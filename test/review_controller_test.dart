@@ -193,4 +193,90 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(downloads, 0);
   });
+
+  group('editor', () {
+    ReviewController editor() {
+      final (c, _, _) = _ready((m, {onProgress}) async => File('v.mp4'), null);
+      c.setSermon(10, 90);
+      return c;
+    }
+
+    test('nudge, I/O at the playhead, undo and redo', () {
+      final c = editor();
+      c.nudge(true, 1);
+      c.nudge(true, 0.1);
+      expect(c.plan!.sermonStart, closeTo(11.1, 1e-9));
+      c.position.value = 50;
+      c.markOut();
+      expect(c.plan!.sermonEnd, 50);
+      c.undo();
+      expect(c.plan!.sermonEnd, 90);
+      c.undo();
+      expect(c.plan!.sermonStart, closeTo(11, 1e-9));
+      c.redo();
+      c.redo();
+      expect(c.plan!.sermonStart, closeTo(11.1, 1e-9));
+      expect(c.plan!.sermonEnd, 50);
+      c.position.value = 60;
+      c.markIn(); // past the end: clamped one second before it
+      expect(c.plan!.sermonStart, 49);
+    });
+
+    test('typing the title is one undo step', () {
+      final c = editor();
+      c.setTitle('a');
+      c.setTitle('ab');
+      c.setTitle('abc');
+      c.undo();
+      expect(c.plan!.title, 't');
+      expect(c.canRedo, isTrue);
+    });
+
+    test('cut out a middle piece, set its ends at the playhead, remove it', () {
+      final c = editor();
+      c.position.value = 30;
+      c.addCut();
+      expect((c.plan!.cuts.single.start, c.plan!.cuts.single.end), (30, 60));
+      c.position.value = 40;
+      c.setCutEnd(c.plan!.cuts.single);
+      expect(c.plan!.parts().map((s) => (s.start, s.end)), [
+        (10, 30),
+        (40, 90),
+      ]);
+      c.removeCut(c.plan!.cuts.single);
+      expect(c.plan!.cuts, isEmpty);
+      c.undo();
+      expect(c.plan!.cuts.single.end, 40);
+    });
+
+    test('preview of the cut jumps over cut pieces and stops at the end', () {
+      final c = editor();
+      c.plan!.cuts.add(Span(30, 40));
+      c.previewCut();
+      expect(c.position.value, 10);
+      c.position.value = 31;
+      expect(c.position.value, 40);
+      c.position.value = 91;
+      expect(c.previewing, isFalse);
+      c.position.value = 35; // no longer previewing: no jump
+      expect(c.position.value, 35);
+    });
+
+    test('Shorts move as a whole, start at the playhead, get a title', () {
+      final c = editor();
+      c.position.value = 20;
+      c.addShort('Nuwe Short');
+      final s = c.plan!.shorts.single;
+      c.moveShort(s, 5);
+      expect((s.start, s.end), (25, 85));
+      c.position.value = 30;
+      c.setShortStart(s);
+      expect((s.start, s.end), (30, 90));
+      c.setShortTitle(s, 'Genade');
+      expect(s.title, 'Genade');
+      c.undo();
+      c.undo();
+      expect(c.plan!.shorts.single.start, 25);
+    });
+  });
 }
