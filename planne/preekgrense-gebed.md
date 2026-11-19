@@ -45,5 +45,18 @@ Whisper, middelstukke uitsny (fase 6), UI-veranderinge in Hersien.
 - (aanname) Twee ander preke: `6s_FFatG0so` (bevestiging/wapenrusting) en `pJzN-k-rVfQ` ("Ware bekering bring genesing", ander prediker).
 
 ## Log
+- 2026-11-19 stap 1: `Prayer` + `prayers(segs)`, fixtures vir 3 preke; prayers_test rooi → groen.
+- 2026-11-19 stap 2: skema `openingPrayer`/`closingPrayer`, kandidate as genommerde lys; planner_test rooi → groen.
+- 2026-11-19 stap 3: kort formules (seëngroet, geloofsbelydenis, < 45 s) is nie kandidate nie; nou het elke fixture presies 2 kandidate (G1 en G2 hieronder).
+- 2026-11-19 stap 4: Qwen3-dinkmodus-steekproef (temperature 0.6, top_p 0.95, top_k 20, seed 1) en `num_predict` 8192; planner_test rooi → groen. Rede: met temperature 0 het een lopie meer as 80 000 tekens in sirkels gedink.
+- 2026-11-19 maatstaf (BOUNDS=1), lopies wat klaar gekom het:
+  - voor stap 3: YWz5gf0onjk 14:46–56:03 ×3 (1 s / 1 s; 92, 33, 60 s); pJzN-k-rVfQ lopie 1 13:44–57:48 (verwag 23:01–57:46, −557 s: 'n kort formule gekies) → stap 3.
+  - ná stap 3 (temperature 0): 6s_FFatG0so 25:50–68:54 ×3 (0 s / 1 s; 48, 29, 28 s); YWz5gf0onjk "Die KI het nie twee geldige gebede gekies nie" ná 29 min; pJzN hang.
+  - ná stap 4: nie gemeet nie. Ollama is vas: 'n weesversoek van die vorige lopie (taak 117517, `--context-shift`, `-np 1`) genereer steeds (> 82 000 tekens) en elke nuwe versoek wag daaragter. Ollama mag nie herbegin word nie.
 
 ## Verslag
+**Nie saamgevoeg nie**, bly op `bou/preekgrense-gebed`: die aanvaarding (9/9 binne ±30 s) is nie bewys nie. Die kandidaat-soek vind by al 3 preke presies die regte twee gebede (G1-begin en G2-einde binne 2 s van die verwagte grense, sonder internet getoets), so die keuse vir Ollama is triviaal; die risiko was net die eindelose dink, wat stap 4 aanpak.
+Stappe vir Schalk:
+1. `systemctl restart ollama` (of herbegin die rekenaar), sodat die vasgehaakte versoek ophou.
+2. `cd ../.bou/ytsermon-prosessor-preekgrense-gebed && BOUNDS=1 flutter test test/bounds_bench_test.dart --reporter expanded` (~10 min).
+3. As al 9 lopies binne ±30 s val: `git merge --no-ff bou/preekgrense-gebed` op main (konflik in `jobs.dart` `planJob` en `planner.dart`: hou albei kante), en vul dan in `ReviewController` `prayerMarks` uit `prayers(segments)` (die transkripsie en tydlyn wys dit reeds).
