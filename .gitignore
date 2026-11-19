@@ -8,7 +8,7 @@ downloads/
 out/
 client_secret*.json
 token*.json
-work/
+/work/
 .dart_tool/
 build/
 .flutter-plugins
