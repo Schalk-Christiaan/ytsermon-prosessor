@@ -3,7 +3,7 @@
 //   wanneer: Werk (rail)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag-, klaar- en fout-lyste; klaar-items: Speel, Wys in gids, Klank vir WhatsApp
+//   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag-, klaar- en fout-lyste; klaar-items: Speel, Wys in gids, Klank vir WhatsApp, Laai op, Wys op YouTube; oplaai-teller
 //   status: oop
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import '../../core/jobs.dart';
 import '../../core/store.dart';
 import '../../core/tools.dart';
+import '../../core/youtube.dart';
 import '../../l10n/app_localizations.dart';
 
 class WorkScreen extends StatelessWidget {
@@ -20,6 +21,7 @@ class WorkScreen extends StatelessWidget {
     required this.jobs,
     required this.onBack,
     this.open = openPath,
+    this.quota,
   });
   final SermonStore store;
   final JobQueue jobs;
@@ -30,12 +32,16 @@ class WorkScreen extends StatelessWidget {
   /// Test seam: opens a file (default: the system player / file manager).
   final Future<void> Function(String path, {bool select}) open;
 
+  /// Today's upload count; null hides the line.
+  final UploadQuota? quota;
+
   String _title(Job j) => store.byId(j.sermon)?.title ?? j.sermon;
 
   String _kind(L l, Job j) => switch (j.kind) {
     JobKind.plan => l.taskPlan,
     JobKind.cut => l.taskCut,
     JobKind.audio => l.taskAudio,
+    JobKind.upload => l.taskUpload,
   };
 
   String _phase(L l, JobPhase? p) => switch (p) {
@@ -44,6 +50,7 @@ class WorkScreen extends StatelessWidget {
     JobPhase.download => l.stageDownload,
     JobPhase.cut => l.stageCut,
     JobPhase.audio => l.stageAudio,
+    JobPhase.upload => l.stageUpload,
   };
 
   @override
@@ -71,6 +78,13 @@ class WorkScreen extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               children: [
                 Text(l.navWerk, style: th.textTheme.headlineMedium),
+                if (quota != null)
+                  Text(
+                    l.quotaToday(quota!.used, UploadQuota.limit),
+                    style: th.textTheme.bodyMedium?.copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
                 const SizedBox(height: 16),
                 if (jobs.jobs.isEmpty) Text(l.workEmpty),
                 if (cur != null) _current(l, th, cur),
@@ -147,7 +161,23 @@ class WorkScreen extends StatelessWidget {
   );
 
   Widget _done(L l, ThemeData th, Job j) {
-    final out = store.byId(j.sermon)?.outputs ?? const <String>[];
+    final s = store.byId(j.sermon);
+    final out = s?.outputs ?? const <String>[];
+    if (j.kind == JobKind.upload) {
+      final id = s?.uploads[out.firstOrNull];
+      return _line(
+        l,
+        th,
+        j,
+        trailing: id == null
+            ? null
+            : TextButton(
+                onPressed: () =>
+                    open('https://studio.youtube.com/video/$id/edit'),
+                child: Text(l.openOnYouTube),
+              ),
+      );
+    }
     // A cut job offers its sermon video; an audio job its mp3.
     final ext = j.kind == JobKind.audio ? '.mp3' : '.mp4';
     final file = out.where((o) => o.endsWith(ext)).firstOrNull;
@@ -163,11 +193,17 @@ class WorkScreen extends StatelessWidget {
             onPressed: () => open(file, select: true),
             child: Text(l.showInFolder),
           ),
-          if (j.kind == JobKind.cut)
+          if (j.kind == JobKind.cut) ...[
             TextButton(
               onPressed: () => jobs.enqueue(j.sermon, JobKind.audio),
               child: Text(l.whatsappAudio),
             ),
+            if (s?.state != SermonState.opgelaai)
+              TextButton(
+                onPressed: () => jobs.enqueue(j.sermon, JobKind.upload),
+                child: Text(l.upload),
+              ),
+          ],
         ],
       ),
     );

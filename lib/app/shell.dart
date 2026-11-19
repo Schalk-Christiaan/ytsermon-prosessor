@@ -3,16 +3,24 @@
 //   wanneer: by opstart
 //   groep: app | App-raam
 //   skryf: —
-//   doel: NavigationRail: Preke (tuis), Hersien, Werk, Instellings; Snitlyste af tot fase 3
+//   doel: NavigationRail: Preke (tuis), Hersien, Werk, Snitlyste, Instellings (Kanaal + Stelsel)
 //   status: oop
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 
 import '../core/channel.dart';
 import '../core/jobs.dart';
+import '../core/settings.dart';
 import '../core/store.dart';
+import '../core/tools.dart';
+import '../core/youtube.dart';
+import '../features/playlists/playlists_screen.dart';
 import '../features/review/review_controller.dart';
 import '../features/review/review_screen.dart';
 import '../features/sermons/sermons_screen.dart';
+import '../features/settings/settings_screen.dart';
 import '../features/settings/system_status.dart';
 import '../features/work/work_screen.dart';
 import '../l10n/app_localizations.dart';
@@ -23,9 +31,17 @@ class Shell extends StatefulWidget {
     required this.store,
     required this.jobs,
     this.list = listChannel,
+    this.settings,
+    this.auth,
+    this.quota,
   });
   final SermonStore store;
   final JobQueue jobs;
+
+  /// App wiring; tests leave these null and get files under the store's root (token in memory).
+  final AppSettings? settings;
+  final GoogleAuth? auth;
+  final UploadQuota? quota;
 
   /// Test seam: the channel lister.
   final Future<List<ChannelItem>> Function() list;
@@ -35,8 +51,20 @@ class Shell extends StatefulWidget {
 }
 
 class _ShellState extends State<Shell> {
-  int _i = 0; // 0 Preke, 1 Hersien, 2 Werk, 3 Instellings
+  int _i = 0; // 0 Preke, 1 Hersien, 2 Werk, 3 Snitlyste, 4 Instellings
   late final _review = ReviewController(store: widget.store, jobs: widget.jobs);
+  late final _settings = widget.settings ?? AppSettings.load(widget.store.root);
+  late final _quota =
+      widget.quota ??
+      UploadQuota(File(p.join(widget.store.root.path, 'quota.json')));
+  String? _memToken;
+  late final _auth =
+      widget.auth ??
+      GoogleAuth(
+        File(_settings.clientFile),
+        read: () async => _memToken,
+        write: (v) async => _memToken = v,
+      );
 
   @override
   void dispose() {
@@ -47,23 +75,6 @@ class _ShellState extends State<Shell> {
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
-    Widget disabled(IconData icon, String label) => Tooltip(
-      message: l.comingPhase3,
-      child: Opacity(
-        opacity: 0.38,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon),
-              const SizedBox(height: 4),
-              Text(label, style: Theme.of(context).textTheme.labelMedium),
-            ],
-          ),
-        ),
-      ),
-    );
     return Scaffold(
       body: Row(
         children: [
@@ -75,9 +86,9 @@ class _ShellState extends State<Shell> {
                 _dest(Icons.church_rounded, l.navPreke, 0),
                 _dest(Icons.rate_review_rounded, l.navReview, 1),
                 _dest(Icons.work_history_rounded, l.navWerk, 2),
-                disabled(Icons.playlist_play_rounded, l.navSnitlyste),
+                _dest(Icons.playlist_play_rounded, l.navSnitlyste, 3),
                 const Spacer(),
-                _dest(Icons.settings_rounded, l.navSettings, 3),
+                _dest(Icons.settings_rounded, l.navSettings, 4),
                 const SizedBox(height: 8),
               ],
             ),
@@ -101,8 +112,15 @@ class _ShellState extends State<Shell> {
                   store: widget.store,
                   jobs: widget.jobs,
                   onBack: () => setState(() => _i = 0),
+                  quota: _quota,
                 ),
-                const SystemStatus(),
+                PlaylistsScreen(store: widget.store, settings: _settings),
+                SettingsScreen(
+                  settings: _settings,
+                  auth: _auth,
+                  signIn: () => _auth.signIn(openPath),
+                  system: const SystemStatus(),
+                ),
               ],
             ),
           ),

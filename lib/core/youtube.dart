@@ -50,7 +50,7 @@ String _random() =>
 /// Desktop OAuth for one Google account; the refresh token lives wherever [read]/[write] keep it.
 class GoogleAuth {
   GoogleAuth(this.clientFile, {required this.read, required this.write});
-  final File clientFile;
+  File clientFile;
   final Future<String?> Function() read;
   final Future<void> Function(String? token) write;
   String? _token;
