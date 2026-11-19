@@ -6,6 +6,9 @@ import 'package:path/path.dart' as p;
 import 'models.dart';
 import 'tools.dart';
 
+/// Longest allowed Short in seconds.
+const kMaxShort = 90;
+
 const kPlanFile = 'plan.json';
 
 class PlanException implements Exception {
@@ -83,7 +86,7 @@ List<String> validate(SermonPlan plan, double duration) {
         s.end > plan.sermonEnd ||
         s.start >= s.end) {
       e.add('Short "${s.title}" lê nie binne die preek nie.');
-    } else if (s.end - s.start < 20 || s.end - s.start > 90) {
+    } else if (s.end - s.start < 20 || s.end - s.start > kMaxShort) {
       e.add(
         'Short "${s.title}" is ${(s.end - s.start).round()} s; dit moet 20 tot 90 s wees.',
       );
@@ -157,8 +160,15 @@ class Planner {
     final shorts = <Short>[];
     for (final s in (j['shorts'] as List? ?? const [])) {
       final a = parseTime(s['start']), b = parseTime(s['end']);
+      // The model cannot count seconds; trim an overlong Short instead of rejecting the plan.
       if (a != null && b != null)
-        shorts.add(Short(start: a, end: b, title: '${s['title']}'));
+        shorts.add(
+          Short(
+            start: a,
+            end: b - a > kMaxShort ? a + kMaxShort - 5 : b,
+            title: '${s['title']}',
+          ),
+        );
     }
     final plan = SermonPlan(
       sermonStart: start,

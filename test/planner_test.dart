@@ -81,6 +81,33 @@ void main() {
     },
   );
 
+  test('plan() trims a Short over 90 s instead of rejecting', () async {
+    final planner = Planner(
+      chat: (_) async => {
+        'message': {
+          'content': jsonEncode({
+            'sermonStart': '23:00',
+            'sermonEnd': '52:00',
+            'title': 'T',
+            'description': 'D',
+            'shorts': [
+              {'start': '25:00', 'end': '27:02', 'title': 'lank'},
+            ],
+          }),
+        },
+      },
+    );
+    final plan = await planner.plan(
+      compactText: 'x',
+      duration: 3728,
+      originalDescription: '',
+    );
+    expect(
+      plan.shorts.single.end - plan.shorts.single.start,
+      lessThanOrEqualTo(90),
+    );
+  });
+
   test('plan() throws PlanException for an invalid plan', () async {
     final planner = Planner(
       chat: (_) async => {

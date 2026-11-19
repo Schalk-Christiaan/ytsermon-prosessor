@@ -25,11 +25,12 @@ enum ReviewState { empty, loading, error, ready }
 enum LoadStage { meta, plan, cut }
 
 class ReviewController extends ChangeNotifier {
-  ReviewController({this.work, this.out});
+  ReviewController({this.work, this.out, this.font});
 
   /// Overrides for tests: work cache root and output folder.
   final Directory? work;
   final Directory? out;
+  final File? font;
 
   /// Created only once the video is on disk (no libmpv work before that).
   late final player = Player();
@@ -229,7 +230,7 @@ class ReviewController extends ChangeNotifier {
       final v = await _download!.future;
       final date = m.info.uploadDate;
       final out = this.out ?? outDir();
-      final font = bundledFont();
+      final font = this.font ?? bundledFont();
       await cutSermon(v, pl, date, out);
       for (var i = 0; i < pl.shorts.length; i++) {
         await cutShort(
