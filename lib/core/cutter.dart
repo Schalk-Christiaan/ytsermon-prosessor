@@ -1,9 +1,9 @@
 // @stelsel cutter
 //   soort: module
-//   wanneer: by 'Keur goed en sny'
+//   wanneer: by 'Keur goed en sny' en 'Klank vir WhatsApp'
 //   groep: core | Kern
 //   skryf: out/
-//   doel: sny die preek (stroomkopie) en Shorts (9:16 met ingebrande onderskrif) met ffmpeg
+//   doel: sny die preek (stroomkopie), Shorts (9:16 met ingebrande onderskrif) en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg
 //   status: oop
 import 'dart:io';
 
@@ -17,9 +17,9 @@ String _sec(double s) => s.toStringAsFixed(3);
 
 String _clean(String s) => s.replaceAll(RegExp(r'[<>:"/\\|?*]'), '').trim();
 
-/// `JJJJ-MM-DD Titel.mp4` with characters illegal on Windows removed.
-String sermonFileName(String date, String title) =>
-    '$date ${_clean(title)}.mp4';
+/// `JJJJ-MM-DD Titel.<ext>` with characters illegal on Windows removed.
+String sermonFileName(String date, String title, {String ext = 'mp4'}) =>
+    '$date ${_clean(title)}.$ext';
 
 /// ffmpeg arguments for a keyframe-accurate-enough stream copy of [start, end].
 List<String> sermonArgs(String video, double start, double end, String out) => [
@@ -64,6 +64,28 @@ List<String> shortArgs(
   'aac',
   '-movflags',
   '+faststart',
+  '-nostats',
+  '-progress',
+  'pipe:1',
+  out,
+];
+
+/// ffmpeg arguments for the WhatsApp audio: mono mp3 at 64 kbps (~20 MB per 40 min) with an ID3 title.
+List<String> audioArgs(String input, String out, String title) => [
+  '-y',
+  '-i',
+  input,
+  '-vn',
+  '-ac',
+  '1',
+  '-c:a',
+  'libmp3lame',
+  '-b:a',
+  '64k',
+  '-id3v2_version',
+  '3',
+  '-metadata',
+  'title=$title',
   '-nostats',
   '-progress',
   'pipe:1',
@@ -145,6 +167,29 @@ Future<File> cutShort(
     shortArgs(p.basename(video.path), srt, s.start, s.end, out),
     cwd: work.path,
     duration: s.end - s.start,
+    onProgress: onProgress,
+    cancel: cancel,
+    log: log,
+  );
+  return File(out);
+}
+
+/// Exports [sermon] (the cut mp4) as `JJJJ-MM-DD Tema.mp3` in [outDir] for WhatsApp.
+Future<File> cutAudio(
+  File sermon,
+  String title,
+  String date,
+  Directory outDir, {
+  double? duration,
+  void Function(double frac)? onProgress,
+  Future<void>? cancel,
+  void Function(String line)? log,
+}) async {
+  outDir.createSync(recursive: true);
+  final out = p.join(outDir.path, sermonFileName(date, title, ext: 'mp3'));
+  await _ffmpeg(
+    audioArgs(sermon.path, out, title),
+    duration: duration,
     onProgress: onProgress,
     cancel: cancel,
     log: log,
