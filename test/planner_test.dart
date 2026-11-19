@@ -97,6 +97,10 @@ void main() {
       expect(seen!['stream'], false);
       expect(seen!['think'], true);
       expect(seen!['options']['num_ctx'], 16384);
+      // Qwen3 loops forever in thinking mode with greedy decoding; seed keeps it reproducible.
+      expect(seen!['options']['temperature'], 0.6);
+      expect(seen!['options']['seed'], 1);
+      expect(seen!['options']['num_predict'], lessThanOrEqualTo(8192));
       expect(seen!['format'], isA<Map>());
       expect(jsonEncode(seen!['messages']), contains('Psalm 1'));
       expect(

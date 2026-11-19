@@ -169,7 +169,16 @@ class Planner {
       'stream': false,
       'think': think,
       'format': _schema,
-      'options': {'num_ctx': 16384, 'temperature': 0, 'seed': 1},
+      // Qwen3's thinking-mode sampling: greedy decoding (temperature 0) can think in circles for
+      // half an hour. num_predict caps a runaway at a few minutes; the seed keeps runs reproducible.
+      'options': {
+        'num_ctx': 16384,
+        'temperature': 0.6,
+        'top_p': 0.95,
+        'top_k': 20,
+        'num_predict': 8192,
+        'seed': 1,
+      },
       'messages': [
         {'role': 'system', 'content': _systemPrompt},
         {
