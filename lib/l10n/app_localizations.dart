@@ -129,12 +129,6 @@ abstract class L {
   /// **'Snitlyste'**
   String get navSnitlyste;
 
-  /// No description provided for @comingPhase3.
-  ///
-  /// In af, this message translates to:
-  /// **'Kom in fase 3'**
-  String get comingPhase3;
-
   /// No description provided for @settingsSystem.
   ///
   /// In af, this message translates to:
@@ -608,6 +602,185 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Short {n}'**
   String shortPreview(int n);
+
+  /// No description provided for @taskUpload.
+  ///
+  /// In af, this message translates to:
+  /// **'Oplaai'**
+  String get taskUpload;
+
+  /// No description provided for @stageUpload.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai op…'**
+  String get stageUpload;
+
+  /// No description provided for @upload.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai op'**
+  String get upload;
+
+  /// No description provided for @openOnYouTube.
+  ///
+  /// In af, this message translates to:
+  /// **'Wys op YouTube'**
+  String get openOnYouTube;
+
+  /// No description provided for @quotaToday.
+  ///
+  /// In af, this message translates to:
+  /// **'Oplaaie vandag: {n} van {max}'**
+  String quotaToday(int n, int max);
+
+  /// No description provided for @navSettingsTitle.
+  ///
+  /// In af, this message translates to:
+  /// **'Instellings'**
+  String get navSettingsTitle;
+
+  /// No description provided for @settingsChannel.
+  ///
+  /// In af, this message translates to:
+  /// **'Kanaal'**
+  String get settingsChannel;
+
+  /// No description provided for @clientFile.
+  ///
+  /// In af, this message translates to:
+  /// **'Kliënt-ID-lêer (Google, Desktop app)'**
+  String get clientFile;
+
+  /// No description provided for @clientFileHelp.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai dit by Google Cloud af; sien die stappe in die handleiding.'**
+  String get clientFileHelp;
+
+  /// No description provided for @clientMissing.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen kliënt-ID-lêer nie'**
+  String get clientMissing;
+
+  /// No description provided for @notConnected.
+  ///
+  /// In af, this message translates to:
+  /// **'Nie gekoppel nie'**
+  String get notConnected;
+
+  /// No description provided for @connected.
+  ///
+  /// In af, this message translates to:
+  /// **'Gekoppel'**
+  String get connected;
+
+  /// No description provided for @connect.
+  ///
+  /// In af, this message translates to:
+  /// **'Koppel kanaal'**
+  String get connect;
+
+  /// No description provided for @disconnect.
+  ///
+  /// In af, this message translates to:
+  /// **'Ontkoppel'**
+  String get disconnect;
+
+  /// No description provided for @connectWaiting.
+  ///
+  /// In af, this message translates to:
+  /// **'Kies die kerk se rekening in die blaaier…'**
+  String get connectWaiting;
+
+  /// No description provided for @uploadPrivacy.
+  ///
+  /// In af, this message translates to:
+  /// **'Nuwe oplaaie is'**
+  String get uploadPrivacy;
+
+  /// No description provided for @privacyPrivate.
+  ///
+  /// In af, this message translates to:
+  /// **'Privaat'**
+  String get privacyPrivate;
+
+  /// No description provided for @privacyUnlisted.
+  ///
+  /// In af, this message translates to:
+  /// **'Ongelys'**
+  String get privacyUnlisted;
+
+  /// No description provided for @privacyPublic.
+  ///
+  /// In af, this message translates to:
+  /// **'Publiek'**
+  String get privacyPublic;
+
+  /// No description provided for @playlistRules.
+  ///
+  /// In af, this message translates to:
+  /// **'Reëls'**
+  String get playlistRules;
+
+  /// No description provided for @playlistRulesHelp.
+  ///
+  /// In af, this message translates to:
+  /// **'Die eerste reël wat by \'n preek pas, kies sy snitlys. Sleep om die volgorde te verander.'**
+  String get playlistRulesHelp;
+
+  /// No description provided for @ruleBook.
+  ///
+  /// In af, this message translates to:
+  /// **'Bybelboek uit die Skriflesing'**
+  String get ruleBook;
+
+  /// No description provided for @ruleYear.
+  ///
+  /// In af, this message translates to:
+  /// **'Jaar (\"Preke 2026\")'**
+  String get ruleYear;
+
+  /// No description provided for @playlistPreview.
+  ///
+  /// In af, this message translates to:
+  /// **'Voorskou'**
+  String get playlistPreview;
+
+  /// No description provided for @sermonCount.
+  ///
+  /// In af, this message translates to:
+  /// **'{n, plural, =1{1 preek} other{{n} preke}}'**
+  String sermonCount(int n);
+
+  /// No description provided for @noPlaylist.
+  ///
+  /// In af, this message translates to:
+  /// **'Sonder snitlys'**
+  String get noPlaylist;
+
+  /// No description provided for @template.
+  ///
+  /// In af, this message translates to:
+  /// **'Beskrywingsjabloon'**
+  String get template;
+
+  /// No description provided for @templatePreview.
+  ///
+  /// In af, this message translates to:
+  /// **'So lyk dit vir die nuutste preek'**
+  String get templatePreview;
+
+  /// Arguments are the literal tokens {tema} etc.
+  ///
+  /// In af, this message translates to:
+  /// **'{tema}, {skriflesing}, {datum} en {beskrywing} word ingevul.'**
+  String templateHelp(
+    String tema,
+    String skriflesing,
+    String datum,
+    String beskrywing,
+  );
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

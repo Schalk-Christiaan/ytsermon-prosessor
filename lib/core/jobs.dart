@@ -1,9 +1,9 @@
 // @stelsel jobs
 //   soort: module
-//   wanneer: "Verwerk volgende", "Keur goed en sny", "Beplan weer", "Klank vir WhatsApp" en by begin (hervat)
+//   wanneer: "Verwerk volgende", "Keur goed en sny", "Beplan weer", "Klank vir WhatsApp", "Laai op" en by begin (hervat)
 //   groep: core | Kern
 //   skryf: <werkmap>/jobs.json | die ry; sermon.json van die preek wat verwerk word
-//   doel: een taak op 'n slag (plan, sny of klank), hervat ná herbegin, kanselleer, probeer weer
+//   doel: een taak op 'n slag (plan, sny, klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
 //   status: oop
 import 'dart:async';
 import 'dart:convert';
@@ -18,15 +18,18 @@ import 'cutter.dart';
 import 'models.dart';
 import 'paths.dart';
 import 'planner.dart';
+import 'playlists.dart';
+import 'settings.dart';
 import 'store.dart';
 import 'tools.dart';
+import 'youtube.dart';
 
-enum JobKind { plan, cut, audio }
+enum JobKind { plan, cut, audio, upload }
 
 enum JobStatus { wag, besig, klaar, fout, gekanselleer }
 
 /// What a running job is busy with (the Werk-skerm maps it to text).
-enum JobPhase { meta, plan, download, cut, audio }
+enum JobPhase { meta, plan, download, cut, audio, upload }
 
 class Job {
   Job(
@@ -104,11 +107,15 @@ class JobQueue extends ChangeNotifier {
     JobRun? plan,
     JobRun? cut,
     JobRun? audio,
+    JobRun? upload,
     Directory? out,
     File? font,
   }) : _plan = plan ?? planJob(store),
        _cut = cut ?? cutJob(store, out: out, font: font),
-       _audio = audio ?? audioJob(store) {
+       _audio = audio ?? audioJob(store),
+       _upload =
+           upload ??
+           ((_) async => throw StateError('Oplaai is nie opgestel nie.')) {
     final f = _file;
     if (f.existsSync()) {
       jobs.addAll([
@@ -122,7 +129,7 @@ class JobQueue extends ChangeNotifier {
   }
 
   final SermonStore store;
-  final JobRun _plan, _cut, _audio;
+  final JobRun _plan, _cut, _audio, _upload;
   final jobs = <Job>[];
 
   /// The running job; its fraction (null = unknown) and phase.
@@ -139,10 +146,7 @@ class JobQueue extends ChangeNotifier {
   Future<void> get idle => _loop ?? Future.value();
 
   void _persist() {
-    final f = _file..parent.createSync(recursive: true);
-    final tmp = File('${f.path}.tmp')
-      ..writeAsStringSync(jsonEncode([for (final j in jobs) j.toJson()]));
-    tmp.renameSync(f.path);
+    writeJson(_file, [for (final j in jobs) j.toJson()]);
     notifyListeners();
   }
 
@@ -190,15 +194,21 @@ class JobQueue extends ChangeNotifier {
           JobKind.plan => _plan,
           JobKind.cut => _cut,
           JobKind.audio => _audio,
+          JobKind.upload => _upload,
         };
         await run(JobCtx(job.sermon, cancel.future, this));
         job.status = JobStatus.klaar;
         // An audio export leaves the sermon's state (gesny/opgelaai) alone.
-        if (job.kind != JobKind.audio) {
-          s.state = job.kind == JobKind.plan
-              ? SermonState.beplan
-              : SermonState.gesny;
-          s.error = null;
+        final done = switch (job.kind) {
+          JobKind.plan => SermonState.beplan,
+          JobKind.cut => SermonState.gesny,
+          JobKind.upload => SermonState.opgelaai,
+          JobKind.audio => null,
+        };
+        if (done != null) {
+          s
+            ..state = done
+            ..error = null;
         }
       } on JobCancelled {
         job.status = JobStatus.gekanselleer;
@@ -236,9 +246,11 @@ class JobQueue extends ChangeNotifier {
     job.error = null;
     final s = store.byId(job.sermon)!;
     if (s.state == SermonState.fout && job.kind != JobKind.audio) {
-      s.state = job.kind == JobKind.plan
-          ? SermonState.nuut
-          : SermonState.goedgekeur;
+      s.state = switch (job.kind) {
+        JobKind.plan => SermonState.nuut,
+        JobKind.upload => SermonState.gesny,
+        _ => SermonState.goedgekeur,
+      };
       s.error = null;
       store.save(s);
     }
@@ -283,10 +295,7 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
     cancel: c.cancel,
     log: c.log,
   );
-  final plan = SermonPlan.fromJson(
-    jsonDecode(File(p.join(m.dir.path, kPlanFile)).readAsStringSync())
-        as Map<String, dynamic>,
-  );
+  final plan = _plan(store, c.id);
   final segs = parseJson3(m.captions.readAsStringSync());
   final dest = out ?? outDir();
   final date = m.info.uploadDate;
@@ -325,11 +334,7 @@ JobRun audioJob(SermonStore store) => (c) async {
   if (video == null || !File(video).existsSync()) {
     throw StateError('Sny eers die preek.');
   }
-  final plan = SermonPlan.fromJson(
-    jsonDecode(
-      File(p.join(store.root.path, c.id, kPlanFile)).readAsStringSync(),
-    ) as Map<String, dynamic>,
-  );
+  final plan = _plan(store, c.id);
   c.phase(JobPhase.audio);
   c.progress(0);
   final out = await cutAudio(
@@ -345,5 +350,59 @@ JobRun audioJob(SermonStore store) => (c) async {
   final latest = store.byId(c.id)!;
   if (!latest.outputs.contains(out.path)) {
     store.save(latest..outputs = [...latest.outputs, out.path]);
+  }
+};
+
+SermonPlan _plan(SermonStore store, String id) => SermonPlan.fromJson(
+  jsonDecode(File(p.join(store.root.path, id, kPlanFile)).readAsStringSync())
+      as Map<String, dynamic>,
+);
+
+/// Uploads the cut sermon and its Shorts (privacy from settings), then puts the sermon in its playlist.
+JobRun uploadJob(
+  SermonStore store, {
+  required YouTube yt,
+  required AppSettings settings,
+  required UploadQuota quota,
+}) => (c) async {
+  final s = store.byId(c.id)!;
+  final videos = s.outputs.where((o) => o.endsWith('.mp4')).toList();
+  if (videos.isEmpty) throw StateError('Sny eers die preek.');
+  final plan = _plan(store, c.id);
+  final description = describe(
+    settings.template,
+    tema: plan.title,
+    scripture: s.scripture,
+    date: s.date,
+    description: plan.description,
+  );
+  c.phase(JobPhase.upload);
+  for (var i = 0; i < videos.length; i++) {
+    final path = videos[i];
+    if (store.byId(c.id)!.uploads.containsKey(path)) continue;
+    final title = i == 0 || i > plan.shorts.length
+        ? plan.title
+        : plan.shorts[i - 1].title;
+    final session = File(p.join(store.root.path, c.id, 'upload-$i.json'));
+    // A resumed session was already counted when it started.
+    if (!session.existsSync()) quota.take();
+    final id = await yt.upload(
+      File(path),
+      title: title.length > 100 ? title.substring(0, 100) : title,
+      description: description,
+      privacy: settings.privacy,
+      session: session,
+      onProgress: (f) => c.progress((i + f) / videos.length),
+      cancel: c.cancel,
+    );
+    final latest = store.byId(c.id)!;
+    store.save(latest..uploads = {...latest.uploads, path: id});
+  }
+  final name = playlistFor(s, settings.rules);
+  final latest = store.byId(c.id)!;
+  if (name != null && latest.playlist == null) {
+    final pl = (await yt.playlists())[name] ?? await yt.createPlaylist(name);
+    await yt.addToPlaylist(pl, latest.uploads[videos.first]!);
+    store.save(latest..playlist = name);
   }
 };

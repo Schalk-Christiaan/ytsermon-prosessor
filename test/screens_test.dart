@@ -14,6 +14,10 @@ import 'package:preekverwerker/core/channel.dart';
 import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/store.dart';
+import 'package:preekverwerker/core/settings.dart';
+import 'package:preekverwerker/core/youtube.dart';
+import 'package:preekverwerker/features/playlists/playlists_screen.dart';
+import 'package:preekverwerker/features/settings/settings_screen.dart';
 import 'package:preekverwerker/features/sermons/sermons_screen.dart';
 import 'package:preekverwerker/features/work/work_screen.dart';
 import 'package:preekverwerker/features/review/review_controller.dart';
@@ -36,7 +40,31 @@ Future<void> _fonts() async {
       );
     await l.load();
   }
+  // Material icons from the Flutter SDK, so icons render instead of boxes.
+  // flutter_tester lives in <sdk>/bin/cache/artifacts/engine/<platform>/.
+  final f = File(
+    p.join(
+      p.dirname(p.dirname(p.dirname(Platform.resolvedExecutable))),
+      'material_fonts',
+      'MaterialIcons-Regular.otf',
+    ),
+  );
+  if (f.existsSync()) {
+    await (FontLoader(
+      'MaterialIcons',
+    )..addFont(Future.value(ByteData.sublistView(f.readAsBytesSync())))).load();
+  }
 }
+
+/// Saves the RepaintBoundary under [key] as `out/shots/<name>.png`.
+Future<void> _shot(WidgetTester t, GlobalKey key, String name) =>
+    t.runAsync(() async {
+      final r = key.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      final img = await r.toImage();
+      final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
+      File(p.join('out', 'shots', '$name.png'))
+          .writeAsBytesSync(bytes!.buffer.asUint8List());
+    });
 
 Widget _app(Brightness b, Widget home) => MaterialApp(
   theme: buildTheme(b),
@@ -574,4 +602,182 @@ void main() {
     await t.runAsync(() => Future<void>.delayed(const Duration(seconds: 3)));
     await t.pumpWidget(const SizedBox());
   });
+
+  SermonStore playlistStore() {
+    final st = testController(seed: false).$2
+      ..merge([
+        for (final (id, sc) in [
+          ('aaaaaaaaaaa', 'Romeine 5:1-11'),
+          ('bbbbbbbbbbb', 'Romeine 8:1-4'),
+          ('ccccccccccc', 'Efesiërs 6:10-20'),
+          ('ddddddddddd', null),
+        ])
+          ChannelItem(id, 'Preek $sc', 100),
+      ]);
+    for (final (id, sc, d) in [
+      ('aaaaaaaaaaa', 'Romeine 5:1-11', '2026-11-15'),
+      ('bbbbbbbbbbb', 'Romeine 8:1-4', '2026-11-08'),
+      ('ccccccccccc', 'Efesiërs 6:10-20', '2026-11-01'),
+      ('ddddddddddd', null, null),
+    ]) {
+      st.byId(id)!
+        ..scripture = sc
+        ..date = d;
+    }
+    return st;
+  }
+
+  testWidgets('snitlyste: preview counts per playlist; a rule toggles', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final st = playlistStore();
+    final set = AppSettings.load(st.root);
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: PlaylistsScreen(store: st, settings: set),
+        ),
+      ),
+    );
+    await t.pump();
+    expect(find.text('Romeine'), findsOneWidget);
+    expect(find.text('2 preke'), findsOneWidget);
+    expect(find.text('Efesiërs'), findsOneWidget);
+    expect(find.text('Sonder snitlys'), findsOneWidget);
+    await t.tap(find.byKey(const ValueKey('rule-book')));
+    await t.pump();
+    expect(AppSettings.load(st.root).rules, ['year']);
+    expect(find.text('Preke 2026'), findsOneWidget);
+    expect(find.text('3 preke'), findsOneWidget);
+    await t.enterText(find.byKey(const ValueKey('template')), '{tema}!');
+    await t.pump();
+    expect(AppSettings.load(st.root).template, '{tema}!');
+    expect(find.text('Preek Romeine 5:1-11!'), findsOneWidget);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('instellings: no client file → says so; Koppel signs in', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final root = Directory.systemTemp.createTempSync('set');
+    final set = AppSettings.load(root);
+    String? token;
+    final auth = GoogleAuth(
+      File(set.clientFile),
+      read: () async => token,
+      write: (v) async => token = v,
+    );
+    var signIns = 0;
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: SettingsScreen(
+            settings: set,
+            auth: auth,
+            signIn: () async {
+              signIns++;
+              token = 'rt';
+            },
+            system: const SizedBox(),
+          ),
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(find.text('Geen kliënt-ID-lêer nie'), findsOneWidget);
+    File(set.clientFile).writeAsStringSync('{"installed":{}}');
+    await t.enterText(find.byKey(const ValueKey('clientFile')), set.clientFile);
+    await t.testTextInput.receiveAction(TextInputAction.done);
+    await t.pumpAndSettle();
+    expect(find.text('Nie gekoppel nie'), findsOneWidget);
+    await t.tap(find.text('Koppel kanaal'));
+    await t.pumpAndSettle();
+    expect(signIns, 1);
+    expect(find.text('Gekoppel'), findsOneWidget);
+    await t.tap(find.text('Ongelys'));
+    await t.pumpAndSettle();
+    expect(AppSettings.load(root).privacy, 'unlisted');
+    await t.tap(find.text('Ontkoppel'));
+    await t.pumpAndSettle();
+    expect(token, isNull);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('werk: Laai op queues an upload; quota shows', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final (st, q) = workQueue();
+    final quota = UploadQuota(File(p.join(st.root.path, 'quota.json')))
+      ..take()
+      ..take();
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: WorkScreen(store: st, jobs: q, onBack: () {}, quota: quota),
+        ),
+      ),
+    );
+    await t.pump();
+    expect(find.text('Oplaaie vandag: 2 van 100'), findsOneWidget);
+    await t.tap(find.text('Laai op'));
+    await t.pump();
+    expect(
+      q.jobs.any((j) => j.sermon == 'ccccccccccc' && j.kind == JobKind.upload),
+      isTrue,
+    );
+    await t.pumpWidget(const SizedBox());
+  });
+
+  for (final b in Brightness.values) {
+    for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
+      testWidgets('fase 3 skermkiekies ${b.name} ${w.toInt()}', (t) async {
+        await _fonts();
+        t.view.physicalSize = Size(w, h);
+        t.view.devicePixelRatio = 1;
+        final st = playlistStore();
+        final set = AppSettings.load(st.root);
+        for (final (name, screen) in [
+          ('snitlyste', PlaylistsScreen(store: st, settings: set)),
+          (
+            'instellings',
+            SettingsScreen(
+              settings: set,
+              auth: GoogleAuth(
+                File(set.clientFile),
+                read: () async => null,
+                write: (_) async {},
+              ),
+              signIn: () async {},
+              system: const SizedBox(),
+            ),
+          ),
+        ]) {
+          final key = GlobalKey();
+          await t.pumpWidget(
+            _app(
+              b,
+              RepaintBoundary(
+                key: key,
+                child: Scaffold(body: screen),
+              ),
+            ),
+          );
+          await t.pumpAndSettle();
+          expect(t.takeException(), isNull);
+          await _shot(t, key, '$name-${b.name}-${w.toInt()}');
+        }
+        await t.pumpWidget(const SizedBox());
+      });
+    }
+  }
 }

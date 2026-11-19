@@ -6,6 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:preekverwerker/core/channel.dart';
 import 'package:preekverwerker/core/jobs.dart';
+import 'package:preekverwerker/core/planner.dart';
+import 'package:preekverwerker/core/settings.dart';
+import 'package:preekverwerker/core/youtube.dart';
 import 'package:preekverwerker/core/store.dart';
 import 'package:preekverwerker/core/tools.dart';
 
@@ -23,12 +26,14 @@ void main() {
   });
   tearDown(() => root.deleteSync(recursive: true));
 
-  JobQueue queue({JobRun? plan, JobRun? cut, JobRun? audio}) => JobQueue(
-    store,
-    plan: plan ?? (_) async {},
-    cut: cut ?? (_) async {},
-    audio: audio,
-  );
+  JobQueue queue({JobRun? plan, JobRun? cut, JobRun? audio, JobRun? upload}) =>
+      JobQueue(
+        store,
+        plan: plan ?? (_) async {},
+        cut: cut ?? (_) async {},
+        audio: audio,
+        upload: upload,
+      );
 
   test('runs in order, one at a time, sets states', () async {
     final log = <String>[];
@@ -182,4 +187,128 @@ void main() {
     expect(q.jobs.single.status, JobStatus.fout);
     expect(q.jobs.single.error, 'Sny eers die preek.');
   });
+
+  group('upload', () {
+    late FakeYouTube yt;
+    late UploadQuota quota;
+    late JobQueue q;
+    setUp(() {
+      final dir = Directory(p.join(root.path, 'aaaaaaaaaaa'));
+      File(p.join(dir.path, kPlanFile)).writeAsStringSync(
+        jsonEncode({
+          'sermonStart': 0,
+          'sermonEnd': 1,
+          'title': 'Genade',
+          'description': 'Oor genade.',
+          'shorts': [
+            {'start': 0, 'end': 1, 'title': 'Short een'},
+          ],
+        }),
+      );
+      final sermon = File(p.join(root.path, 'p.mp4'))..writeAsStringSync('v');
+      final short = File(p.join(root.path, 's.mp4'))..writeAsStringSync('s');
+      store.save(
+        store.byId('aaaaaaaaaaa')!
+          ..state = SermonState.gesny
+          ..date = '2026-11-15'
+          ..scripture = 'Romeine 5:1-11'
+          ..outputs = [sermon.path, short.path, '${root.path}/p.mp3'],
+      );
+      yt = FakeYouTube();
+      quota = UploadQuota(File(p.join(root.path, 'quota.json')));
+      q = queue(
+        upload: uploadJob(
+          store,
+          yt: yt,
+          settings: AppSettings.load(root),
+          quota: quota,
+        ),
+      );
+    });
+
+    test(
+      'uploads sermon + Shorts privately, sermon into its playlist',
+      () async {
+        q.enqueue('aaaaaaaaaaa', JobKind.upload);
+        await q.idle;
+        expect(
+          q.jobs.single.status,
+          JobStatus.klaar,
+          reason: q.jobs.single.error,
+        );
+        expect(yt.uploaded.map((u) => u.$2), ['Genade', 'Short een']);
+        expect(yt.uploaded.every((u) => u.$4 == 'private'), isTrue);
+        expect(yt.uploaded.first.$3, contains('Skriflesing: Romeine 5:1-11'));
+        expect(yt.made, ['Romeine']);
+        expect(yt.added, [('PL-Romeine', 'V1')]);
+        final s = store.byId('aaaaaaaaaaa')!;
+        expect(s.state, SermonState.opgelaai);
+        expect(s.uploads.values, ['V1', 'V2']);
+        expect(s.playlist, 'Romeine');
+        expect(quota.used, 2);
+      },
+    );
+
+    test('a retry after a failure does not upload twice', () async {
+      yt.failOn = 'Short een';
+      q.enqueue('aaaaaaaaaaa', JobKind.upload);
+      await q.idle;
+      expect(q.jobs.single.status, JobStatus.fout);
+      expect(store.byId('aaaaaaaaaaa')!.state, SermonState.fout);
+      yt.failOn = null;
+      q.retry(q.jobs.single);
+      await q.idle;
+      expect(q.jobs.single.status, JobStatus.klaar);
+      expect(yt.uploaded.map((u) => u.$2), ['Genade', 'Short een']);
+      expect(yt.added, hasLength(1));
+    });
+
+    test('a full quota fails in plain language before uploading', () async {
+      for (var i = 0; i < 100; i++) {
+        quota.take();
+      }
+      q.enqueue('aaaaaaaaaaa', JobKind.upload);
+      await q.idle;
+      expect(q.jobs.single.error, contains('100 oplaaie'));
+      expect(yt.uploaded, isEmpty);
+    });
+  });
+}
+
+class FakeYouTube implements YouTube {
+  final uploaded = <(String, String, String, String)>[];
+  final made = <String>[];
+  final added = <(String, String)>[];
+  String? failOn;
+
+  @override
+  Future<String> upload(
+    File file, {
+    required String title,
+    required String description,
+    required String privacy,
+    required File session,
+    void Function(double frac)? onProgress,
+    Future<void>? cancel,
+  }) async {
+    if (title == failOn) throw const HttpException('503');
+    uploaded.add((file.path, title, description, privacy));
+    return 'V${uploaded.length}';
+  }
+
+  @override
+  Future<Map<String, String>> playlists() async => {'Mattheus': 'PL1'};
+
+  @override
+  Future<String> createPlaylist(String title) async {
+    made.add(title);
+    return 'PL-$title';
+  }
+
+  @override
+  Future<void> addToPlaylist(String playlist, String video) async =>
+      added.add((playlist, video));
+
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }

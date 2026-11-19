@@ -28,9 +28,6 @@ class LAf extends L {
   String get navSnitlyste => 'Snitlyste';
 
   @override
-  String get comingPhase3 => 'Kom in fase 3';
-
-  @override
   String get settingsSystem => 'Stelsel';
 
   @override
@@ -311,5 +308,111 @@ class LAf extends L {
   @override
   String shortPreview(int n) {
     return 'Short $n';
+  }
+
+  @override
+  String get taskUpload => 'Oplaai';
+
+  @override
+  String get stageUpload => 'Laai op…';
+
+  @override
+  String get upload => 'Laai op';
+
+  @override
+  String get openOnYouTube => 'Wys op YouTube';
+
+  @override
+  String quotaToday(int n, int max) {
+    return 'Oplaaie vandag: $n van $max';
+  }
+
+  @override
+  String get navSettingsTitle => 'Instellings';
+
+  @override
+  String get settingsChannel => 'Kanaal';
+
+  @override
+  String get clientFile => 'Kliënt-ID-lêer (Google, Desktop app)';
+
+  @override
+  String get clientFileHelp =>
+      'Laai dit by Google Cloud af; sien die stappe in die handleiding.';
+
+  @override
+  String get clientMissing => 'Geen kliënt-ID-lêer nie';
+
+  @override
+  String get notConnected => 'Nie gekoppel nie';
+
+  @override
+  String get connected => 'Gekoppel';
+
+  @override
+  String get connect => 'Koppel kanaal';
+
+  @override
+  String get disconnect => 'Ontkoppel';
+
+  @override
+  String get connectWaiting => 'Kies die kerk se rekening in die blaaier…';
+
+  @override
+  String get uploadPrivacy => 'Nuwe oplaaie is';
+
+  @override
+  String get privacyPrivate => 'Privaat';
+
+  @override
+  String get privacyUnlisted => 'Ongelys';
+
+  @override
+  String get privacyPublic => 'Publiek';
+
+  @override
+  String get playlistRules => 'Reëls';
+
+  @override
+  String get playlistRulesHelp =>
+      'Die eerste reël wat by \'n preek pas, kies sy snitlys. Sleep om die volgorde te verander.';
+
+  @override
+  String get ruleBook => 'Bybelboek uit die Skriflesing';
+
+  @override
+  String get ruleYear => 'Jaar (\"Preke 2026\")';
+
+  @override
+  String get playlistPreview => 'Voorskou';
+
+  @override
+  String sermonCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n preke',
+      one: '1 preek',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noPlaylist => 'Sonder snitlys';
+
+  @override
+  String get template => 'Beskrywingsjabloon';
+
+  @override
+  String get templatePreview => 'So lyk dit vir die nuutste preek';
+
+  @override
+  String templateHelp(
+    String tema,
+    String skriflesing,
+    String datum,
+    String beskrywing,
+  ) {
+    return '$tema, $skriflesing, $datum en $beskrywing word ingevul.';
   }
 }
