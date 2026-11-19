@@ -86,7 +86,11 @@ List<String> _ffmpegArgs() {
 }
 
 /// Downloads info.json and the af-orig json3 captions to `<root>/<id>/`; skips what already exists.
-Future<FetchedMeta> fetchMeta(String url, Directory root) async {
+Future<FetchedMeta> fetchMeta(
+  String url,
+  Directory root, {
+  Future<void>? cancel,
+}) async {
   final id = videoIdFromUrl(url);
   if (id == null) throw ArgumentError('Geen YouTube-skakel nie: $url');
   final dir = Directory(p.join(root.path, id))..createSync(recursive: true);
@@ -104,7 +108,7 @@ Future<FetchedMeta> fetchMeta(String url, Directory root) async {
       '-o',
       p.join(dir.path, '%(id)s'),
       'https://www.youtube.com/watch?v=$id',
-    ]);
+    ], cancel: cancel);
   }
   if (!meta.captions.existsSync()) {
     throw StateError('Geen af-orig-onderskrifte vir $id nie');
@@ -121,6 +125,7 @@ Future<FetchedMeta> fetchMeta(String url, Directory root) async {
 Future<File> downloadVideo(
   FetchedMeta meta, {
   void Function(double pct)? onProgress,
+  Future<void>? cancel,
 }) async {
   if (meta.video.existsSync()) {
     onProgress?.call(100);
@@ -143,6 +148,7 @@ Future<File> downloadVideo(
       final v = parseProgress(l);
       if (v != null) onProgress?.call(v);
     },
+    cancel: cancel,
   );
   return meta.video;
 }
