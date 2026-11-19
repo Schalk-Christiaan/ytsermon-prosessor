@@ -16,3 +16,9 @@ build/
 .idea/
 *.iml
 installer/Output/
+
+build/
+.dart_tool/
+out/
+*.png
+!assets/**/*.png
