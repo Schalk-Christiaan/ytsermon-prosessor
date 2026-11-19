@@ -55,21 +55,36 @@ Future<void> runTool(
   final path = findExecutable(exe) ?? (p.isAbsolute(exe) ? exe : null);
   if (path == null) throw StateError('$exe ontbreek');
   final proc = await Process.start(path, args, workingDirectory: cwd);
-  var cancelled = false;
+  var cancelled = false, finished = false;
   cancel?.then((_) {
+    if (finished) return;
     cancelled = true;
-    proc.kill();
+    _killTree(proc);
   });
   final err = StringBuffer();
-  proc.stderr.transform(utf8.decoder).listen(err.write);
+  final errDone = proc.stderr.transform(utf8.decoder).forEach(err.write);
   final done = proc.stdout
       .transform(utf8.decoder)
       .transform(const LineSplitter())
       .forEach((l) => onLine?.call(l));
   final code = await proc.exitCode;
-  await done;
+  finished = true;
+  await Future.wait([done, errDone]);
   if (cancelled) throw JobCancelled();
   if (code != 0) throw ProcessException(exe, args, err.toString(), code);
+}
+
+/// Kills [proc] and its children (yt-dlp starts ffmpeg): children first, or they are orphaned.
+void _killTree(Process proc) {
+  if (Platform.isWindows) {
+    Process.run('taskkill', ['/T', '/F', '/PID', '${proc.pid}']);
+  } else {
+    Process.run('pkill', [
+      '-TERM',
+      '-P',
+      '${proc.pid}',
+    ]).whenComplete(proc.kill);
+  }
 }
 
 /// Result of probing one external tool; [ok] false means [detail] says what is missing.

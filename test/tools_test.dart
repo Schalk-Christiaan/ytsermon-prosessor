@@ -45,4 +45,25 @@ void runToolTests() {
     await expectLater(f, throwsA(isA<JobCancelled>()));
     expect(sw.elapsed, lessThan(const Duration(seconds: 10)));
   }, skip: sh == null);
+
+  test('runTool: cancel also kills the process children', () async {
+    final c = Completer<void>();
+    // A unique duration so no other sleep in `ps` is mistaken for ours.
+    final f = runTool(sh!, ['-c', 'sleep 37 & wait'], cancel: c.future);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    c.complete();
+    await expectLater(f, throwsA(isA<JobCancelled>()));
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    final ps = await Process.run('pgrep', ['-f', 'sleep 37']);
+    expect(ps.stdout.toString().trim(), isEmpty);
+  }, skip: sh == null);
+
+  test('runTool: ProcessException carries all of stderr', () async {
+    await expectLater(
+      runTool(sh!, ['-c', 'head -c 100000 /dev/zero | tr "\\0" x >&2; exit 1']),
+      throwsA(
+        isA<ProcessException>().having((e) => e.message.length, 'len', 100000),
+      ),
+    );
+  }, skip: sh == null);
 }
