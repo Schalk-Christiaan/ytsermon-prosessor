@@ -327,6 +327,72 @@ abstract class L {
   /// **'Oorgeslaan'**
   String get stateOorgeslaan;
 
+  /// No description provided for @workNow.
+  ///
+  /// In af, this message translates to:
+  /// **'Besig'**
+  String get workNow;
+
+  /// No description provided for @workWaiting.
+  ///
+  /// In af, this message translates to:
+  /// **'Wag'**
+  String get workWaiting;
+
+  /// No description provided for @workDone.
+  ///
+  /// In af, this message translates to:
+  /// **'Klaar'**
+  String get workDone;
+
+  /// No description provided for @workFailed.
+  ///
+  /// In af, this message translates to:
+  /// **'Foute'**
+  String get workFailed;
+
+  /// No description provided for @workEmpty.
+  ///
+  /// In af, this message translates to:
+  /// **'Niks in die ry nie.'**
+  String get workEmpty;
+
+  /// No description provided for @play.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel'**
+  String get play;
+
+  /// No description provided for @technicalLog.
+  ///
+  /// In af, this message translates to:
+  /// **'Tegniese log'**
+  String get technicalLog;
+
+  /// No description provided for @taskPlan.
+  ///
+  /// In af, this message translates to:
+  /// **'Plan'**
+  String get taskPlan;
+
+  /// No description provided for @taskCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Sny'**
+  String get taskCut;
+
+  /// No description provided for @taskCancelled.
+  ///
+  /// In af, this message translates to:
+  /// **'Gekanselleer'**
+  String get taskCancelled;
+
+  /// No description provided for @percent.
+  ///
+  /// In af, this message translates to:
+  /// **'{pct}%'**
+  String percent(int pct);
+
   /// No description provided for @retry.
   ///
   /// In af, this message translates to:

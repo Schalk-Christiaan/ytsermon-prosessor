@@ -149,6 +149,41 @@ class LAf extends L {
   String get stateOorgeslaan => 'Oorgeslaan';
 
   @override
+  String get workNow => 'Besig';
+
+  @override
+  String get workWaiting => 'Wag';
+
+  @override
+  String get workDone => 'Klaar';
+
+  @override
+  String get workFailed => 'Foute';
+
+  @override
+  String get workEmpty => 'Niks in die ry nie.';
+
+  @override
+  String get play => 'Speel';
+
+  @override
+  String get technicalLog => 'Tegniese log';
+
+  @override
+  String get taskPlan => 'Plan';
+
+  @override
+  String get taskCut => 'Sny';
+
+  @override
+  String get taskCancelled => 'Gekanselleer';
+
+  @override
+  String percent(int pct) {
+    return '$pct%';
+  }
+
+  @override
   String get retry => 'Probeer weer';
 
   @override
