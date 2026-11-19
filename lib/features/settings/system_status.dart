@@ -1,7 +1,82 @@
+// @stelsel system_status
+//   soort: skerm
+//   wanneer: Instellings → Stelsel
+//   groep: features | Skerms
+//   skryf: —
+//   doel: wys yt-dlp/ffmpeg/ffprobe/Ollama met ikoon + woord (Gereed / Ontbreek)
+//   status: oop
 import 'package:flutter/material.dart';
 
-class SystemStatus extends StatelessWidget {
+import '../../app/theme.dart';
+import '../../core/tools.dart';
+import '../../l10n/app_localizations.dart';
+
+class SystemStatus extends StatefulWidget {
   const SystemStatus({super.key});
+
   @override
-  Widget build(BuildContext context) => const SizedBox.expand();
+  State<SystemStatus> createState() => _SystemStatusState();
+}
+
+class _SystemStatusState extends State<SystemStatus> {
+  late final Future<List<ToolStatus>> _f = probeAll();
+
+  String _text(L l, ToolStatus s) {
+    if (s.ok) return '${l.toolReady} · ${s.detail}';
+    if (s.detail == 'notRunning') return l.ollamaNotRunning;
+    if (s.detail.startsWith('model:')) {
+      return l.modelMissing(s.detail.substring(6));
+    }
+    return l.toolMissing(s.name);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final th = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l.settingsSystem, style: th.textTheme.headlineMedium),
+          const SizedBox(height: 16),
+          Expanded(
+            child: FutureBuilder<List<ToolStatus>>(
+              future: _f,
+              builder: (c, snap) => ListView(
+                children: [
+                  for (final s in snap.data ?? const <ToolStatus>[])
+                    SizedBox(
+                      height: 56,
+                      child: Row(
+                        children: [
+                          Icon(
+                            s.ok
+                                ? Icons.check_circle_rounded
+                                : Icons.error_rounded,
+                            color: s.ok
+                                ? th.extension<AppTokens>()!.success
+                                : th.colorScheme.error,
+                          ),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              s.name,
+                              style: th.textTheme.titleMedium,
+                            ),
+                          ),
+                          Expanded(child: Text(_text(l, s))),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
