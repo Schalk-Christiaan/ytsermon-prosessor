@@ -1,3 +1,10 @@
+// @stelsel paths
+//   soort: module
+//   wanneer: by laai en sny
+//   groep: core | Kern
+//   skryf: —
+//   doel: werkmap, gebundelde lettertipe en uitsetgids
+//   status: oop
 import 'dart:io';
 
 import 'package:path/path.dart' as p;

@@ -1,3 +1,10 @@
+// @stelsel models
+//   soort: module
+//   wanneer: oral waar 'n plan gebruik word
+//   groep: core | Kern
+//   skryf: —
+//   doel: Segment, TimeBlock, Short, SermonPlan met JSON
+//   status: oop
 enum SegmentKind { speech, music }
 
 /// One caption line (or music marker); times in seconds from video start.

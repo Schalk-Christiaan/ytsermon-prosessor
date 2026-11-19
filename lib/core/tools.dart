@@ -1,3 +1,10 @@
+// @stelsel tools
+//   soort: module
+//   wanneer: by oopmaak van Instellings en voor elke aflaai/KI-oproep
+//   groep: core | Kern
+//   skryf: —
+//   doel: vind yt-dlp/ffmpeg/ffprobe (PATH of langs die exe) en toets Ollama + qwen3:8b
+//   status: oop
 import 'dart:convert';
 import 'dart:io';
 

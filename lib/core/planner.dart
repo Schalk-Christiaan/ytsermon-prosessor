@@ -1,3 +1,10 @@
+// @stelsel planner
+//   soort: module
+//   wanneer: ná captions, een Ollama-oproep per preek
+//   groep: core | Kern
+//   skryf: werkmap/<id>/plan.json
+//   doel: vra qwen3:8b vir preekgrense, Shorts, titel en beskrywing; valideer en berg plan.json op
+//   status: oop
 import 'dart:convert';
 import 'dart:io';
 

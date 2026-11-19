@@ -1,3 +1,10 @@
+// @stelsel channel
+//   soort: module
+//   wanneer: as 'n preek-URL gelaai word
+//   groep: core | Kern
+//   skryf: werkmap/<id>/ (info.json, onderskrifte, video.mp4)
+//   doel: video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af
+//   status: oop
 import 'dart:convert';
 import 'dart:io';
 

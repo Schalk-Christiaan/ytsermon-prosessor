@@ -1,3 +1,10 @@
+// @stelsel captions
+//   soort: module
+//   wanneer: ná fetchMeta
+//   groep: core | Kern
+//   skryf: —
+//   doel: json3-onderskrifte → segmente, kompakte teks vir die KI, SRT en dienstydlyn (spraak/musiek)
+//   status: oop
 import 'dart:convert';
 
 import 'models.dart';

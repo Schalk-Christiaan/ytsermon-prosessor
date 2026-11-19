@@ -1,3 +1,10 @@
+// @stelsel cutter
+//   soort: module
+//   wanneer: by 'Keur goed en sny'
+//   groep: core | Kern
+//   skryf: out/
+//   doel: sny die preek (stroomkopie) en Shorts (9:16 met ingebrande onderskrif) met ffmpeg
+//   status: oop
 import 'dart:convert';
 import 'dart:io';
 

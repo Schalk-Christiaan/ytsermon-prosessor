@@ -7,6 +7,7 @@ Type: flutter · Platforms: linux (dev), windows (church PC; built on GitHub Act
 ## Opdragte
 ```
 flutter pub get · dart analyze · flutter test · dart format <veranderde lêers>
+flutter build linux --debug (bou; `flutter run` vereis cmake+ninja) · E2E=1 flutter test test/e2e_test.dart (volle vloei, internet + Ollama)
 ```
 Eksterne tools op PATH (dev): `yt-dlp`, `ffmpeg`, `ollama` met `qwen3:8b`. Windows-bou + installeerder: `.github/workflows/windows.yml`.
 
