@@ -90,6 +90,7 @@ Future<FetchedMeta> fetchMeta(
   String url,
   Directory root, {
   Future<void>? cancel,
+  void Function(String line)? log,
 }) async {
   final id = videoIdFromUrl(url);
   if (id == null) throw ArgumentError('Geen YouTube-skakel nie: $url');
@@ -97,18 +98,23 @@ Future<FetchedMeta> fetchMeta(
   final infoFile = File(p.join(dir.path, '$id.info.json'));
   final meta = FetchedMeta(id, dir, {});
   if (!infoFile.existsSync() || !meta.captions.existsSync()) {
-    await runTool('yt-dlp', [
-      '--write-info-json',
-      '--write-auto-subs',
-      '--sub-langs',
-      'af-orig',
-      '--sub-format',
-      'json3',
-      '--skip-download',
-      '-o',
-      p.join(dir.path, '%(id)s'),
-      'https://www.youtube.com/watch?v=$id',
-    ], cancel: cancel);
+    await runTool(
+      'yt-dlp',
+      [
+        '--write-info-json',
+        '--write-auto-subs',
+        '--sub-langs',
+        'af-orig',
+        '--sub-format',
+        'json3',
+        '--skip-download',
+        '-o',
+        p.join(dir.path, '%(id)s'),
+        'https://www.youtube.com/watch?v=$id',
+      ],
+      cancel: cancel,
+      onLine: log,
+    );
   }
   if (!meta.captions.existsSync()) {
     throw StateError('Geen af-orig-onderskrifte vir $id nie');
@@ -126,6 +132,7 @@ Future<File> downloadVideo(
   FetchedMeta meta, {
   void Function(double pct)? onProgress,
   Future<void>? cancel,
+  void Function(String line)? log,
 }) async {
   if (meta.video.existsSync()) {
     onProgress?.call(100);
@@ -145,6 +152,7 @@ Future<File> downloadVideo(
       'https://www.youtube.com/watch?v=${meta.id}',
     ],
     onLine: (l) {
+      log?.call(l);
       final v = parseProgress(l);
       if (v != null) onProgress?.call(v);
     },

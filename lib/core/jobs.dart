@@ -46,6 +46,12 @@ class Job {
   /// Last 200 lines of technical detail.
   final List<String> log;
 
+  /// Appends [lines], keeping only the last 200.
+  void addLog(Iterable<String> lines) {
+    log.addAll(lines);
+    if (log.length > 200) log.removeRange(0, log.length - 200);
+  }
+
   Map<String, dynamic> toJson() => {
     'sermon': sermon,
     'kind': kind.name,
@@ -73,7 +79,7 @@ class JobCtx {
   final JobQueue _queue;
   void phase(JobPhase p) => _queue.phase.value = p;
   void progress(double? v) => _queue.progress.value = v;
-  void log(String line) => _queue.current?.log.add(line);
+  void log(String line) => _queue.current?.addLog([line]);
 }
 
 typedef JobRun = Future<void> Function(JobCtx ctx);
@@ -150,21 +156,29 @@ class JobQueue extends ChangeNotifier {
   }
 
   /// Runs waiting jobs one after another; does nothing if already running.
-  void start() => _loop ??= _run().whenComplete(() => _loop = null);
+  void start() => _loop ??= _run();
 
   Future<void> _run() async {
+    // Let the caller store this future in _loop first, and enqueue more jobs.
+    await null;
     while (true) {
       final i = jobs.indexWhere((j) => j.status == JobStatus.wag);
-      if (i < 0) return;
+      if (i < 0) {
+        _loop = null; // in the same step as the check, so no job is stranded
+        return;
+      }
       final job = jobs[i];
-      current = job;
-      job.status = JobStatus.besig;
-      progress.value = null;
-      phase.value = null;
-      _persist();
-      final cancel = _cancel = Completer<void>();
-      final s = store.byId(job.sermon)!;
+      Sermon? s;
       try {
+        current = job;
+        job.status = JobStatus.besig;
+        progress.value = null;
+        phase.value = null;
+        _persist();
+        final cancel = _cancel = Completer<void>();
+        s = store.byId(job.sermon);
+        if (s == null)
+          throw StateError('Preek ${job.sermon} bestaan nie meer nie.');
         await (job.kind == JobKind.plan ? _plan : _cut)(
           JobCtx(job.sermon, cancel.future, this),
         );
@@ -178,15 +192,20 @@ class JobQueue extends ChangeNotifier {
       } on Object catch (e) {
         job.status = JobStatus.fout;
         job.error = friendlyError(e);
-        job.log.addAll('$e'.split('\n'));
-        if (job.log.length > 200) job.log.removeRange(0, job.log.length - 200);
-        s.state = SermonState.fout;
-        s.error = job.error;
+        job.addLog('$e'.split('\n'));
+        s
+          ?..state = SermonState.fout
+          ..error = job.error;
       }
       current = null;
       _cancel = null;
-      store.save(s);
-      _persist();
+      try {
+        if (s != null) store.save(s);
+        _persist();
+      } on Object catch (e) {
+        // A full disk must not kill the loop; the job keeps its status in memory.
+        job.addLog(['$e']);
+      }
     }
   }
 
@@ -216,7 +235,7 @@ class JobQueue extends ChangeNotifier {
 /// Fetches meta and captions, asks Ollama for a plan; fills the sermon's date.
 JobRun planJob(SermonStore store) => (c) async {
   c.phase(JobPhase.meta);
-  final m = await fetchMeta(c.id, store.root, cancel: c.cancel);
+  final m = await fetchMeta(c.id, store.root, cancel: c.cancel, log: c.log);
   final s = store.byId(c.id)!
     ..date = m.info.uploadDate
     ..scripture = scriptureFrom(m.info.descriptionText)
@@ -239,13 +258,14 @@ JobRun planJob(SermonStore store) => (c) async {
 /// Downloads the video and cuts the sermon and its Shorts from the saved plan.
 JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   c.phase(JobPhase.meta);
-  final m = await fetchMeta(c.id, store.root, cancel: c.cancel);
+  final m = await fetchMeta(c.id, store.root, cancel: c.cancel, log: c.log);
   c.phase(JobPhase.download);
   c.progress(0);
   final video = await downloadVideo(
     m,
     onProgress: (v) => c.progress(v / 100),
     cancel: c.cancel,
+    log: c.log,
   );
   final plan = SermonPlan.fromJson(
     jsonDecode(File(p.join(m.dir.path, kPlanFile)).readAsStringSync())
@@ -256,7 +276,12 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   final date = m.info.uploadDate;
   c.phase(JobPhase.cut);
   c.progress(null);
-  final files = [await cutSermon(video, plan, date, dest, cancel: c.cancel)];
+  final files = [
+    await cutSermon(video, plan, date, dest, cancel: c.cancel, log: c.log),
+  ];
+  void saveOutputs() =>
+      store.save(store.byId(c.id)!..outputs = [for (final f in files) f.path]);
+  saveOutputs();
   for (var i = 0; i < plan.shorts.length; i++) {
     c.progress(i / plan.shorts.length);
     files.add(
@@ -270,8 +295,9 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
         dest,
         onProgress: (f) => c.progress((i + f) / plan.shorts.length),
         cancel: c.cancel,
+        log: c.log,
       ),
     );
+    saveOutputs();
   }
-  store.save(store.byId(c.id)!..outputs = [for (final f in files) f.path]);
 };

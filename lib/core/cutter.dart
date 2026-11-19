@@ -82,12 +82,14 @@ Future<void> _ffmpeg(
   double? duration,
   void Function(double frac)? onProgress,
   Future<void>? cancel,
+  void Function(String line)? log,
 }) => runTool(
   'ffmpeg',
   args,
   cwd: cwd,
   cancel: cancel,
   onLine: (l) {
+    log?.call(l);
     final t = parseFfmpegProgress(l);
     if (t != null && duration != null && duration > 0) {
       onProgress?.call((t / duration).clamp(0, 1));
@@ -102,12 +104,14 @@ Future<File> cutSermon(
   String date,
   Directory outDir, {
   Future<void>? cancel,
+  void Function(String line)? log,
 }) async {
   outDir.createSync(recursive: true);
   final out = p.join(outDir.path, sermonFileName(date, plan.title));
   await _ffmpeg(
     sermonArgs(video.path, plan.sermonStart, plan.sermonEnd, out),
     cancel: cancel,
+    log: log,
   );
   return File(out);
 }
@@ -124,6 +128,7 @@ Future<File> cutShort(
   Directory outDir, {
   void Function(double frac)? onProgress,
   Future<void>? cancel,
+  void Function(String line)? log,
 }) async {
   outDir.createSync(recursive: true);
   final work = video.parent;
@@ -142,6 +147,7 @@ Future<File> cutShort(
     duration: s.end - s.start,
     onProgress: onProgress,
     cancel: cancel,
+    log: log,
   );
   return File(out);
 }

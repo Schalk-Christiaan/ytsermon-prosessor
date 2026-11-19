@@ -114,4 +114,39 @@ void main() {
     expect(q.jobs[1].status, JobStatus.klaar);
     expect(store.byId('aaaaaaaaaaa')!.state, SermonState.nuut);
   });
+
+  test(
+    'a failing job keeps its logged lines plus the error, max 200',
+    () async {
+      final q = queue(
+        plan: (c) async {
+          for (var i = 0; i < 300; i++) {
+            c.log('reël $i');
+          }
+          throw StateError('stuk');
+        },
+      );
+      q.enqueue('aaaaaaaaaaa', JobKind.plan);
+      await q.idle;
+      final j = q.jobs.single;
+      expect(j.status, JobStatus.fout);
+      expect(j.log.length, 200);
+      expect(j.log, contains('reël 299'));
+      expect(j.log.last, contains('stuk'));
+    },
+  );
+
+  test(
+    'a job for a missing sermon fails and the next job still runs',
+    () async {
+      final ran = <String>[];
+      final q = queue(plan: (c) async => ran.add(c.id));
+      q.enqueue('zzzzzzzzzzz', JobKind.plan);
+      q.enqueue('bbbbbbbbbbb', JobKind.plan);
+      await q.idle;
+      expect(q.jobs.first.status, JobStatus.fout);
+      expect(ran, ['bbbbbbbbbbb']);
+      expect(q.jobs.last.status, JobStatus.klaar);
+    },
+  );
 }
