@@ -190,17 +190,22 @@ class Planner {
     required String compactText,
     required double duration,
     required String originalDescription,
+    Future<void>? cancel,
   }) async {
     final f = File(p.join(dir.path, kPlanFile));
     if (f.existsSync())
       return SermonPlan.fromJson(
         jsonDecode(f.readAsStringSync()) as Map<String, dynamic>,
       );
+    // Ollama's HTTP call cannot be killed: when [cancel] fires its answer is dropped.
+    var cancelled = false;
+    cancel?.then((_) => cancelled = true);
     final plan = await this.plan(
       compactText: compactText,
       duration: duration,
       originalDescription: originalDescription,
     );
+    if (cancelled) throw JobCancelled();
     savePlan(dir, plan);
     return plan;
   }

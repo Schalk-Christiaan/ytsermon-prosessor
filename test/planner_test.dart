@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/planner.dart';
+import 'package:preekverwerker/core/tools.dart';
 
 SermonPlan okPlan() => SermonPlan(
   sermonStart: 23 * 60,
@@ -161,6 +163,41 @@ void main() {
         originalDescription: '',
       );
       expect(p.title, 'Uit die oorvloed van die hart');
+      dir.deleteSync(recursive: true);
+    },
+  );
+
+  test(
+    'loadOrPlan: a cancel before Ollama answers writes no plan.json',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('cancelplan');
+      final cancel = Completer<void>();
+      final planner = Planner(
+        chat: (_) async {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          return {
+            'message': {
+              'content': jsonEncode({
+                'sermonStart': '00:10',
+                'sermonEnd': '30:00',
+                'title': 'T',
+                'description': 'D',
+                'shorts': <dynamic>[],
+              }),
+            },
+          };
+        },
+      );
+      final f = planner.loadOrPlan(
+        dir,
+        compactText: 'x',
+        duration: duration,
+        originalDescription: '',
+        cancel: cancel.future,
+      );
+      cancel.complete();
+      await expectLater(f, throwsA(isA<JobCancelled>()));
+      expect(File('${dir.path}/$kPlanFile').existsSync(), isFalse);
       dir.deleteSync(recursive: true);
     },
   );

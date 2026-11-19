@@ -250,6 +250,7 @@ JobRun planJob(SermonStore store) => (c) async {
       compactText: compact(segs),
       duration: s.duration,
       originalDescription: m.info.descriptionText,
+      cancel: c.cancel,
     ),
     c.cancel.then<SermonPlan>((_) => throw JobCancelled()),
   ]);
