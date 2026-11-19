@@ -36,7 +36,19 @@ class ToolStatus {
 
   /// Version string when ok; machine-readable reason otherwise (`missing`, `notRunning`, `model:<name>`).
   final String detail;
+
+  bool get notRunning => detail == 'notRunning';
+
+  /// The model that is missing from Ollama, or null.
+  String? get missingModel =>
+      detail.startsWith('model:') ? detail.substring(6) : null;
 }
+
+/// Opens [d] in the system file manager.
+Future<void> openFolder(Directory d) => Process.run(
+  Platform.isWindows ? 'explorer' : (Platform.isMacOS ? 'open' : 'xdg-open'),
+  [d.path],
+);
 
 Future<ToolStatus> _probe(
   String name,

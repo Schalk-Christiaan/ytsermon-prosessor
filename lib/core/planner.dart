@@ -6,6 +6,8 @@ import 'package:path/path.dart' as p;
 import 'models.dart';
 import 'tools.dart';
 
+const kPlanFile = 'plan.json';
+
 class PlanException implements Exception {
   PlanException(this.errors, {this.plan});
   final List<String> errors;
@@ -177,7 +179,7 @@ class Planner {
     required double duration,
     required String originalDescription,
   }) async {
-    final f = File(p.join(dir.path, 'plan.json'));
+    final f = File(p.join(dir.path, kPlanFile));
     if (f.existsSync())
       return SermonPlan.fromJson(
         jsonDecode(f.readAsStringSync()) as Map<String, dynamic>,

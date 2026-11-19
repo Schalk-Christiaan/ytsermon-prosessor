@@ -117,3 +117,16 @@ Future<File> downloadVideo(
   );
   return meta.video;
 }
+
+/// Facts from yt-dlp's info.json that the app needs.
+extension InfoFields on Map<String, dynamic> {
+  double get durationSeconds => (this['duration'] as num).toDouble();
+  String get titleText => '${this['title'] ?? ''}';
+  String get descriptionText => '${this['description'] ?? ''}';
+
+  /// Upload date as `JJJJ-MM-DD`.
+  String get uploadDate {
+    final u = '${this['upload_date'] ?? '00000000'}';
+    return '${u.substring(0, 4)}-${u.substring(4, 6)}-${u.substring(6, 8)}';
+  }
+}

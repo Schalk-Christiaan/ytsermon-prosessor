@@ -22,11 +22,9 @@ class _SystemStatusState extends State<SystemStatus> {
   late final Future<List<ToolStatus>> _f = probeAll();
 
   String _text(L l, ToolStatus s) {
-    if (s.ok) return '${l.toolReady} · ${s.detail}';
-    if (s.detail == 'notRunning') return l.ollamaNotRunning;
-    if (s.detail.startsWith('model:')) {
-      return l.modelMissing(s.detail.substring(6));
-    }
+    if (s.ok) return l.toolReadyVersion(s.detail);
+    if (s.notRunning) return l.ollamaNotRunning;
+    if (s.missingModel != null) return l.modelMissing(s.missingModel!);
     return l.toolMissing(s.name);
   }
 

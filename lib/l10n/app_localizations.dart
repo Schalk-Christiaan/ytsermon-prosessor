@@ -147,6 +147,12 @@ abstract class L {
   /// **'Gereed'**
   String get toolReady;
 
+  /// No description provided for @toolReadyVersion.
+  ///
+  /// In af, this message translates to:
+  /// **'Gereed · {version}'**
+  String toolReadyVersion(String version);
+
   /// No description provided for @toolMissing.
   ///
   /// In af, this message translates to:
@@ -356,6 +362,30 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Laai video af: {pct}%'**
   String downloadProgress(int pct);
+
+  /// No description provided for @shortRange.
+  ///
+  /// In af, this message translates to:
+  /// **'{start} – {end}'**
+  String shortRange(String start, String end);
+
+  /// No description provided for @newShortTitle.
+  ///
+  /// In af, this message translates to:
+  /// **'Nuwe Short'**
+  String get newShortTitle;
+
+  /// No description provided for @stageCutPct.
+  ///
+  /// In af, this message translates to:
+  /// **'Sny… {pct}%'**
+  String stageCutPct(int pct);
+
+  /// No description provided for @shortPreview.
+  ///
+  /// In af, this message translates to:
+  /// **'Short {n}'**
+  String shortPreview(int n);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

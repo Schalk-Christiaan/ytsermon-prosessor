@@ -37,6 +37,11 @@ class LAf extends L {
   String get toolReady => 'Gereed';
 
   @override
+  String toolReadyVersion(String version) {
+    return 'Gereed · $version';
+  }
+
+  @override
   String toolMissing(String name) {
     return 'Ontbreek: installeer $name';
   }
@@ -157,5 +162,23 @@ class LAf extends L {
   @override
   String downloadProgress(int pct) {
     return 'Laai video af: $pct%';
+  }
+
+  @override
+  String shortRange(String start, String end) {
+    return '$start – $end';
+  }
+
+  @override
+  String get newShortTitle => 'Nuwe Short';
+
+  @override
+  String stageCutPct(int pct) {
+    return 'Sny… $pct%';
+  }
+
+  @override
+  String shortPreview(int n) {
+    return 'Short $n';
   }
 }

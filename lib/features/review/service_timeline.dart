@@ -1,0 +1,411 @@
+// @stelsel service_timeline
+//   soort: module
+//   wanneer: Hersien-skerm
+//   groep: features | Skerms
+//   skryf: —
+//   doel: dienstydlyn: spraak/musiek, sleepbare preek-hakie, Shorts, speelposisie
+//   status: oop
+import 'dart:ui' show lerpDouble;
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../../app/theme.dart';
+import '../../core/captions.dart';
+import '../../core/models.dart';
+import '../../l10n/app_localizations.dart';
+
+const _kHandleW = 20.0;
+const _kBarH = 56.0;
+
+class ServiceTimeline extends StatefulWidget {
+  const ServiceTimeline({
+    super.key,
+    required this.duration,
+    required this.blocks,
+    required this.sermonStart,
+    required this.sermonEnd,
+    required this.shorts,
+    required this.position,
+    required this.animateKey,
+    required this.onSeek,
+    required this.onSermonChanged,
+    required this.onSermonCommit,
+  });
+
+  final double duration;
+  final List<TimeBlock> blocks;
+  final double sermonStart;
+  final double sermonEnd;
+  final List<Short> shorts;
+  final ValueListenable<double> position;
+
+  /// Changes when a new plan arrives; the handles then glide from the full width to the sermon.
+  final int animateKey;
+  final ValueChanged<double> onSeek;
+  final void Function(double start, double end) onSermonChanged;
+  final VoidCallback onSermonCommit;
+
+  @override
+  State<ServiceTimeline> createState() => _ServiceTimelineState();
+}
+
+class _ServiceTimelineState extends State<ServiceTimeline>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _glide = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 400),
+    value: 1,
+  );
+  late final Animation<double> _t = CurvedAnimation(
+    parent: _glide,
+    curve: Curves.easeOutCubic,
+  );
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_started) {
+      _started = true;
+      _run();
+    }
+  }
+
+  @override
+  void didUpdateWidget(ServiceTimeline old) {
+    super.didUpdateWidget(old);
+    if (old.animateKey != widget.animateKey) _run();
+  }
+
+  void _run() {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _glide.value = 1;
+    } else {
+      _glide.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _glide.dispose();
+    super.dispose();
+  }
+
+  double _x(double t, double w) => t / widget.duration * w;
+
+  void _drag(bool isStart, double dx, double w) {
+    final dt = dx / w * widget.duration;
+    var s = widget.sermonStart, e = widget.sermonEnd;
+    if (isStart) {
+      s = (s + dt).clamp(0, e - 1);
+    } else {
+      e = (e + dt).clamp(s + 1, widget.duration);
+    }
+    widget.onSermonChanged(s, e);
+    widget.onSeek(isStart ? s : e);
+  }
+
+  void _nudge(bool isStart, double secs) {
+    final s = isStart
+        ? (widget.sermonStart + secs).clamp(0.0, widget.sermonEnd - 1)
+        : widget.sermonStart;
+    final e = isStart
+        ? widget.sermonEnd
+        : (widget.sermonEnd + secs).clamp(
+            widget.sermonStart + 1,
+            widget.duration,
+          );
+    widget.onSermonChanged(s, e);
+    widget.onSeek(isStart ? s : e);
+    widget.onSermonCommit();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final th = Theme.of(context);
+    return LayoutBuilder(
+      builder: (context, c) {
+        final w = c.maxWidth;
+        return AnimatedBuilder(
+          animation: _t,
+          builder: (context, _) {
+            final s = lerpDouble(0, widget.sermonStart, _t.value)!;
+            final e = lerpDouble(widget.duration, widget.sermonEnd, _t.value)!;
+            Widget handle(bool isStart) {
+              final time = formatTime(isStart ? s : e);
+              final label = isStart
+                  ? l.sermonHandleStart(time)
+                  : l.sermonHandleEnd(time);
+              return Positioned(
+                left: _x(isStart ? s : e, w) - _kHandleW / 2,
+                top: 0,
+                width: _kHandleW,
+                height: _kBarH,
+                child: _Handle(
+                  label: label,
+                  onDrag: (dx) => _drag(isStart, dx, w),
+                  onEnd: widget.onSermonCommit,
+                  onNudge: (secs) => _nudge(isStart, secs),
+                ),
+              );
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: _kBarH,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned.fill(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTapUp: (d) => widget.onSeek(
+                            d.localPosition.dx / w * widget.duration,
+                          ),
+                          child: CustomPaint(
+                            painter: _TimelinePainter(
+                              duration: widget.duration,
+                              blocks: widget.blocks,
+                              shorts: widget.shorts,
+                              start: s,
+                              end: e,
+                              position: widget.position,
+                              speech: th.colorScheme.secondary,
+                              music: th.colorScheme.tertiary,
+                              sermon: th.colorScheme.primary,
+                              wood: th.extension<AppTokens>()!.wood,
+                              ink: th.colorScheme.onSurface,
+                              surface: th.colorScheme.surface,
+                              musicLabel: l.music,
+                              labelStyle: th.textTheme.labelSmall!.copyWith(
+                                color: th.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      handle(true),
+                      handle(false),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  height: 20,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      _label(formatTime(s), _x(s, w), w, th),
+                      _label(formatTime(e), _x(e, w), w, th),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _label(String text, double x, double w, ThemeData th) {
+    const half = 24.0;
+    return Positioned(
+      left: (x - half).clamp(0, w - 2 * half),
+      width: 2 * half,
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: th.textTheme.labelMedium!.copyWith(
+          color: th.colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _Handle extends StatefulWidget {
+  const _Handle({
+    required this.label,
+    required this.onDrag,
+    required this.onEnd,
+    required this.onNudge,
+  });
+  final String label;
+  final ValueChanged<double> onDrag;
+  final VoidCallback onEnd;
+  final ValueChanged<double> onNudge;
+
+  @override
+  State<_Handle> createState() => _HandleState();
+}
+
+class _HandleState extends State<_Handle> {
+  bool _focus = false;
+  final _node = FocusNode();
+
+  @override
+  void dispose() {
+    _node.dispose();
+    super.dispose();
+  }
+
+  KeyEventResult _key(FocusNode n, KeyEvent e) {
+    if (e is KeyUpEvent) return KeyEventResult.ignored;
+    final step = HardwareKeyboard.instance.isShiftPressed ? 1.0 : 5.0;
+    if (e.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      widget.onNudge(-step);
+      return KeyEventResult.handled;
+    }
+    if (e.logicalKey == LogicalKeyboardKey.arrowRight) {
+      widget.onNudge(step);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Semantics(
+      label: widget.label,
+      slider: true,
+      focusable: true,
+      child: Focus(
+        focusNode: _node,
+        onKeyEvent: _key,
+        onFocusChange: (f) => setState(() => _focus = f),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.resizeLeftRight,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (_) => _node.requestFocus(),
+            onHorizontalDragUpdate: (d) => widget.onDrag(d.delta.dx),
+            onHorizontalDragEnd: (_) => widget.onEnd(),
+            child: Center(
+              child: Container(
+                width: 8,
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  borderRadius: BorderRadius.circular(4),
+                  border: _focus
+                      ? Border.all(color: cs.onSurface, width: 2)
+                      : null,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TimelinePainter extends CustomPainter {
+  _TimelinePainter({
+    required this.duration,
+    required this.blocks,
+    required this.shorts,
+    required this.start,
+    required this.end,
+    required this.position,
+    required this.speech,
+    required this.music,
+    required this.sermon,
+    required this.wood,
+    required this.ink,
+    required this.surface,
+    required this.musicLabel,
+    required this.labelStyle,
+  }) : super(repaint: position);
+
+  final double duration, start, end;
+  final List<TimeBlock> blocks;
+  final List<Short> shorts;
+  final ValueListenable<double> position;
+  final Color speech, music, sermon, wood, ink, surface;
+  final String musicLabel;
+  final TextStyle labelStyle;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double x(double t) => t / duration * size.width;
+    final track = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 8, size.width, size.height - 16),
+      const Radius.circular(4),
+    );
+    canvas.save();
+    canvas.clipRRect(track);
+    canvas.drawRect(
+      track.outerRect,
+      Paint()..color = ink.withValues(alpha: 0.06),
+    );
+    for (final b in blocks) {
+      final r = Rect.fromLTRB(
+        x(b.start),
+        8,
+        x(b.end).clamp(x(b.start) + 1, size.width),
+        size.height - 8,
+      );
+      canvas.drawRect(
+        r,
+        Paint()
+          ..color = (b.kind == SegmentKind.music ? music : speech).withValues(
+            alpha: b.kind == SegmentKind.music ? 0.32 : 0.45,
+          ),
+      );
+      if (b.kind == SegmentKind.music && r.width > 44) {
+        final tp = TextPainter(
+          text: TextSpan(text: musicLabel, style: labelStyle),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: r.width);
+        tp.paint(canvas, Offset(r.left + 4, r.center.dy - tp.height / 2));
+      }
+    }
+    canvas.restore();
+    final sr = Rect.fromLTRB(x(start), 4, x(end), size.height - 4);
+    canvas.drawRect(sr, Paint()..color = sermon.withValues(alpha: 0.14));
+    final bar = Paint()..color = sermon;
+    canvas.drawRect(Rect.fromLTRB(sr.left, sr.top, sr.right, sr.top + 3), bar);
+    canvas.drawRect(
+      Rect.fromLTRB(sr.left, sr.bottom - 3, sr.right, sr.bottom),
+      bar,
+    );
+    for (final s in shorts) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTRB(
+            x(s.start),
+            size.height - 22,
+            x(s.end).clamp(x(s.start) + 3, size.width),
+            size.height - 10,
+          ),
+          const Radius.circular(2),
+        ),
+        Paint()..color = wood,
+      );
+    }
+    final px = x(position.value.clamp(0, duration));
+    canvas.drawRect(
+      Rect.fromLTWH(px - 1, 0, 2, size.height),
+      Paint()..color = ink,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_TimelinePainter o) =>
+      o.start != start ||
+      o.end != end ||
+      o.blocks != blocks ||
+      o.shorts.length != shorts.length ||
+      o.sermon != sermon ||
+      o.ink != ink ||
+      o.duration != duration;
+}

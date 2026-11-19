@@ -9,6 +9,8 @@
   "comingPhase2": "Kom in fase 2",
   "settingsSystem": "Stelsel",
   "toolReady": "Gereed",
+  "toolReadyVersion": "Gereed · {version}",
+  "@toolReadyVersion": {"placeholders": {"version": {"type": "String"}}},
   "toolMissing": "Ontbreek: installeer {name}",
   "@toolMissing": {"placeholders": {"name": {"type": "String"}}},
   "modelMissing": "Model {model} ontbreek: hardloop ollama pull {model}",
@@ -52,5 +54,12 @@
   "emptyReview": "Plak 'n skakel om 'n preek te hersien.",
   "skipped": "Oorgeslaan",
   "downloadProgress": "Laai video af: {pct}%",
-  "@downloadProgress": {"placeholders": {"pct": {"type": "int"}}}
+  "@downloadProgress": {"placeholders": {"pct": {"type": "int"}}},
+  "shortRange": "{start} – {end}",
+  "@shortRange": {"placeholders": {"start": {"type": "String"}, "end": {"type": "String"}}},
+  "newShortTitle": "Nuwe Short",
+  "stageCutPct": "Sny… {pct}%",
+  "@stageCutPct": {"placeholders": {"pct": {"type": "int"}}},
+  "shortPreview": "Short {n}",
+  "@shortPreview": {"placeholders": {"n": {"type": "int"}}}
 }

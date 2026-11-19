@@ -38,7 +38,8 @@ List<Segment> parseJson3(String raw) {
   ];
 }
 
-String _mmss(double s) {
+/// `mm:ss` (minutes may exceed 59), the format of the captions and the timeline labels.
+String formatTime(double s) {
   final t = s.floor();
   return '${(t ~/ 60).toString().padLeft(2, '0')}:${(t % 60).toString().padLeft(2, '0')}';
 }
@@ -53,7 +54,7 @@ String compact(List<Segment> segs, {double window = 30}) {
     final g = s.start ~/ window;
     if (g != group) {
       if (group != null) out.write('\n');
-      out.write('[${_mmss(s.start)}]');
+      out.write('[${formatTime(s.start)}]');
       group = g;
       prevMusic = false;
     }
