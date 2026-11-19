@@ -78,8 +78,9 @@ Future<FetchedMeta> fetchMeta(String url, Directory root) async {
       'https://www.youtube.com/watch?v=$id',
     ]);
   }
-  if (!meta.captions.existsSync())
+  if (!meta.captions.existsSync()) {
     throw StateError('Geen af-orig-onderskrifte vir $id nie');
+  }
   return FetchedMeta(
     id,
     dir,
