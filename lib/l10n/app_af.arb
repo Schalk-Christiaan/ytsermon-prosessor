@@ -384,5 +384,7 @@
   "editorKeys": "I/O: begin/einde by speelkop; ←/→: hakie 1 s, Shift 0,1 s",
   "undo": "Ontdoen (Ctrl+Z)",
   "redo": "Herdoen (Ctrl+Shift+Z)",
-  "noShorts": "Nog geen Shorts nie. Speel na 'n sterk stuk van die preek en kies \"Voeg Short by\"."
+  "noShorts": "Nog geen Shorts nie. Speel na 'n sterk stuk van die preek en kies \"Voeg Short by\".",
+  "processLatest": "Verwerk nuutste diens",
+  "filterNotUploaded": "Nie opgelaai nie"
 }

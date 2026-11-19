@@ -444,6 +444,30 @@ void main() {
     await t.pumpAndSettle();
   });
 
+  testWidgets('preke: "Verwerk nuutste diens" plans the newest and opens it', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final (st, q) = seeded();
+    final opened = <String>[];
+    await t.pumpWidget(
+      _app(Brightness.light, preke(st, q, onOpen: opened.add)),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.text('Verwerk nuutste diens'));
+    await t.pumpAndSettle();
+    final newest = st.sorted.first.id;
+    expect(q.jobs.single.sermon, newest);
+    expect(opened, [newest]);
+    st.byId('id000000003')!.state = SermonState.opgelaai;
+    await t.tap(find.widgetWithText(FilterChip, 'Nie opgelaai nie'));
+    await t.pumpAndSettle();
+    expect(find.text('Preek 3'), findsNothing);
+    expect(find.text('Preek 4'), findsOneWidget);
+  });
+
   testWidgets('preke: new services strip, empty and error states', (t) async {
     await _fonts();
     t.view.physicalSize = const Size(1100, 720);
@@ -483,13 +507,21 @@ void main() {
   });
 
   for (final b in Brightness.values) {
-    for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
+    for (final (w, h) in [
+      (1100.0, 720.0),
+      (1920.0, 1080.0),
+      if (b == Brightness.light) (750.0, 720.0),
+    ]) {
       testWidgets('preke skermkiekie ${b.name} ${w.toInt()}', (t) async {
         await _fonts();
         t.view.physicalSize = Size(w, h);
         t.view.devicePixelRatio = 1;
         final key = GlobalKey();
         final (st, q) = seeded();
+        st.byId('id000000000')!
+          ..title =
+              'Die genade van God wat ons dra deur elke seisoen van die lewe'
+          ..scripture = '2 Korinthiërs 12:1-10';
         await t.pumpWidget(
           _app(b, RepaintBoundary(key: key, child: preke(st, q))),
         );

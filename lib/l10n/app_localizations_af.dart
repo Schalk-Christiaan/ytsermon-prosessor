@@ -562,4 +562,10 @@ class LAf extends L {
   @override
   String get noShorts =>
       'Nog geen Shorts nie. Speel na \'n sterk stuk van die preek en kies \"Voeg Short by\".';
+
+  @override
+  String get processLatest => 'Verwerk nuutste diens';
+
+  @override
+  String get filterNotUploaded => 'Nie opgelaai nie';
 }

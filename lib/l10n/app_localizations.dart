@@ -1039,6 +1039,18 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Nog geen Shorts nie. Speel na \'n sterk stuk van die preek en kies \"Voeg Short by\".'**
   String get noShorts;
+
+  /// No description provided for @processLatest.
+  ///
+  /// In af, this message translates to:
+  /// **'Verwerk nuutste diens'**
+  String get processLatest;
+
+  /// No description provided for @filterNotUploaded.
+  ///
+  /// In af, this message translates to:
+  /// **'Nie opgelaai nie'**
+  String get filterNotUploaded;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

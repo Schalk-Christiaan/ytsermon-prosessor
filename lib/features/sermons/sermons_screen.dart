@@ -3,7 +3,7 @@
 //   wanneer: Preke (rail, tuis)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: die hele kanaal as lys met toestand; filter, soek, "Verwerk volgende" → werkry
+//   doel: die hele kanaal as lys met toestand (titel bo, Skriflesing onder); filter (ook "Nie opgelaai nie"), soek; "Verwerk nuutste diens" → plan → Hersien; "Verwerk volgende" → werkry
 //   status: oop
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -59,6 +59,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
   final _filter = <SermonState>{};
+  bool _notUploaded = false;
   final _selected = <String>{};
   bool _loading = false;
   String? _error;
@@ -114,6 +115,18 @@ class _SermonsScreenState extends State<SermonsScreen> {
     setState(_selected.clear);
   }
 
+  /// The usual Monday: refresh the list, plan the newest service if it is new, open it in Hersien.
+  Future<void> _processLatest() async {
+    await _refresh();
+    final all = widget.store.sorted;
+    if (all.isEmpty) return;
+    final s = all.first;
+    if (s.state == SermonState.nuut && !widget.jobs.hasPending(s.id)) {
+      widget.jobs.enqueue(s.id, JobKind.plan);
+    }
+    widget.onOpen(s.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
@@ -137,6 +150,9 @@ class _SermonsScreenState extends State<SermonsScreen> {
               final rows = [
                 for (final s in all)
                   if ((_filter.isEmpty || _filter.contains(s.state)) &&
+                      (!_notUploaded ||
+                          (s.state != SermonState.opgelaai &&
+                              s.state != SermonState.oorgeslaan)) &&
                       (q.isEmpty ||
                           '${s.title} ${s.scripture ?? ''} ${s.date ?? ''}'
                               .toLowerCase()
@@ -147,7 +163,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _header(l, th),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   _filters(l),
                   if (_fresh > 0)
                     _strip(l, th, l.newServices(_fresh), () {
@@ -171,26 +187,44 @@ class _SermonsScreenState extends State<SermonsScreen> {
       Text(l.navPreke, style: th.textTheme.headlineMedium),
       const SizedBox(width: 24),
       Expanded(
-        child: TextField(
-          controller: _search,
-          focusNode: _searchFocus,
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.search_rounded),
-            hintText: l.searchSermons,
-            border: const OutlineInputBorder(),
-            isDense: true,
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: TextField(
+              controller: _search,
+              focusNode: _searchFocus,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search_rounded),
+                hintText: l.searchSermons,
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
           ),
         ),
       ),
       const SizedBox(width: 12),
-      FilledButton(onPressed: _processNext, child: Text(l.processNext)),
+      OutlinedButton(onPressed: _processNext, child: Text(l.processNext)),
+      const SizedBox(width: 12),
+      FilledButton(
+        onPressed: _loading ? null : _processLatest,
+        child: Text(l.processLatest),
+      ),
     ],
   );
 
   Widget _filters(L l) => Wrap(
     spacing: 8,
+    runSpacing: 8,
     children: [
+      FilterChip(
+        avatar: const Icon(Icons.cloud_off_rounded, size: 18),
+        label: Text(l.filterNotUploaded),
+        selected: _notUploaded,
+        onSelected: (v) => setState(() => _notUploaded = v),
+      ),
       for (final s in SermonState.values)
         FilterChip(
           avatar: Icon(stateIcon(s), size: 18),
@@ -257,7 +291,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
     }
     return ListView.builder(
       itemCount: rows.length,
-      itemExtent: 56,
+      itemExtent: 64,
       itemBuilder: (context, i) => _row(l, th, rows[i]),
     );
   }
@@ -279,21 +313,27 @@ class _SermonsScreenState extends State<SermonsScreen> {
             child: Text(s.date ?? l.noDate, style: th.textTheme.labelMedium),
           ),
           Expanded(
-            child: Text(
-              s.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: th.textTheme.headlineSmall?.copyWith(fontSize: 18),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: th.textTheme.headlineSmall?.copyWith(fontSize: 18),
+                ),
+                if (s.scripture != null)
+                  Text(
+                    s.scripture!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: th.textTheme.bodySmall,
+                  ),
+              ],
             ),
           ),
-          SizedBox(
-            width: 180,
-            child: Text(
-              s.scripture ?? '',
-              overflow: TextOverflow.ellipsis,
-              style: th.textTheme.bodyMedium,
-            ),
-          ),
+          const SizedBox(width: 16),
           SizedBox(
             width: 140,
             child: Row(
@@ -325,7 +365,7 @@ class _Skeleton extends StatelessWidget {
     final c = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08);
     return ListView.builder(
       physics: const NeverScrollableScrollPhysics(),
-      itemExtent: 56,
+      itemExtent: 64,
       itemCount: 8,
       itemBuilder: (_, _) => Center(
         child: Container(
