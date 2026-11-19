@@ -21,6 +21,14 @@ String? scriptureFrom(String description) => RegExp(
   caseSensitive: false,
 ).firstMatch(description)?.group(1)?.trim();
 
+/// Writes [json] to [f] atomically (`.tmp`, then rename), creating the folder.
+void writeJson(File f, Object? json) {
+  f.parent.createSync(recursive: true);
+  File('${f.path}.tmp')
+    ..writeAsStringSync(jsonEncode(json))
+    ..renameSync(f.path);
+}
+
 enum SermonState { nuut, beplan, goedgekeur, gesny, opgelaai, fout, oorgeslaan }
 
 /// One service on the channel with its processing state.
@@ -131,10 +139,7 @@ class SermonStore extends ChangeNotifier {
 
   void _write(Sermon s) {
     _byId[s.id] = s;
-    final f = _file(s.id)..parent.createSync(recursive: true);
-    final tmp = File('${f.path}.tmp')
-      ..writeAsStringSync(jsonEncode(s.toJson()));
-    tmp.renameSync(f.path);
+    writeJson(_file(s.id), s.toJson());
   }
 
   /// Adds the listed channel entries: new IDs become `nuut` (returned), known ones keep their state.

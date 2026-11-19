@@ -139,10 +139,7 @@ class JobQueue extends ChangeNotifier {
   Future<void> get idle => _loop ?? Future.value();
 
   void _persist() {
-    final f = _file..parent.createSync(recursive: true);
-    final tmp = File('${f.path}.tmp')
-      ..writeAsStringSync(jsonEncode([for (final j in jobs) j.toJson()]));
-    tmp.renameSync(f.path);
+    writeJson(_file, [for (final j in jobs) j.toJson()]);
     notifyListeners();
   }
 
