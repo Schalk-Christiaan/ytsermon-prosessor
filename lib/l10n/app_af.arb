@@ -136,5 +136,22 @@
   "template": "Beskrywingsjabloon",
   "templatePreview": "So lyk dit vir die nuutste preek",
   "templateHelp": "{tema}, {skriflesing}, {datum} en {beskrywing} word ingevul.",
-  "@templateHelp": {"description": "Arguments are the literal tokens {tema} etc.", "placeholders": {"tema": {"type": "String"}, "skriflesing": {"type": "String"}, "datum": {"type": "String"}, "beskrywing": {"type": "String"}}}
+  "@templateHelp": {"description": "Arguments are the literal tokens {tema} etc.", "placeholders": {"tema": {"type": "String"}, "skriflesing": {"type": "String"}, "datum": {"type": "String"}, "beskrywing": {"type": "String"}}},
+  "navSetup": "Opstelling",
+  "setupIntro": "Vier dinge, een keer. Daarna begin die app by Preke.",
+  "setupOllama": "Ollama (die KI op hierdie rekenaar) loop",
+  "setupModel": "Die KI-model is afgelaai (5 GB)",
+  "setupChannel": "Die kerk se YouTube-kanaal is gekoppel",
+  "setupFolder": "Gids vir gesnyde preke: {path}",
+  "@setupFolder": {"placeholders": {"path": {"type": "String"}}},
+  "stepDone": "Klaar",
+  "stepTodo": "Nog nie",
+  "startOllama": "Begin Ollama",
+  "downloadModel": "Laai model af",
+  "clientFirst": "Kies eers die kliënt-ID-lêer in Instellings",
+  "goSettings": "Gaan na Instellings",
+  "makeFolder": "Maak gids",
+  "startWork": "Begin werk",
+  "checkAgain": "Kontroleer weer",
+  "outFolder": "Gids vir gesnyde preke"
 }

@@ -51,7 +51,7 @@ class _SystemStatusState extends State<SystemStatus> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l.settingsSystem, style: th.textTheme.headlineMedium),
+          Text(l.settingsSystem, style: th.textTheme.headlineSmall),
           const SizedBox(height: 16),
           Expanded(
             child: FutureBuilder<List<ToolStatus>>(

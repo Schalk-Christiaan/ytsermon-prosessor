@@ -3,7 +3,7 @@
 //   wanneer: Instellings (rail)
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | kliëntlêer en privaatheid; refresh-token via GoogleAuth
-//   doel: Kanaal (kliënt-ID-lêer, Koppel/Ontkoppel, privaatheid van oplaaie) bo die Stelsel-lys
+//   doel: Kanaal (kliënt-ID-lêer, Koppel/Ontkoppel, privaatheid van oplaaie), uitsetgids en Opstelling, bo die Stelsel-lys
 //   status: oop
 import 'dart:io';
 
@@ -22,6 +22,7 @@ class SettingsScreen extends StatefulWidget {
     required this.auth,
     required this.signIn,
     required this.system,
+    this.onSetup,
   });
   final AppSettings settings;
   final GoogleAuth auth;
@@ -32,12 +33,16 @@ class SettingsScreen extends StatefulWidget {
   /// The Stelsel list below the channel group.
   final Widget system;
 
+  /// Opens the Opstelling list again.
+  final VoidCallback? onSetup;
+
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final _file = TextEditingController(text: widget.settings.clientFile);
+  late final _out = TextEditingController(text: widget.settings.outDir);
   bool? _signedIn;
   bool _busy = false;
   String? _error;
@@ -51,6 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _file.dispose();
+    _out.dispose();
     super.dispose();
   }
 
@@ -108,7 +114,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l.navSettingsTitle, style: th.textTheme.headlineMedium),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l.navSettingsTitle,
+                        style: th.textTheme.headlineMedium,
+                      ),
+                    ),
+                    if (widget.onSetup != null)
+                      TextButton(
+                        onPressed: widget.onSetup,
+                        child: Text(l.navSetup),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 24),
                 Text(l.settingsChannel, style: th.textTheme.headlineSmall),
                 const SizedBox(height: 12),
@@ -181,6 +201,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  key: const ValueKey('outDir'),
+                  controller: _out,
+                  decoration: InputDecoration(
+                    labelText: l.outFolder,
+                    border: const OutlineInputBorder(),
+                  ),
+                  onSubmitted: (v) => widget.settings
+                    ..outDir = v.trim()
+                    ..save(),
                 ),
                 const SizedBox(height: 8),
               ],
