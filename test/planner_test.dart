@@ -81,7 +81,7 @@ void main() {
     },
   );
 
-  test('plan() trims a Short over 90 s instead of rejecting', () async {
+  test('plan() rejects a Short over 90 s with a validation error', () async {
     final planner = Planner(
       chat: (_) async => {
         'message': {
@@ -97,14 +97,15 @@ void main() {
         },
       },
     );
-    final plan = await planner.plan(
-      compactText: 'x',
-      duration: 3728,
-      originalDescription: '',
-    );
-    expect(
-      plan.shorts.single.end - plan.shorts.single.start,
-      lessThanOrEqualTo(90),
+    await expectLater(
+      planner.plan(compactText: 'x', duration: 3728, originalDescription: ''),
+      throwsA(
+        isA<PlanException>().having(
+          (e) => e.errors.join(),
+          'errors',
+          contains('dit moet 20 tot 90 s wees'),
+        ),
+      ),
     );
   });
 

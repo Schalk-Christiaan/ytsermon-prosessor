@@ -108,7 +108,7 @@ List<String> validate(SermonPlan plan, double duration) {
 
 /// Writes plan.json into [dir]; called on every edit.
 void savePlan(Directory dir, SermonPlan plan) => File(
-  p.join(dir.path, 'plan.json'),
+  p.join(dir.path, kPlanFile),
 ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(plan.toJson()));
 
 Future<Map<String, dynamic>> _ollamaChat(Map<String, dynamic> body) async {
@@ -167,15 +167,8 @@ class Planner {
     final shorts = <Short>[];
     for (final s in (j['shorts'] as List? ?? const [])) {
       final a = parseTime(s['start']), b = parseTime(s['end']);
-      // The model cannot count seconds; trim an overlong Short instead of rejecting the plan.
       if (a != null && b != null)
-        shorts.add(
-          Short(
-            start: a,
-            end: b - a > kMaxShort ? a + kMaxShort - 5 : b,
-            title: '${s['title']}',
-          ),
-        );
+        shorts.add(Short(start: a, end: b, title: '${s['title']}'));
     }
     final plan = SermonPlan(
       sermonStart: start,
