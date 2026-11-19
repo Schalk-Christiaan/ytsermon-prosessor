@@ -178,6 +178,27 @@ class LAf extends L {
   }
 
   @override
+  String shortTooLong(int s) {
+    return '$s s; maks 90 s';
+  }
+
+  @override
+  String shortTooShort(int s) {
+    return '$s s; minstens 20 s';
+  }
+
+  @override
+  String get shortOutside => 'Lê buite die preek';
+
+  @override
+  String shortLength(int n) {
+    return 'Lengte van Short $n';
+  }
+
+  @override
+  String get approveBlocked => 'Herstel eers die Shorts wat rooi gemerk is';
+
+  @override
   String shortPreview(int n) {
     return 'Short $n';
   }

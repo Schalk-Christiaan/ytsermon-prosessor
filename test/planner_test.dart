@@ -30,10 +30,22 @@ void main() {
         Short(start: 1500, end: 1510, title: 'kort'),
       ];
     final e = validate(p, duration);
-    expect(e.length, greaterThanOrEqualTo(5), reason: e.join('\n'));
+    expect(e.length, 3, reason: e.join('\n'));
     expect(e.any((m) => m.contains('preek')), isTrue);
     expect(validate(okPlan()..sermonEnd = duration + 5, duration), isNotEmpty);
     expect(validate(okPlan()..sermonStart = -1, duration), isNotEmpty);
+  });
+
+  test('shortFault separates Short errors from plan errors', () {
+    final p = okPlan();
+    Short sh(double a, double b) => Short(start: a, end: b, title: 't');
+    expect(shortFault(sh(1500, 1560), p), isNull);
+    expect(shortFault(sh(1500, 1595), p), ShortFault.tooLong);
+    expect(shortFault(sh(1500, 1510), p), ShortFault.tooShort);
+    expect(shortFault(sh(100, 160), p), ShortFault.outside);
+    expect(shortFault(sh(3100, 3160), p), ShortFault.outside);
+    p.shorts.add(sh(1500, 1595));
+    expect(validate(p, duration), isEmpty);
   });
 
   test('parseTime handles mm:ss, h:mm:ss and numbers', () {
@@ -81,33 +93,33 @@ void main() {
     },
   );
 
-  test('plan() rejects a Short over 90 s with a validation error', () async {
-    final planner = Planner(
-      chat: (_) async => {
-        'message': {
-          'content': jsonEncode({
-            'sermonStart': '23:00',
-            'sermonEnd': '52:00',
-            'title': 'T',
-            'description': 'D',
-            'shorts': [
-              {'start': '25:00', 'end': '27:02', 'title': 'lank'},
-            ],
-          }),
+  test(
+    'plan() keeps a Short over 90 s unchanged; the plan stays valid',
+    () async {
+      final planner = Planner(
+        chat: (_) async => {
+          'message': {
+            'content': jsonEncode({
+              'sermonStart': '23:00',
+              'sermonEnd': '52:00',
+              'title': 'T',
+              'description': 'D',
+              'shorts': [
+                {'start': '25:00', 'end': '27:02', 'title': 'lank'},
+              ],
+            }),
+          },
         },
-      },
-    );
-    await expectLater(
-      planner.plan(compactText: 'x', duration: 3728, originalDescription: ''),
-      throwsA(
-        isA<PlanException>().having(
-          (e) => e.errors.join(),
-          'errors',
-          contains('dit moet 20 tot 90 s wees'),
-        ),
-      ),
-    );
-  });
+      );
+      final p = await planner.plan(
+        compactText: 'x',
+        duration: 3728,
+        originalDescription: '',
+      );
+      expect(p.shorts.single.end - p.shorts.single.start, 122);
+      expect(shortFault(p.shorts.single, p), ShortFault.tooLong);
+    },
+  );
 
   test('plan() throws PlanException for an invalid plan', () async {
     final planner = Planner(

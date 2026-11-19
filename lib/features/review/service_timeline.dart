@@ -3,7 +3,7 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: —
-//   doel: dienstydlyn: spraak/musiek, sleepbare preek-hakie, Shorts, speelposisie
+//   doel: dienstydlyn: spraak/musiek, sleepbare preek-hakie, Shorts (ongeldige met foutkleur), speelposisie
 //   status: oop
 import 'dart:ui' show lerpDouble;
 
@@ -27,6 +27,7 @@ class ServiceTimeline extends StatefulWidget {
     required this.sermonStart,
     required this.sermonEnd,
     required this.shorts,
+    this.faulty = const {},
     required this.position,
     required this.animateKey,
     required this.onSeek,
@@ -39,6 +40,9 @@ class ServiceTimeline extends StatefulWidget {
   final double sermonStart;
   final double sermonEnd;
   final List<Short> shorts;
+
+  /// Invalid Shorts, drawn in the error colour with an outline (not colour alone).
+  final Set<Short> faulty;
   final ValueListenable<double> position;
 
   /// Changes when a new plan arrives; the handles then glide from the full width to the sermon.
@@ -173,6 +177,8 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                               duration: widget.duration,
                               blocks: widget.blocks,
                               shorts: widget.shorts,
+                              faulty: widget.faulty,
+                              error: th.colorScheme.error,
                               start: s,
                               end: e,
                               position: widget.position,
@@ -313,6 +319,8 @@ class _TimelinePainter extends CustomPainter {
     required this.duration,
     required this.blocks,
     required this.shorts,
+    required this.faulty,
+    required this.error,
     required this.start,
     required this.end,
     required this.position,
@@ -329,6 +337,8 @@ class _TimelinePainter extends CustomPainter {
   final double duration, start, end;
   final List<TimeBlock> blocks;
   final List<Short> shorts;
+  final Set<Short> faulty;
+  final Color error;
   final ValueListenable<double> position;
   final Color speech, music, sermon, wood, ink, surface;
   final String musicLabel;
@@ -379,18 +389,26 @@ class _TimelinePainter extends CustomPainter {
       bar,
     );
     for (final s in shorts) {
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTRB(
-            x(s.start),
-            size.height - 22,
-            x(s.end).clamp(x(s.start) + 3, size.width),
-            size.height - 10,
-          ),
-          const Radius.circular(2),
+      final bad = faulty.contains(s);
+      final r = RRect.fromRectAndRadius(
+        Rect.fromLTRB(
+          x(s.start),
+          size.height - (bad ? 26 : 22),
+          x(s.end).clamp(x(s.start) + 3, size.width),
+          size.height - 10,
         ),
-        Paint()..color = wood,
+        const Radius.circular(2),
       );
+      canvas.drawRRect(r, Paint()..color = bad ? error : wood);
+      if (bad) {
+        canvas.drawRRect(
+          r,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2
+            ..color = ink,
+        );
+      }
     }
     final px = x(position.value.clamp(0, duration));
     canvas.drawRect(
@@ -400,12 +418,7 @@ class _TimelinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_TimelinePainter o) =>
-      o.start != start ||
-      o.end != end ||
-      o.blocks != blocks ||
-      o.shorts.length != shorts.length ||
-      o.sermon != sermon ||
-      o.ink != ink ||
-      o.duration != duration;
+  // Shorts are mutated in place (length slider), so a diff is impossible; the
+  // painter is only rebuilt when the parent rebuilds, i.e. on a change.
+  bool shouldRepaint(_TimelinePainter o) => true;
 }

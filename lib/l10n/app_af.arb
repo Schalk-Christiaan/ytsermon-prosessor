@@ -60,6 +60,14 @@
   "newShortTitle": "Nuwe Short",
   "stageCutPct": "Sny… {pct}%",
   "@stageCutPct": {"placeholders": {"pct": {"type": "int"}}},
+  "shortTooLong": "{s} s; maks 90 s",
+  "shortTooShort": "{s} s; minstens 20 s",
+  "shortOutside": "Lê buite die preek",
+  "@shortTooLong": {"placeholders": {"s": {"type": "int"}}},
+  "@shortTooShort": {"placeholders": {"s": {"type": "int"}}},
+  "shortLength": "Lengte van Short {n}",
+  "@shortLength": {"placeholders": {"n": {"type": "int"}}},
+  "approveBlocked": "Herstel eers die Shorts wat rooi gemerk is",
   "shortPreview": "Short {n}",
   "@shortPreview": {"placeholders": {"n": {"type": "int"}}}
 }

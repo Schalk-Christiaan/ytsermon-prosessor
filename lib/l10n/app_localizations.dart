@@ -381,6 +381,36 @@ abstract class L {
   /// **'Sny… {pct}%'**
   String stageCutPct(int pct);
 
+  /// No description provided for @shortTooLong.
+  ///
+  /// In af, this message translates to:
+  /// **'{s} s; maks 90 s'**
+  String shortTooLong(int s);
+
+  /// No description provided for @shortTooShort.
+  ///
+  /// In af, this message translates to:
+  /// **'{s} s; minstens 20 s'**
+  String shortTooShort(int s);
+
+  /// No description provided for @shortOutside.
+  ///
+  /// In af, this message translates to:
+  /// **'Lê buite die preek'**
+  String get shortOutside;
+
+  /// No description provided for @shortLength.
+  ///
+  /// In af, this message translates to:
+  /// **'Lengte van Short {n}'**
+  String shortLength(int n);
+
+  /// No description provided for @approveBlocked.
+  ///
+  /// In af, this message translates to:
+  /// **'Herstel eers die Shorts wat rooi gemerk is'**
+  String get approveBlocked;
+
   /// No description provided for @shortPreview.
   ///
   /// In af, this message translates to:

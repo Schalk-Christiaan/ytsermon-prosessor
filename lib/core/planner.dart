@@ -3,7 +3,7 @@
 //   wanneer: ná captions, een Ollama-oproep per preek
 //   groep: core | Kern
 //   skryf: werkmap/<id>/plan.json
-//   doel: vra qwen3:8b vir preekgrense, Shorts, titel en beskrywing; valideer en berg plan.json op
+//   doel: vra qwen3:8b vir preekgrense, Shorts, titel en beskrywing; validate() toets die plan, shortFault() elke Short apart; berg plan.json op
 //   status: oop
 import 'dart:convert';
 import 'dart:io';
@@ -75,7 +75,8 @@ double? parseTime(Object? v) {
   return parts.fold<double>(0, (a, b) => a * 60 + b!);
 }
 
-/// Checks a plan against the rules; returns Afrikaans messages (empty = valid).
+/// Checks the plan itself (sermon bounds, title, description); returns Afrikaans messages (empty = valid).
+/// Short errors are not plan errors: see [shortFault].
 List<String> validate(SermonPlan plan, double duration) {
   final e = <String>[];
   final len = plan.sermonEnd - plan.sermonStart;
@@ -88,22 +89,23 @@ List<String> validate(SermonPlan plan, double duration) {
       'Die preek is ${(len / 60).round()} min; dit moet tussen 15 en 75 min wees.',
     );
   }
-  for (final s in plan.shorts) {
-    if (s.start < plan.sermonStart ||
-        s.end > plan.sermonEnd ||
-        s.start >= s.end) {
-      e.add('Short "${s.title}" lê nie binne die preek nie.');
-    } else if (s.end - s.start < 20 || s.end - s.start > kMaxShort) {
-      e.add(
-        'Short "${s.title}" is ${(s.end - s.start).round()} s; dit moet 20 tot 90 s wees.',
-      );
-    }
-  }
   if (plan.title.isEmpty || plan.title.length > 100)
     e.add('Die titel moet 1 tot 100 karakters wees.');
   if (plan.description.length > 5000)
     e.add('Die beskrywing is langer as 5000 karakters.');
   return e;
+}
+
+enum ShortFault { outside, tooShort, tooLong }
+
+/// Why a Short can't be cut (outside the sermon, or not 20-90 s); null = fine.
+/// The plan stays valid: Hersien marks the Short instead (no truncation, no replan).
+ShortFault? shortFault(Short s, SermonPlan plan) {
+  if (s.start < plan.sermonStart || s.end > plan.sermonEnd || s.start >= s.end)
+    return ShortFault.outside;
+  final d = s.end - s.start;
+  if (d < 20) return ShortFault.tooShort;
+  return d > kMaxShort ? ShortFault.tooLong : null;
 }
 
 /// Writes plan.json into [dir]; called on every edit.

@@ -3,7 +3,7 @@
 //   wanneer: Hersien (rail)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: URL → plan → hersien op die dienstydlyn → keur goed en sny
+//   doel: URL → plan → hersien op die dienstydlyn (ongeldige Shorts rooi gemerk, kan korter gesleep word) → keur goed en sny
 //   status: oop
 
 import 'package:flutter/material.dart';
@@ -12,6 +12,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../core/captions.dart';
 import '../../core/models.dart';
+import '../../core/planner.dart';
 import '../../core/tools.dart';
 import '../../l10n/app_localizations.dart';
 import 'review_controller.dart';
@@ -206,6 +207,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
           sermonStart: plan.sermonStart,
           sermonEnd: plan.sermonEnd,
           shorts: plan.shorts,
+          faulty: {
+            for (final s in plan.shorts)
+              if (shortFault(s, plan) != null) s,
+          },
           position: _c.position,
           animateKey: _c.planRevision,
           onSeek: _c.seek,
@@ -226,7 +231,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         ),
         SizedBox(height: 96, child: _shorts(l, th, plan)),
         const SizedBox(height: 12),
-        _actions(l),
+        _actions(l, th),
       ],
     );
   }
@@ -338,13 +343,25 @@ class _ReviewScreenState extends State<ReviewScreen> {
     itemExtent: 48,
     itemBuilder: (context, i) {
       final s = plan.shorts[i];
+      final fault = shortFault(s, plan);
+      final secs = (s.end - s.start).round();
+      final reason = switch (fault) {
+        ShortFault.tooLong => l.shortTooLong(secs),
+        ShortFault.tooShort => l.shortTooShort(secs),
+        ShortFault.outside => l.shortOutside,
+        null => null,
+      };
+      final err = th.colorScheme.error;
       return Row(
         children: [
           Container(
             width: 27,
             height: 44,
             decoration: BoxDecoration(
-              border: Border.all(color: th.colorScheme.tertiary, width: 2),
+              border: Border.all(
+                color: fault == null ? th.colorScheme.tertiary : err,
+                width: 2,
+              ),
               borderRadius: BorderRadius.circular(4),
             ),
             alignment: Alignment.center,
@@ -361,6 +378,22 @@ class _ReviewScreenState extends State<ReviewScreen> {
             ),
           ),
           Expanded(child: Text(s.title, overflow: TextOverflow.ellipsis)),
+          if (reason != null) ...[
+            Icon(Icons.error_outline_rounded, size: 18, color: err),
+            const SizedBox(width: 4),
+            Text(reason, style: TextStyle(color: err)),
+          ],
+          SizedBox(
+            width: 160,
+            child: Slider(
+              semanticFormatterCallback: (_) => l.shortLength(i + 1),
+              min: 20,
+              max: secs > 120 ? secs.toDouble() : 120,
+              value: secs.clamp(20, 100000).toDouble(),
+              onChanged: (v) => _c.setShortEnd(s, s.start + v, save: false),
+              onChangeEnd: (_) => _c.commit(),
+            ),
+          ),
           TextButton(
             onPressed: () => _c.seek(s.start),
             child: Text(l.shortPreview(i + 1)),
@@ -375,14 +408,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
     },
   );
 
-  Widget _actions(L l) => Row(
+  Widget _actions(L l, ThemeData th) => Row(
     mainAxisAlignment: MainAxisAlignment.end,
     children: [
       TextButton(onPressed: _c.reset, child: Text(l.skip)),
       const SizedBox(width: 12),
       OutlinedButton(onPressed: () => _replan(l), child: Text(l.replan)),
       const SizedBox(width: 12),
-      FilledButton(onPressed: () => _cut(l), child: Text(l.approveAndCut)),
+      if (_c.hasShortFault) ...[
+        Text(l.approveBlocked, style: TextStyle(color: th.colorScheme.error)),
+        const SizedBox(width: 12),
+      ],
+      FilledButton(
+        onPressed: _c.hasShortFault ? null : () => _cut(l),
+        child: Text(l.approveAndCut),
+      ),
     ],
   );
 }

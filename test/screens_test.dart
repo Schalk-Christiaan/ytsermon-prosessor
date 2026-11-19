@@ -163,4 +163,64 @@ void main() {
     final saved = File(p.join(dir.path, 'plan.json')).readAsStringSync();
     expect(saved, contains('sermonStart'));
   });
+
+  testWidgets('invalid Short is marked and blocks approval until shortened', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final dir = Directory.systemTemp.createTempSync('plan');
+    final c = ReviewController();
+    c.debugReady(
+      FetchedMeta('x', dir, {'title': 'Preek'}),
+      parseJson3(File('test/fixtures/sample.af-orig.json3').readAsStringSync()),
+      SermonPlan(
+        sermonStart: 1384,
+        sermonEnd: 3210,
+        title: 't',
+        description: 'd',
+        shorts: [Short(start: 1500, end: 1592, title: 'lank')],
+      ),
+      3600,
+    );
+    await t.pumpWidget(
+      _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
+    );
+    await t.pump(const Duration(seconds: 1));
+    FilledButton approve() => t.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Keur goed en sny'),
+    );
+    expect(find.text('92 s; maks 90 s'), findsOneWidget);
+    final key = GlobalKey();
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        RepaintBoundary(
+          key: key,
+          child: Scaffold(body: ReviewScreen(controller: c)),
+        ),
+      ),
+    );
+    await t.pump(const Duration(seconds: 1));
+    final bytes = await t.runAsync(() async {
+      final img =
+          await (key.currentContext!.findRenderObject()!
+                  as RenderRepaintBoundary)
+              .toImage();
+      return (await img.toByteData(format: ui.ImageByteFormat.png))!;
+    });
+    File(p.join(shots.path, 'hersien-short-fout-light.png'))
+        .writeAsBytesSync(bytes!.buffer.asUint8List());
+    expect(find.byIcon(Icons.error_outline_rounded), findsOneWidget);
+    expect(approve().onPressed, isNull);
+    await t.drag(find.byType(Slider).first, const Offset(-60, 0));
+    await t.pump();
+    expect(c.plan!.shorts.single.end - 1500, lessThanOrEqualTo(90));
+    expect(find.byIcon(Icons.error_outline_rounded), findsNothing);
+    expect(approve().onPressed, isNotNull);
+    await t.runAsync(
+      () async => await Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+  });
 }

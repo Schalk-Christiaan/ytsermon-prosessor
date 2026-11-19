@@ -229,6 +229,17 @@ class ReviewController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Moves a Short's end (the length slider); save only when [save].
+  void setShortEnd(Short s, double end, {bool save = true}) {
+    s.end = end.clamp(s.start + 1, plan!.sermonEnd);
+    if (save) _save();
+    notifyListeners();
+  }
+
+  /// True while a Short is invalid (blocks "Keur goed en sny").
+  bool get hasShortFault =>
+      plan?.shorts.any((s) => shortFault(s, plan!) != null) ?? false;
+
   void removeShort(Short s) {
     plan!.shorts.remove(s);
     _save();
