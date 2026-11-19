@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: <werkmap>/<id>/sermon.json | atomies (.tmp, dan hernoem)
 //   doel: elke diens as Sermon met toestand wat herbegin oorleef; voeg die kanaallys by
-//   status: oop
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 
@@ -29,6 +29,7 @@ void writeJson(File f, Object? json) {
     ..renameSync(f.path);
 }
 
+/// Where a sermon is in its life: new, planned, approved, cut, uploaded, failed or skipped.
 enum SermonState { nuut, beplan, goedgekeur, gesny, opgelaai, fout, oorgeslaan }
 
 /// One service on the channel with its processing state.

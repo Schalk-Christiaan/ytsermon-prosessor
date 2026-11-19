@@ -4,7 +4,7 @@
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | setupDone; maak die uitsetgids
 //   doel: Opstelling-lys: Ollama loop → model afgelaai → kanaal gekoppel → uitsetgids, elk een knoppie; "Begin werk" as alles klaar is
-//   status: oop
+//   status: bou
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -17,6 +17,7 @@ import '../../core/tools.dart' show ToolStatus;
 import '../../core/youtube.dart';
 import '../../l10n/app_localizations.dart';
 
+/// Opstelling: four steps to green (Ollama, model, channel, folder), one button at a time.
 class SetupScreen extends StatefulWidget {
   const SetupScreen({
     super.key,
@@ -54,6 +55,7 @@ class _SetupScreenState extends State<SetupScreen> {
     _check();
   }
 
+  // stap: v6 2 Kontroleer | kyk wat klaar is: Ollama, model, kanaal, uitsetgids
   Future<void> _check() async {
     final o = await widget.probe();
     final s = await widget.auth.signedIn;
@@ -65,6 +67,8 @@ class _SetupScreenState extends State<SetupScreen> {
     }
   }
 
+  // stap: v6 3 Een knoppie op 'n slag | Begin Ollama → Laai model af → Koppel kanaal → Maak gids
+  // tak: geen kliënt-ID-lêer → "Gaan na Instellings"
   Future<void> _run(String step, Future<void> Function() f) async {
     setState(() {
       _busy = step;
@@ -80,6 +84,7 @@ class _SetupScreenState extends State<SetupScreen> {
     await _check();
   }
 
+  // stap: v6 4 Begin werk | aktief as alles groen is; gaan na Preke en verskyn nie weer nie
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);

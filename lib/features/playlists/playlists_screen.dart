@@ -4,7 +4,7 @@
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | reëls en jabloon
 //   doel: snitlysreëls aan/af en in volgorde, voorskou hoeveel preke in elke snitlys val, beskrywingsjabloon
-//   status: oop
+//   status: bou
 import 'package:flutter/material.dart';
 
 import '../../core/playlists.dart';
@@ -12,6 +12,7 @@ import '../../core/settings.dart';
 import '../../core/store.dart';
 import '../../l10n/app_localizations.dart';
 
+/// Lists the channel's playlists and which series each sermon goes into.
 class PlaylistsScreen extends StatefulWidget {
   const PlaylistsScreen({
     super.key,

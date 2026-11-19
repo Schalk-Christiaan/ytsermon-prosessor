@@ -11,6 +11,7 @@ import 'package:preekverwerker/app/shell.dart';
 import 'package:preekverwerker/app/theme.dart';
 import 'package:preekverwerker/core/captions.dart';
 import 'package:preekverwerker/core/channel.dart';
+import 'package:preekverwerker/core/cutter.dart';
 import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/store.dart';
@@ -101,11 +102,143 @@ void main() {
           Short(start: 1500, end: 1561, title: 'Genade is nie verdien nie'),
           Short(start: 2400, end: 2450, title: 'Die kruis as middelpunt'),
         ],
+        cuts: [Span(2050, 2140)],
       ),
       3600,
     );
+    c.prayerMarks = [Span(1384, 1500), Span(3100, 3210)];
     return c;
   }
+
+  testWidgets('hersien: "Keur goed en sny" offers the way to Werk', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    var work = 0;
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: ReviewScreen(controller: ready(), onWork: () => work++),
+        ),
+      ),
+    );
+    await t.pump(const Duration(seconds: 1));
+    await t.tap(find.text('Keur goed en sny'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 500));
+    await t.tap(find.widgetWithText(SnackBarAction, 'Werk'));
+    expect(work, 1);
+    await t.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('hersien: an uploaded sermon offers "Werk op YouTube by"', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final c = ready();
+    c.store.save(c.sermon!..state = SermonState.opgelaai);
+    final sent = <String>[];
+    c.updateYouTube = (id) async {
+      sent.add(id);
+      return 3;
+    };
+    await t.pumpWidget(
+      _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
+    );
+    await t.pump(const Duration(seconds: 1));
+    await t.tap(find.text('Werk op YouTube by'));
+    await t.pump();
+    await t.pump();
+    expect(sent, ['x']);
+    expect(find.text('3 video\'s op YouTube bygewerk'), findsOneWidget);
+    await t.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('editor: I/O at the playhead, Ctrl+Z, transcript seeks', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final c = ready();
+    final dir = Directory.systemTemp.createTempSync('plan');
+    c.meta = FetchedMeta('x', dir, {});
+    await t.pumpWidget(
+      _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
+    );
+    await t.pump(const Duration(seconds: 1));
+    c.position.value = 1400;
+    await t.sendKeyEvent(LogicalKeyboardKey.keyI);
+    await t.pump();
+    expect(c.plan!.sermonStart, 1400);
+    c.position.value = 3000;
+    await t.sendKeyEvent(LogicalKeyboardKey.keyO);
+    await t.pump();
+    expect(c.plan!.sermonEnd, 3000);
+    await t.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await t.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await t.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await t.pump();
+    expect(c.plan!.sermonEnd, 3210);
+    await t.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await t.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await t.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await t.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await t.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await t.pump();
+    expect(c.plan!.sermonEnd, 3000);
+    // Typing an "i" in the title is text, not a shortcut.
+    await t.enterText(find.byKey(const ValueKey('title')), 'i');
+    await t.sendKeyEvent(LogicalKeyboardKey.keyI);
+    expect(c.plan!.sermonStart, 1400);
+    final line = find.byKey(ValueKey('line-${c.segments[2].start}'));
+    await t.ensureVisible(line);
+    await t.tap(line);
+    expect(c.position.value, c.segments[2].start);
+    await t.tap(find.text('Uitgeknip (1)'));
+    await t.pump();
+    expect(find.text('Uitgeknip 1'), findsOneWidget);
+    expect(find.text('34:10 – 35:40'), findsOneWidget);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('hersien opname sonder onderskrifte', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final c = testController().$1
+      ..debugReady(
+        FetchedMeta('opname-20261115-093000', Directory.systemTemp, {}),
+        [],
+        SermonPlan(
+          sermonStart: 0,
+          sermonEnd: 4200,
+          title: 'Erediens 15 November',
+          description: '',
+          shorts: [],
+        ),
+        4200,
+      );
+    final key = GlobalKey();
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        RepaintBoundary(
+          key: key,
+          child: Scaffold(body: ReviewScreen(controller: c)),
+        ),
+      ),
+    );
+    await t.pump(const Duration(seconds: 1));
+    expect(
+      find.text('Geen onderskrifte nie, stel die begin en einde self'),
+      findsOneWidget,
+    );
+    await _shot(t, key, 'hersien-opname-light-1100');
+  });
 
   for (final b in Brightness.values) {
     for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
@@ -194,18 +327,23 @@ void main() {
       _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
     );
     await t.pump(const Duration(seconds: 1));
-    final start = find.bySemanticsLabel(RegExp('23:'));
+    final start = find.bySemanticsLabel(RegExp('Preek begin 23:'));
     expect(start, findsWidgets);
     await t.tap(start.first);
     await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await t.pump();
-    expect(c.plan!.sermonStart, 1389);
+    expect(c.plan!.sermonStart, 1385);
+    await t.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await t.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await t.pump();
+    expect(c.plan!.sermonStart, closeTo(1385.1, 1e-9));
     await t.drag(
-      find.bySemanticsLabel(RegExp('23:')).first,
+      find.bySemanticsLabel(RegExp('Preek begin 23:')).first,
       const Offset(60, 0),
     );
     await t.pump();
-    expect(c.plan!.sermonStart, greaterThan(1389));
+    expect(c.plan!.sermonStart, greaterThan(1386));
     await t.runAsync(
       () async => await Future<void>.delayed(const Duration(milliseconds: 200)),
     );
@@ -294,6 +432,8 @@ void main() {
     JobQueue q, {
     Future<List<ChannelItem>> Function()? list,
     void Function(String)? onOpen,
+    Future<String?> Function()? pickVideo,
+    Future<Sermon> Function(File, String, DateTime)? importFile,
   }) => Scaffold(
     body: SermonsScreen(
       key: UniqueKey(),
@@ -301,6 +441,8 @@ void main() {
       jobs: q,
       list: list ?? () async => items,
       onOpen: onOpen ?? (_) {},
+      pickVideo: pickVideo ?? () async => null,
+      importFile: importFile,
     ),
   );
 
@@ -353,6 +495,83 @@ void main() {
     await t.pumpAndSettle();
   });
 
+  testWidgets('preke: "Verwerk nuutste diens" plans the newest and opens it', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final (st, q) = seeded();
+    final opened = <String>[];
+    await t.pumpWidget(
+      _app(Brightness.light, preke(st, q, onOpen: opened.add)),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.text('Verwerk nuutste diens'));
+    await t.pumpAndSettle();
+    final newest = st.sorted.first.id;
+    expect(q.jobs.single.sermon, newest);
+    expect(opened, [newest]);
+    st.byId('id000000003')!.state = SermonState.opgelaai;
+    await t.tap(find.widgetWithText(FilterChip, 'Nie opgelaai nie'));
+    await t.pumpAndSettle();
+    expect(find.text('Preek 3'), findsNothing);
+    expect(find.text('Preek 4'), findsOneWidget);
+  });
+
+  testWidgets('preke: "Voer opname in" picks, asks title and date, opens', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final (st, q) = seeded();
+    final opened = <String>[];
+    final got = <String>[];
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        preke(
+          st,
+          q,
+          onOpen: opened.add,
+          pickVideo: () async => p.join('usb', 'Kersdiens.mp4'),
+          importFile: (f, title, date) async {
+            got.add('${p.basename(f.path)}|$title');
+            return Sermon('opname-1', title, 60, state: SermonState.beplan);
+          },
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.text('Voer opname in'));
+    await t.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'Kersdiens'), findsOneWidget);
+    await t.enterText(find.widgetWithText(TextField, 'Kersdiens'), 'Kersdag');
+    await t.tap(find.text('Voer in'));
+    await t.pumpAndSettle();
+    expect(got, ['Kersdiens.mp4|Kersdag']);
+    expect(opened, ['opname-1']);
+  });
+
+  testWidgets('preke: "Verwerk nuutste diens" skips a local recording', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final (st, q) = seeded();
+    st.save(Sermon('opname-20261226-090507', 'Opname', 60, order: -5));
+    final opened = <String>[];
+    await t.pumpWidget(
+      _app(Brightness.light, preke(st, q, onOpen: opened.add)),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.text('Verwerk nuutste diens'));
+    await t.pumpAndSettle();
+    expect(opened, ['id000000000']);
+  });
+
   testWidgets('preke: new services strip, empty and error states', (t) async {
     await _fonts();
     t.view.physicalSize = const Size(1100, 720);
@@ -392,13 +611,21 @@ void main() {
   });
 
   for (final b in Brightness.values) {
-    for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
+    for (final (w, h) in [
+      (1100.0, 720.0),
+      (1920.0, 1080.0),
+      if (b == Brightness.light) (750.0, 720.0),
+    ]) {
       testWidgets('preke skermkiekie ${b.name} ${w.toInt()}', (t) async {
         await _fonts();
         t.view.physicalSize = Size(w, h);
         t.view.devicePixelRatio = 1;
         final key = GlobalKey();
         final (st, q) = seeded();
+        st.byId('id000000000')!
+          ..title =
+              'Die genade van God wat ons dra deur elke seisoen van die lewe'
+          ..scripture = '2 Korinthiërs 12:1-10';
         await t.pumpWidget(
           _app(b, RepaintBoundary(key: key, child: preke(st, q))),
         );
@@ -720,6 +947,46 @@ void main() {
     await t.tap(find.text('Ontkoppel'));
     await t.pumpAndSettle();
     expect(token, isNull);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('instellings: intro is chosen, shows its length, is removed', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final root = Directory.systemTemp.createTempSync('set');
+    final set = AppSettings.load(root);
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: SettingsScreen(
+            settings: set,
+            auth: GoogleAuth(
+              File(set.clientFile),
+              read: () async => null,
+              write: (_) async {},
+            ),
+            signIn: () async {},
+            system: const SizedBox(),
+            pickVideo: () async => '/klippies/intro.mp4',
+            probe: (_) async => const MediaInfo(1920, 1080, '25/1', 12, true),
+          ),
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(find.text('Geen'), findsNWidgets(2));
+    await t.ensureVisible(find.text('Kies…').last);
+    await t.tap(find.text('Kies…').first);
+    await t.pumpAndSettle();
+    expect(find.textContaining('intro.mp4 (00:12)'), findsOneWidget);
+    expect(AppSettings.load(root).intro, '/klippies/intro.mp4');
+    await t.tap(find.byTooltip('Verwyder'));
+    await t.pumpAndSettle();
+    expect(AppSettings.load(root).intro, isNull);
     await t.pumpWidget(const SizedBox());
   });
 

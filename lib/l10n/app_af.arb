@@ -9,20 +9,50 @@
   "settingsSystem": "Stelsel",
   "toolReady": "Gereed",
   "toolReadyVersion": "Gereed · {version}",
-  "@toolReadyVersion": {"placeholders": {"version": {"type": "String"}}},
+  "@toolReadyVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "toolMissing": "Ontbreek: installeer {name}",
-  "@toolMissing": {"placeholders": {"name": {"type": "String"}}},
+  "@toolMissing": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "modelMissing": "Model {model} ontbreek: hardloop ollama pull {model}",
-  "@modelMissing": {"placeholders": {"model": {"type": "String"}}},
+  "@modelMissing": {
+    "placeholders": {
+      "model": {
+        "type": "String"
+      }
+    }
+  },
   "ollamaNotRunning": "Ollama loop nie: begin die Ollama-diens",
   "stageMeta": "Lees onderskrifte…",
   "stagePlan": "Soek die preek…",
   "stageDownload": "Laai video af…",
   "stageCut": "Sny…",
   "elapsed": "{time} verloop",
-  "@elapsed": {"placeholders": {"time": {"type": "String"}}},
+  "@elapsed": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "errorGeneric": "Iets het skeefgeloop: {message}",
-  "@errorGeneric": {"placeholders": {"message": {"type": "String"}}},
+  "@errorGeneric": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "unplanned": "Hierdie preek is nog nie beplan nie",
   "planNow": "Beplan nou",
   "cutQueued": "Gestuur na Werk",
@@ -30,12 +60,30 @@
   "processNext": "Verwerk volgende",
   "noSermons": "Geen preke gevind nie",
   "listError": "Die kanaal se lys kon nie gelaai word nie: {message}",
-  "@listError": {"placeholders": {"message": {"type": "String"}}},
+  "@listError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "updateYtDlp": "Werk yt-dlp by",
   "updateYtDlpDone": "yt-dlp: {result}",
-  "@updateYtDlpDone": {"placeholders": {"result": {"type": "String"}}},
+  "@updateYtDlpDone": {
+    "placeholders": {
+      "result": {
+        "type": "String"
+      }
+    }
+  },
   "newServices": "{n, plural, =1{1 nuwe diens} other{{n} nuwe dienste}}",
-  "@newServices": {"placeholders": {"n": {"type": "int"}}},
+  "@newServices": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "dismiss": "Maak toe",
   "noDate": "—",
   "inQueue": "In die ry",
@@ -60,23 +108,59 @@
   "whatsappAudio": "Klank vir WhatsApp",
   "taskCancelled": "Gekanselleer",
   "percent": "{pct}%",
-  "@percent": {"placeholders": {"pct": {"type": "int"}}},
+  "@percent": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
   "taskLine": "{kind}: {title}",
-  "@taskLine": {"placeholders": {"kind": {"type": "String"}, "title": {"type": "String"}}},
+  "@taskLine": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "retry": "Probeer weer",
   "setManually": "Stel self in",
   "title": "Titel",
   "description": "Beskrywing",
   "counter": "{n} / {max}",
-  "@counter": {"placeholders": {"n": {"type": "int"}, "max": {"type": "int"}}},
+  "@counter": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "saved": "Gestoor",
   "serviceTimeline": "Dienstydlyn",
   "speech": "Spraak",
   "music": "Sang",
   "sermonHandleStart": "Preek begin {time}",
   "sermonHandleEnd": "Preek eindig {time}",
-  "@sermonHandleStart": {"placeholders": {"time": {"type": "String"}}},
-  "@sermonHandleEnd": {"placeholders": {"time": {"type": "String"}}},
+  "@sermonHandleStart": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "@sermonHandleEnd": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "shorts": "Shorts",
   "addShort": "Voeg Short by",
   "remove": "Verwyder",
@@ -89,28 +173,82 @@
   "emptyReview": "Kies 'n preek in Preke.",
   "skipped": "Oorgeslaan",
   "downloadProgress": "Laai video af: {pct}%",
-  "@downloadProgress": {"placeholders": {"pct": {"type": "int"}}},
+  "@downloadProgress": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
   "shortRange": "{start} – {end}",
-  "@shortRange": {"placeholders": {"start": {"type": "String"}, "end": {"type": "String"}}},
+  "@shortRange": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
   "newShortTitle": "Nuwe Short",
   "stageCutPct": "Sny… {pct}%",
-  "@stageCutPct": {"placeholders": {"pct": {"type": "int"}}},
+  "@stageCutPct": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
   "shortTooLong": "{s} s; maks 90 s",
   "shortTooShort": "{s} s; minstens 20 s",
   "shortOutside": "Lê buite die preek",
-  "@shortTooLong": {"placeholders": {"s": {"type": "int"}}},
-  "@shortTooShort": {"placeholders": {"s": {"type": "int"}}},
+  "@shortTooLong": {
+    "placeholders": {
+      "s": {
+        "type": "int"
+      }
+    }
+  },
+  "@shortTooShort": {
+    "placeholders": {
+      "s": {
+        "type": "int"
+      }
+    }
+  },
   "shortLength": "Lengte van Short {n}",
-  "@shortLength": {"placeholders": {"n": {"type": "int"}}},
+  "@shortLength": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "approveBlocked": "Herstel eers die Shorts wat rooi gemerk is",
   "shortPreview": "Short {n}",
-  "@shortPreview": {"placeholders": {"n": {"type": "int"}}},
+  "@shortPreview": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "taskUpload": "Oplaai",
   "stageUpload": "Laai op…",
   "upload": "Laai op",
   "openOnYouTube": "Wys op YouTube",
   "quotaToday": "Oplaaie vandag: {n} van {max}",
-  "@quotaToday": {"placeholders": {"n": {"type": "int"}, "max": {"type": "int"}}},
+  "@quotaToday": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "navSettingsTitle": "Instellings",
   "settingsChannel": "Kanaal",
   "clientFile": "Kliënt-ID-lêer (Google, Desktop app)",
@@ -131,19 +269,47 @@
   "ruleYear": "Jaar (\"Preke 2026\")",
   "playlistPreview": "Voorskou",
   "sermonCount": "{n, plural, =1{1 preek} other{{n} preke}}",
-  "@sermonCount": {"placeholders": {"n": {"type": "int"}}},
+  "@sermonCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "noPlaylist": "Sonder snitlys",
   "template": "Beskrywingsjabloon",
   "templatePreview": "So lyk dit vir die nuutste preek",
   "templateHelp": "{tema}, {skriflesing}, {datum} en {beskrywing} word ingevul.",
-  "@templateHelp": {"description": "Arguments are the literal tokens {tema} etc.", "placeholders": {"tema": {"type": "String"}, "skriflesing": {"type": "String"}, "datum": {"type": "String"}, "beskrywing": {"type": "String"}}},
+  "@templateHelp": {
+    "description": "Arguments are the literal tokens {tema} etc.",
+    "placeholders": {
+      "tema": {
+        "type": "String"
+      },
+      "skriflesing": {
+        "type": "String"
+      },
+      "datum": {
+        "type": "String"
+      },
+      "beskrywing": {
+        "type": "String"
+      }
+    }
+  },
   "navSetup": "Opstelling",
   "setupIntro": "Vier dinge, een keer. Daarna begin die app by Preke.",
   "setupOllama": "Ollama (die KI op hierdie rekenaar) loop",
   "setupModel": "Die KI-model is afgelaai (5 GB)",
   "setupChannel": "Die kerk se YouTube-kanaal is gekoppel",
   "setupFolder": "Gids vir gesnyde preke: {path}",
-  "@setupFolder": {"placeholders": {"path": {"type": "String"}}},
+  "@setupFolder": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "stepDone": "Klaar",
   "stepTodo": "Nog nie",
   "startOllama": "Begin Ollama",
@@ -153,5 +319,93 @@
   "makeFolder": "Maak gids",
   "startWork": "Begin werk",
   "checkAgain": "Kontroleer weer",
-  "outFolder": "Gids vir gesnyde preke"
+  "outFolder": "Gids vir gesnyde preke",
+  "introOutro": "Intro en outro",
+  "introOutroHelp": "Video's wat voor en ná elke volle preek kom (nie op Shorts nie). Albei is opsioneel.",
+  "intro": "Intro",
+  "outro": "Outro",
+  "noClip": "Geen",
+  "chooseFile": "Kies…",
+  "clipWithLength": "{name} ({length})",
+  "@clipWithLength": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "length": {
+        "type": "String"
+      }
+    }
+  },
+  "clipUnreadable": "{name} kan nie gelees word nie",
+  "@clipUnreadable": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noCaptions": "Geen onderskrifte nie, stel die begin en einde self",
+  "transcript": "Transkripsie",
+  "prayer": "Gebed",
+  "cutOut": "Uitgeknip",
+  "cutsTab": "Uitgeknip ({n})",
+  "@cutsTab": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "shortsTab": "Shorts ({n})",
+  "@shortsTab": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cutN": "Uitgeknip {n}",
+  "@cutN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "addCut": "Knip uit by speelkop",
+  "noCuts": "Niks uitgeknip nie. Speel na 'n stuk wat uit moet, soos 'n lied, en kies \"Knip uit by speelkop\".",
+  "startHere": "Begin hier",
+  "endHere": "Einde hier",
+  "playPause": "Speel of pouse (spasie)",
+  "playFromStart": "Speel van begin",
+  "playEnd": "Speel die einde",
+  "previewCut": "Voorskou van die snit",
+  "editorKeys": "I/O: begin/einde by speelkop; ←/→: hakie 1 s, Shift 0,1 s",
+  "undo": "Ontdoen (Ctrl+Z)",
+  "redo": "Herdoen (Ctrl+Shift+Z)",
+  "noShorts": "Nog geen Shorts nie. Speel na 'n sterk stuk van die preek en kies \"Voeg Short by\".",
+  "processLatest": "Verwerk nuutste diens",
+  "filterNotUploaded": "Nie opgelaai nie",
+  "importRecording": "Voer opname in",
+  "importConfirm": "Voer in",
+  "importing": "Kopieer opname…",
+  "dropToImport": "Los die video om dit as opname in te voer",
+  "serviceDate": "Diens op {date}",
+  "@serviceDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "updateOnYouTube": "Werk op YouTube by",
+  "updatedOnYouTube": "{n, plural, =1{1 video op YouTube bygewerk} other{{n} video's op YouTube bygewerk}}",
+  "@updatedOnYouTube": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

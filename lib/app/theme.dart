@@ -4,7 +4,7 @@
 //   groep: app | App-raam
 //   skryf: —
 //   doel: ontwerpstelsel (kleure, tipe) uit planne/hoofplan.md, lig + donker
-//   status: oop
+//   status: bou
 import 'package:flutter/material.dart';
 
 /// Extra token: wood tint for Shorts markers (hoofplan: kanselhout, niks anders nie).
@@ -42,6 +42,7 @@ ColorScheme _scheme(Brightness b) {
 
 const _tabular = [FontFeature.tabularFigures()];
 
+/// The app theme for light or dark: Oranje action, river-teal selection, Source Serif/Sans.
 ThemeData buildTheme(Brightness b) {
   final cs = _scheme(b);
   final light = b == Brightness.light;

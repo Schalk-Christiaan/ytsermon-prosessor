@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: —
 //   doel: vind yt-dlp/ffmpeg/ffprobe/ollama (langs die exe, Ollama se gids, PATH), loop eksterne prosesse (runTool), toets Ollama + qwen3:8b, laai die model af, begin Ollama
-//   status: oop
+//   status: bou
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -153,6 +153,7 @@ Future<dynamic> _getJson(String endpoint) async {
   }
 }
 
+/// Checks that Ollama answers and has the model pulled.
 Future<ToolStatus> probeOllama({String model = kModel}) async {
   try {
     final v = (await _getJson('/api/version'))['version'] as String;

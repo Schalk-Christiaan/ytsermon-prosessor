@@ -3,6 +3,7 @@ type: flutter
 standard: 8
 kategorie: -
 tak: main
+kaart: lib/core/*.dart, lib/app/*.dart, lib/features/**/*.dart
 ---
 # ytsermon-prosessor — konteks
 
@@ -32,7 +33,10 @@ Volgende sessie: laai skill `projekkonteks:ui-ux` vir UI-werk.
 2026-11-19 Eers die raamwerk en ander fases klaarbou, dan eers die preekgrense verfyn (want Ollama kies nog nie betroubaar die regte afdelings nie; 1 uit 3 lopies 2:31–55:00)
 2026-11-19 Preekdatum lui per preek: lys in kanaalvolgorde, datum '—' tot die plan-taak dit uit info.json haal (want die flat-lys dra geen datum nie en 326 volle oproepe is te traag)
 2026-11-19 Preekgrense: die preek begin met 'n gebed en eindig met 'n gebed; die snit sluit albei gebede in (want Schalk: grense val steeds verkeerd; aanname oor insluit, bevestig more)
+2026-11-19 Opname sonder onderskrifte word ingevoer met 'n plan oor die hele lêer; Hersien sê "Geen onderskrifte nie, stel die begin en einde self", geen KI-plan of Whisper nie (aanname; Whisper bly 'n oop vraag)
 
 ## Name
 die kanaal = https://www.youtube.com/@gereformeerdekerkoranjeriv5791
 die kerk-PC = die kerk se Windows 11-rekenaar waar dit finaal loop
+die preekredigeerder = Hersien-skerm as volle redigeerder (hakies, segmente, transkripsie, Shorts, ontdoen)
+die intro/outro = Schalk se eie videoklippies voor en ná elke volle preek (nie op Shorts nie, aanname)

@@ -4,7 +4,7 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag-, klaar- en fout-lyste; klaar-items: Speel, Wys in gids, Klank vir WhatsApp, Laai op, Wys op YouTube; oplaai-teller
-//   status: oop
+//   status: bou
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -14,6 +14,7 @@ import '../../core/tools.dart';
 import '../../core/youtube.dart';
 import '../../l10n/app_localizations.dart';
 
+/// Werkry: the running job with progress, then done and failed jobs with their actions.
 class WorkScreen extends StatelessWidget {
   const WorkScreen({
     super.key,
@@ -160,6 +161,8 @@ class WorkScreen extends StatelessWidget {
     ),
   );
 
+  // stap: v7 1 WhatsApp-klank | by die gesnyde preek in Werkry; een klik
+  // stap: v7 3 Wys in gids | maak die gids met die mp3 oop om in WhatsApp te sleep
   Widget _done(L l, ThemeData th, Job j) {
     final s = store.byId(j.sermon);
     final out = s?.outputs ?? const <String>[];
@@ -209,6 +212,8 @@ class WorkScreen extends StatelessWidget {
     );
   }
 
+  // stap: v5 3 Mislukte taak | rooi ikoon, die rede en Probeer weer
+  // stap: v9 2 Werkry wys die rede | die sin uit friendlyError onder die taak, met Probeer weer
   Widget _failed(L l, ThemeData th, Job j) {
     final cancelled = j.status == JobStatus.gekanselleer;
     return Column(

@@ -3,8 +3,8 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: <app-support>/work/<id>/plan.json | die plan; elke wysiging stoor dadelik
-//   doel: laai meta en plan van 'n preek uit die stoor, hou die plan; plan en sny loop deur die werkry
-//   status: oop
+//   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
+//   status: bou
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -21,10 +21,13 @@ import '../../core/models.dart';
 import '../../core/planner.dart';
 import '../../core/store.dart';
 
+/// What Hersien shows: nothing chosen, loading, an error, no plan yet or the editor.
 enum ReviewState { empty, loading, error, unplanned, ready }
 
+/// Which step of loading a sermon is busy: metadata, planning or cutting.
 enum LoadStage { meta, plan, cut }
 
+/// State of the sermon editor: the plan, playback, undo/redo and every edit.
 class ReviewController extends ChangeNotifier {
   ReviewController({
     required this.store,
@@ -32,7 +35,9 @@ class ReviewController extends ChangeNotifier {
     this.download = downloadVideo,
     this.openVideo,
     this.positions,
-  });
+  }) {
+    position.addListener(_skipCuts);
+  }
 
   final SermonStore store;
   final JobQueue jobs;
@@ -45,6 +50,22 @@ class ReviewController extends ChangeNotifier {
   download;
   final Future<void> Function(File video)? openVideo;
   final Stream<Duration>? positions;
+
+  /// "Werk op YouTube by": sends the plan's title and description to the uploaded videos; set by Shell (null = hidden).
+  Future<int> Function(String id)? updateYouTube;
+  bool updating = false;
+
+  /// "Werk op YouTube by": pushes title and description to the uploaded videos; returns how many.
+  Future<int> pushToYouTube() async {
+    updating = true;
+    notifyListeners();
+    try {
+      return await updateYouTube!(id!);
+    } finally {
+      updating = false;
+      notifyListeners();
+    }
+  }
 
   /// Created only once the video is on disk (no libmpv work before that).
   late final player = Player();
@@ -85,6 +106,12 @@ class ReviewController extends ChangeNotifier {
   List<TimeBlock> blocks = [];
   SermonPlan? plan;
   double duration = 0;
+
+  /// Candidate prayers in the captions, marked on the timeline and in the transcript.
+  List<Span> prayerMarks = [];
+
+  /// Bumped by undo/redo, so the text fields reload from the plan.
+  int edits = 0;
 
   /// Bumped when a new plan arrives, so the timeline plays its handle glide.
   int planRevision = 0;
@@ -128,6 +155,8 @@ class ReviewController extends ChangeNotifier {
       );
       state = _active(JobKind.cut) ? ReviewState.loading : ReviewState.ready;
       planRevision++;
+      _undo.clear();
+      _redo.clear();
       if (_download == null && !jobs.hasPending(id!)) _startDownload(meta!);
     } else if (_active(JobKind.plan)) {
       state = ReviewState.loading;
@@ -200,6 +229,8 @@ class ReviewController extends ChangeNotifier {
     error = null;
     state = ReviewState.ready;
     planRevision++;
+    _undo.clear();
+    _redo.clear();
     _save();
     final s = sermon;
     if (s != null) store.save(s..state = SermonState.beplan);
@@ -243,7 +274,137 @@ class ReviewController extends ChangeNotifier {
     saved = true;
   }
 
+  final _undo = <String>[], _redo = <String>[];
+  String? _group;
+  bool get canUndo => _undo.isNotEmpty;
+  bool get canRedo => _redo.isNotEmpty;
+
+  /// Remembers the plan before an edit; edits in the same [group] (a drag, typing) are one step.
+  void _edit([String? group]) {
+    if (group != null && group == _group) return;
+    _group = group;
+    _undo.add(jsonEncode(plan!.toJson()));
+    if (_undo.length > 100) _undo.removeAt(0);
+    _redo.clear();
+  }
+
+  void _swap(List<String> from, List<String> to) {
+    if (from.isEmpty) return;
+    to.add(jsonEncode(plan!.toJson()));
+    plan = SermonPlan.fromJson(
+      jsonDecode(from.removeLast()) as Map<String, dynamic>,
+    );
+    _group = null;
+    edits++;
+    _save();
+    notifyListeners();
+  }
+
+  // stap: v4 4 Ontdoen | Ctrl+Z draai die laaste skuif terug, Ctrl+Shift+Z herdoen
+  void undo() => _swap(_undo, _redo);
+  void redo() => _swap(_redo, _undo);
+
+  // stap: v4 3 Skuif die hakie | sleep, ←/→ 1 s, Shift 0,1 s, of I/O by die speelkop
+  /// Moves one bracket by [d] seconds (keys: 1 s, Shift 0.1 s).
+  void nudge(bool start, double d) {
+    final pl = plan!;
+    start
+        ? setSermon(
+            (pl.sermonStart + d).clamp(0, pl.sermonEnd - 1),
+            pl.sermonEnd,
+          )
+        : setSermon(
+            pl.sermonStart,
+            (pl.sermonEnd + d).clamp(pl.sermonStart + 1, duration),
+          );
+  }
+
+  /// I: the sermon starts at the playhead.
+  void markIn() =>
+      setSermon(position.value.clamp(0, plan!.sermonEnd - 1), plan!.sermonEnd);
+
+  /// O: the sermon ends at the playhead.
+  void markOut() => setSermon(
+    plan!.sermonStart,
+    position.value.clamp(plan!.sermonStart + 1, duration),
+  );
+
+  /// Cuts out 30 s from the playhead (a hymn, an announcement); the ends are set after.
+  void addCut() {
+    final pl = plan!;
+    final start = position.value.clamp(pl.sermonStart, pl.sermonEnd - 1);
+    _edit();
+    pl.cuts.add(Span(start, (start + 30).clamp(start + 1, pl.sermonEnd)));
+    _save();
+    notifyListeners();
+  }
+
+  /// Sets a cut piece's start or end at the playhead.
+  void setCutStart(Span c) => _setCut(c, position.value, c.end);
+  void setCutEnd(Span c) => _setCut(c, c.start, position.value);
+
+  void _setCut(Span c, double start, double end, {bool save = true}) {
+    _edit(save ? null : 'drag');
+    c
+      ..start = start.clamp(plan!.sermonStart, end - 1)
+      ..end = end.clamp(c.start + 1, plan!.sermonEnd);
+    if (save) _save();
+    notifyListeners();
+  }
+
+  void removeCut(Span c) {
+    _edit();
+    plan!.cuts.remove(c);
+    _save();
+    notifyListeners();
+  }
+
+  /// True while "Voorskou van die snit" plays: cut pieces are skipped.
+  bool previewing = false;
+
+  /// Plays the cut sermon from its start, jumping over cut pieces.
+  void previewCut() {
+    previewing = true;
+    seek(plan!.sermonStart);
+    if (videoReady) player.play();
+    notifyListeners();
+  }
+
+  /// Plays from a bracket: the start, or 10 s before the end.
+  void playFrom(bool start) {
+    final pl = plan!;
+    previewing = false;
+    seek(
+      start
+          ? pl.sermonStart
+          : (pl.sermonEnd - 10).clamp(pl.sermonStart, pl.sermonEnd),
+    );
+    if (videoReady) player.play();
+    notifyListeners();
+  }
+
+  void playPause() {
+    if (videoReady) player.playOrPause();
+  }
+
+  /// While previewing: inside a cut piece → jump to its end; past the end → stop.
+  void _skipCuts() {
+    final pl = plan;
+    if (!previewing || pl == null) return;
+    final t = position.value;
+    if (t >= pl.sermonEnd) {
+      previewing = false;
+      if (videoReady) player.pause();
+      notifyListeners();
+      return;
+    }
+    for (final c in pl.cuts) {
+      if (t >= c.start && t < c.end) return seek(c.end);
+    }
+  }
+
   void setSermon(double start, double end, {bool save = true}) {
+    _edit(save ? null : 'drag');
     plan!
       ..sermonStart = start
       ..sermonEnd = end;
@@ -253,17 +414,20 @@ class ReviewController extends ChangeNotifier {
   }
 
   void commit() {
+    _group = null;
     _save();
     notifyListeners();
   }
 
   void setTitle(String v) {
+    _edit('title');
     plan!.title = v;
     _save();
     notifyListeners();
   }
 
   void setDescription(String v) {
+    _edit('description');
     plan!.description = v;
     _save();
     notifyListeners();
@@ -277,6 +441,7 @@ class ReviewController extends ChangeNotifier {
   void addShort(String title) {
     final pl = plan!;
     final start = position.value.clamp(pl.sermonStart, pl.sermonEnd - 20);
+    _edit();
     pl.shorts.add(
       Short(
         start: start,
@@ -290,6 +455,7 @@ class ReviewController extends ChangeNotifier {
 
   /// Moves a Short's end (the length slider); save only when [save].
   void setShortEnd(Short s, double end, {bool save = true}) {
+    _edit(save ? null : 'drag');
     s.end = end.clamp(s.start + 1, plan!.sermonEnd);
     if (save) _save();
     notifyListeners();
@@ -299,7 +465,30 @@ class ReviewController extends ChangeNotifier {
   bool get hasShortFault =>
       plan?.shorts.any((s) => shortFault(s, plan!) != null) ?? false;
 
+  /// Moves a whole Short by [d] seconds, kept inside the sermon (drag on the timeline).
+  void moveShort(Short s, double d, {bool save = true}) {
+    final pl = plan!;
+    _edit(save ? null : 'drag');
+    final dd = d.clamp(pl.sermonStart - s.start, pl.sermonEnd - s.end);
+    s
+      ..start += dd
+      ..end += dd;
+    if (save) _save();
+    notifyListeners();
+  }
+
+  /// Puts a Short's start at the playhead, keeping its length.
+  void setShortStart(Short s) => moveShort(s, position.value - s.start);
+
+  void setShortTitle(Short s, String v) {
+    _edit('short-title');
+    s.title = v;
+    _save();
+    notifyListeners();
+  }
+
   void removeShort(Short s) {
+    _edit();
     plan!.shorts.remove(s);
     _save();
     notifyListeners();
@@ -324,11 +513,14 @@ class ReviewController extends ChangeNotifier {
     duration = dur;
     state = ReviewState.ready;
     planRevision++;
+    _undo.clear();
+    _redo.clear();
     notifyListeners();
   }
 
   @override
   void dispose() {
+    position.removeListener(_skipCuts);
     jobs.removeListener(_onJobs);
     _pos?.cancel();
     if (videoReady) player.dispose();

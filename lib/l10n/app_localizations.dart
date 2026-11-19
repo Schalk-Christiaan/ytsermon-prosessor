@@ -877,6 +877,222 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Gids vir gesnyde preke'**
   String get outFolder;
+
+  /// No description provided for @introOutro.
+  ///
+  /// In af, this message translates to:
+  /// **'Intro en outro'**
+  String get introOutro;
+
+  /// No description provided for @introOutroHelp.
+  ///
+  /// In af, this message translates to:
+  /// **'Video\'s wat voor en ná elke volle preek kom (nie op Shorts nie). Albei is opsioneel.'**
+  String get introOutroHelp;
+
+  /// No description provided for @intro.
+  ///
+  /// In af, this message translates to:
+  /// **'Intro'**
+  String get intro;
+
+  /// No description provided for @outro.
+  ///
+  /// In af, this message translates to:
+  /// **'Outro'**
+  String get outro;
+
+  /// No description provided for @noClip.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen'**
+  String get noClip;
+
+  /// No description provided for @chooseFile.
+  ///
+  /// In af, this message translates to:
+  /// **'Kies…'**
+  String get chooseFile;
+
+  /// No description provided for @clipWithLength.
+  ///
+  /// In af, this message translates to:
+  /// **'{name} ({length})'**
+  String clipWithLength(String name, String length);
+
+  /// No description provided for @clipUnreadable.
+  ///
+  /// In af, this message translates to:
+  /// **'{name} kan nie gelees word nie'**
+  String clipUnreadable(String name);
+
+  /// No description provided for @noCaptions.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen onderskrifte nie, stel die begin en einde self'**
+  String get noCaptions;
+
+  /// No description provided for @transcript.
+  ///
+  /// In af, this message translates to:
+  /// **'Transkripsie'**
+  String get transcript;
+
+  /// No description provided for @prayer.
+  ///
+  /// In af, this message translates to:
+  /// **'Gebed'**
+  String get prayer;
+
+  /// No description provided for @cutOut.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitgeknip'**
+  String get cutOut;
+
+  /// No description provided for @cutsTab.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitgeknip ({n})'**
+  String cutsTab(int n);
+
+  /// No description provided for @shortsTab.
+  ///
+  /// In af, this message translates to:
+  /// **'Shorts ({n})'**
+  String shortsTab(int n);
+
+  /// No description provided for @cutN.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitgeknip {n}'**
+  String cutN(int n);
+
+  /// No description provided for @addCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Knip uit by speelkop'**
+  String get addCut;
+
+  /// No description provided for @noCuts.
+  ///
+  /// In af, this message translates to:
+  /// **'Niks uitgeknip nie. Speel na \'n stuk wat uit moet, soos \'n lied, en kies \"Knip uit by speelkop\".'**
+  String get noCuts;
+
+  /// No description provided for @startHere.
+  ///
+  /// In af, this message translates to:
+  /// **'Begin hier'**
+  String get startHere;
+
+  /// No description provided for @endHere.
+  ///
+  /// In af, this message translates to:
+  /// **'Einde hier'**
+  String get endHere;
+
+  /// No description provided for @playPause.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel of pouse (spasie)'**
+  String get playPause;
+
+  /// No description provided for @playFromStart.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel van begin'**
+  String get playFromStart;
+
+  /// No description provided for @playEnd.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel die einde'**
+  String get playEnd;
+
+  /// No description provided for @previewCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Voorskou van die snit'**
+  String get previewCut;
+
+  /// No description provided for @editorKeys.
+  ///
+  /// In af, this message translates to:
+  /// **'I/O: begin/einde by speelkop; ←/→: hakie 1 s, Shift 0,1 s'**
+  String get editorKeys;
+
+  /// No description provided for @undo.
+  ///
+  /// In af, this message translates to:
+  /// **'Ontdoen (Ctrl+Z)'**
+  String get undo;
+
+  /// No description provided for @redo.
+  ///
+  /// In af, this message translates to:
+  /// **'Herdoen (Ctrl+Shift+Z)'**
+  String get redo;
+
+  /// No description provided for @noShorts.
+  ///
+  /// In af, this message translates to:
+  /// **'Nog geen Shorts nie. Speel na \'n sterk stuk van die preek en kies \"Voeg Short by\".'**
+  String get noShorts;
+
+  /// No description provided for @processLatest.
+  ///
+  /// In af, this message translates to:
+  /// **'Verwerk nuutste diens'**
+  String get processLatest;
+
+  /// No description provided for @filterNotUploaded.
+  ///
+  /// In af, this message translates to:
+  /// **'Nie opgelaai nie'**
+  String get filterNotUploaded;
+
+  /// No description provided for @importRecording.
+  ///
+  /// In af, this message translates to:
+  /// **'Voer opname in'**
+  String get importRecording;
+
+  /// No description provided for @importConfirm.
+  ///
+  /// In af, this message translates to:
+  /// **'Voer in'**
+  String get importConfirm;
+
+  /// No description provided for @importing.
+  ///
+  /// In af, this message translates to:
+  /// **'Kopieer opname…'**
+  String get importing;
+
+  /// No description provided for @dropToImport.
+  ///
+  /// In af, this message translates to:
+  /// **'Los die video om dit as opname in te voer'**
+  String get dropToImport;
+
+  /// No description provided for @serviceDate.
+  ///
+  /// In af, this message translates to:
+  /// **'Diens op {date}'**
+  String serviceDate(String date);
+
+  /// No description provided for @updateOnYouTube.
+  ///
+  /// In af, this message translates to:
+  /// **'Werk op YouTube by'**
+  String get updateOnYouTube;
+
+  /// No description provided for @updatedOnYouTube.
+  ///
+  /// In af, this message translates to:
+  /// **'{n, plural, =1{1 video op YouTube bygewerk} other{{n} video\'s op YouTube bygewerk}}'**
+  String updatedOnYouTube(int n);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

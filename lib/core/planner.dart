@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: werkmap/<id>/plan.json
 //   doel: vra qwen3:8b vir preekgrense, Shorts, titel en beskrywing; validate() toets die plan, shortFault() elke Short apart; berg plan.json op
-//   status: oop
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 
@@ -18,6 +18,7 @@ const kMaxShort = 90;
 
 const kPlanFile = 'plan.json';
 
+/// Planning failed in a way the user can act on (no captions, Ollama gave nonsense).
 class PlanException implements Exception {
   PlanException(this.errors, {this.plan});
   final List<String> errors;
@@ -96,6 +97,7 @@ List<String> validate(SermonPlan plan, double duration) {
   return e;
 }
 
+/// Why a Short cannot be cut: outside the sermon, under 20 s or over 90 s.
 enum ShortFault { outside, tooShort, tooLong }
 
 /// Why a Short can't be cut (outside the sermon, or not 20-90 s); null = fine.

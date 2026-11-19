@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:preekverwerker/core/cutter.dart';
+import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/tools.dart';
 
 void main() {
@@ -131,4 +132,68 @@ void main() {
     },
     skip: findExecutable('ffmpeg') == null ? 'ffmpeg ontbreek' : null,
   );
+
+  test('cutSermon joins kept parts with intro/outro of another size, fps and no audio (real ffmpeg)', () async {
+    final d = Directory.systemTemp.createTempSync('join');
+    Future<File> gen(
+      String name,
+      String size,
+      int rate,
+      double secs, {
+      bool audio = true,
+    }) async {
+      final f = File(p.join(d.path, name));
+      await Process.run('ffmpeg', [
+        '-y',
+        '-f',
+        'lavfi',
+        '-i',
+        'testsrc=size=$size:rate=$rate:duration=$secs',
+        if (audio) ...['-f', 'lavfi', '-i', 'sine=duration=$secs'],
+        '-pix_fmt',
+        'yuv420p',
+        '-shortest',
+        f.path,
+      ]);
+      return f;
+    }
+
+    final main = await gen('video.mp4', '320x240', 25, 10);
+    final intro = await gen('intro.mp4', '160x120', 30, 2, audio: false);
+    final outro = await gen('outro.mp4', '640x480', 25, 1.5);
+    expect((await probeMedia(intro)).hasAudio, isFalse);
+    expect((await probeMedia(outro)).duration, closeTo(1.5, 0.1));
+    final plan = SermonPlan(
+      sermonStart: 1,
+      sermonEnd: 9,
+      title: 'Snit',
+      description: '',
+      shorts: [],
+      cuts: [Span(4, 6)],
+    );
+    final out = await cutSermon(
+      main,
+      plan,
+      '2026-11-16',
+      d,
+      intro: intro,
+      outro: outro,
+    );
+    final m = await probeMedia(out);
+    expect((m.width, m.height), (320, 240));
+    expect(m.duration, closeTo(2 + 6 + 1.5, 0.3));
+    final r = await Process.run('ffprobe', [
+      '-v',
+      'error',
+      '-select_streams',
+      'a',
+      '-show_entries',
+      'stream=index',
+      '-of',
+      'csv=p=0',
+      out.path,
+    ]);
+    expect((r.stdout as String).trim().split('\n').length, 1);
+    d.deleteSync(recursive: true);
+  }, skip: findExecutable('ffmpeg') == null ? 'ffmpeg ontbreek' : null);
 }

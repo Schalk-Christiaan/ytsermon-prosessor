@@ -3,17 +3,24 @@
 //   wanneer: Preke (rail, tuis)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: die hele kanaal as lys met toestand; filter, soek, "Verwerk volgende" → werkry
-//   status: oop
+//   doel: die hele kanaal as lys met toestand (titel bo, Skriflesing onder); filter (ook "Nie opgelaai nie"), soek; "Verwerk nuutste diens" → plan → Hersien; "Verwerk volgende" → werkry; "Voer opname in" (knoppie of insleep) → Hersien
+//   status: bou
+import 'dart:io';
+
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
 
 import '../../core/channel.dart';
 import '../../core/jobs.dart';
+import '../../core/recording.dart';
 import '../../core/store.dart';
 import '../../l10n/app_localizations.dart';
+import '../settings/settings_screen.dart';
 import '../settings/system_status.dart';
 
+/// The word for a sermon state, so state is never shown by colour alone.
 String stateLabel(L l, SermonState s) => switch (s) {
   SermonState.nuut => l.stateNuut,
   SermonState.beplan => l.stateBeplan,
@@ -24,6 +31,7 @@ String stateLabel(L l, SermonState s) => switch (s) {
   SermonState.oorgeslaan => l.stateOorgeslaan,
 };
 
+/// The icon for a sermon state.
 IconData stateIcon(SermonState s) => switch (s) {
   SermonState.nuut => Icons.fiber_new_rounded,
   SermonState.beplan => Icons.fact_check_rounded,
@@ -34,6 +42,7 @@ IconData stateIcon(SermonState s) => switch (s) {
   SermonState.oorgeslaan => Icons.skip_next_rounded,
 };
 
+/// Preke: the channel's sermons with state, filters, process and import.
 class SermonsScreen extends StatefulWidget {
   const SermonsScreen({
     super.key,
@@ -41,6 +50,8 @@ class SermonsScreen extends StatefulWidget {
     required this.jobs,
     required this.onOpen,
     this.list = listChannel,
+    this.pickVideo = pickVideoFile,
+    this.importFile,
   });
   final SermonStore store;
   final JobQueue jobs;
@@ -51,6 +62,11 @@ class SermonsScreen extends StatefulWidget {
   /// Test seam: the channel lister.
   final Future<List<ChannelItem>> Function() list;
 
+  /// Test seams for "Voer opname in"; [importFile] defaults to [importRecording] into [store].
+  final Future<String?> Function() pickVideo;
+  final Future<Sermon> Function(File f, String title, DateTime date)?
+  importFile;
+
   @override
   State<SermonsScreen> createState() => _SermonsScreenState();
 }
@@ -59,8 +75,11 @@ class _SermonsScreenState extends State<SermonsScreen> {
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
   final _filter = <SermonState>{};
+  bool _notUploaded = false;
   final _selected = <String>{};
   bool _loading = false;
+  bool _importing = false;
+  bool _dragging = false;
   String? _error;
   int _fresh = 0;
 
@@ -114,10 +133,138 @@ class _SermonsScreenState extends State<SermonsScreen> {
     setState(_selected.clear);
   }
 
+  // stap: v1 1 Verwerk nuutste diens | Preke: een knoppie verfris die lys, beplan die boonste diens en maak Hersien oop
+  // tak: nog besig met beplan → Hersien wys die laaistap; geen internet → strook met die rede
+  /// The usual Monday: refresh the list, plan the newest service if it is new, open it in Hersien.
+  Future<void> _processLatest() async {
+    await _refresh();
+    final all = widget.store.sorted.where((s) => !isRecording(s.id));
+    if (all.isEmpty) return;
+    final s = all.first;
+    if (s.state == SermonState.nuut && !widget.jobs.hasPending(s.id)) {
+      widget.jobs.enqueue(s.id, JobKind.plan);
+    }
+    widget.onOpen(s.id);
+  }
+
+  // stap: v3 1 Voer opname in | lêerkieser of insleep → dialoog met titel (lêernaam) en datum
+  // tak: kanselleer → niks verander nie; kopie misluk (skyf vol) → strook met friendlyError
+  /// "Voer opname in": file (picked or dropped) → title and date → copy into the work folder → Hersien.
+  Future<void> _import([String? path]) async {
+    final l = L.of(context);
+    path ??= await widget.pickVideo();
+    if (path == null || !mounted) return;
+    final title = TextEditingController(text: p.basenameWithoutExtension(path));
+    var date = DateTime.now();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, set) => AlertDialog(
+          title: Text(l.importRecording),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: title,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: l.title,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.event_rounded),
+                  label: Text(l.serviceDate(_ymd(date))),
+                  onPressed: () async {
+                    final d = await showDatePicker(
+                      context: context,
+                      initialDate: date,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now().add(const Duration(days: 1)),
+                    );
+                    if (d != null) set(() => date = d);
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l.importConfirm),
+            ),
+          ],
+        ),
+      ),
+    );
+    // Not disposed: the dialog's closing animation still reads it; GC takes it.
+    final name = title.text.trim();
+    if (ok != true || !mounted) return;
+    setState(() => _importing = true);
+    try {
+      final f = File(path);
+      final s = await (widget.importFile != null
+          ? widget.importFile!(f, name.isEmpty ? p.basename(path) : name, date)
+          : importRecording(
+              f,
+              name.isEmpty ? p.basename(path) : name,
+              date,
+              widget.store,
+            ));
+      if (mounted) widget.onOpen(s.id);
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(friendlyError(e))));
+      }
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
+  }
+
+  static String _ymd(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
     final th = Theme.of(context);
+    return DropTarget(
+      onDragEntered: (_) => setState(() => _dragging = true),
+      onDragExited: (_) => setState(() => _dragging = false),
+      onDragDone: (d) {
+        setState(() => _dragging = false);
+        if (d.files.isNotEmpty) _import(d.files.first.path);
+      },
+      child: Stack(
+        children: [
+          _page(l, th),
+          if (_dragging)
+            Positioned.fill(
+              child: ColoredBox(
+                color: th.colorScheme.surface.withValues(alpha: 0.92),
+                child: Center(
+                  child: Text(
+                    l.dropToImport,
+                    style: th.textTheme.headlineSmall,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _page(L l, ThemeData th) {
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
@@ -137,6 +284,9 @@ class _SermonsScreenState extends State<SermonsScreen> {
               final rows = [
                 for (final s in all)
                   if ((_filter.isEmpty || _filter.contains(s.state)) &&
+                      (!_notUploaded ||
+                          (s.state != SermonState.opgelaai &&
+                              s.state != SermonState.oorgeslaan)) &&
                       (q.isEmpty ||
                           '${s.title} ${s.scripture ?? ''} ${s.date ?? ''}'
                               .toLowerCase()
@@ -147,7 +297,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _header(l, th),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   _filters(l),
                   if (_fresh > 0)
                     _strip(l, th, l.newServices(_fresh), () {
@@ -169,8 +319,35 @@ class _SermonsScreenState extends State<SermonsScreen> {
   Widget _header(L l, ThemeData th) => Row(
     children: [
       Text(l.navPreke, style: th.textTheme.headlineMedium),
-      const SizedBox(width: 24),
-      Expanded(
+      const Spacer(),
+      TextButton.icon(
+        onPressed: _importing ? null : _import,
+        icon: _importing
+            ? const SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.video_file_rounded),
+        label: Text(_importing ? l.importing : l.importRecording),
+      ),
+      const SizedBox(width: 8),
+      OutlinedButton(onPressed: _processNext, child: Text(l.processNext)),
+      const SizedBox(width: 12),
+      FilledButton(
+        onPressed: _loading ? null : _processLatest,
+        child: Text(l.processLatest),
+      ),
+    ],
+  );
+
+  // stap: v2 1 Filter nie opgelaai nie | die chip wys net preke wat nog nie op YouTube is nie, nuutste bo
+  Widget _filters(L l) => Wrap(
+    spacing: 8,
+    runSpacing: 8,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      SizedBox(
+        width: 240,
         child: TextField(
           controller: _search,
           focusNode: _searchFocus,
@@ -183,14 +360,13 @@ class _SermonsScreenState extends State<SermonsScreen> {
           ),
         ),
       ),
-      const SizedBox(width: 12),
-      FilledButton(onPressed: _processNext, child: Text(l.processNext)),
-    ],
-  );
-
-  Widget _filters(L l) => Wrap(
-    spacing: 8,
-    children: [
+      const SizedBox(width: 8),
+      FilterChip(
+        avatar: const Icon(Icons.cloud_off_rounded, size: 18),
+        label: Text(l.filterNotUploaded),
+        selected: _notUploaded,
+        onSelected: (v) => setState(() => _notUploaded = v),
+      ),
       for (final s in SermonState.values)
         FilterChip(
           avatar: Icon(stateIcon(s), size: 18),
@@ -257,11 +433,12 @@ class _SermonsScreenState extends State<SermonsScreen> {
     }
     return ListView.builder(
       itemCount: rows.length,
-      itemExtent: 56,
+      itemExtent: 64,
       itemBuilder: (context, i) => _row(l, th, rows[i]),
     );
   }
 
+  // stap: v2 2 Kies die ou preek | klik die ry → Hersien; nog nie beplan nie → Hersien beplan dit eers (laaistap)
   Widget _row(L l, ThemeData th, Sermon s) {
     final queued = widget.jobs.hasPending(s.id);
     return InkWell(
@@ -279,21 +456,27 @@ class _SermonsScreenState extends State<SermonsScreen> {
             child: Text(s.date ?? l.noDate, style: th.textTheme.labelMedium),
           ),
           Expanded(
-            child: Text(
-              s.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: th.textTheme.headlineSmall?.copyWith(fontSize: 18),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: th.textTheme.headlineSmall?.copyWith(fontSize: 18),
+                ),
+                if (s.scripture != null)
+                  Text(
+                    s.scripture!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: th.textTheme.bodySmall,
+                  ),
+              ],
             ),
           ),
-          SizedBox(
-            width: 180,
-            child: Text(
-              s.scripture ?? '',
-              overflow: TextOverflow.ellipsis,
-              style: th.textTheme.bodyMedium,
-            ),
-          ),
+          const SizedBox(width: 16),
           SizedBox(
             width: 140,
             child: Row(
@@ -325,7 +508,7 @@ class _Skeleton extends StatelessWidget {
     final c = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08);
     return ListView.builder(
       physics: const NeverScrollableScrollPhysics(),
-      itemExtent: 56,
+      itemExtent: 64,
       itemCount: 8,
       itemBuilder: (_, _) => Center(
         child: Container(

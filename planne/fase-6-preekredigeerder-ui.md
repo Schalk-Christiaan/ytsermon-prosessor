@@ -1,4 +1,4 @@
-status: oop
+status: hersien
 
 # Fase 6: Die preekredigeerder
 
@@ -137,11 +137,85 @@ Dieselfde fase bring:
 - (aanname) V8 werk net die titel en beskrywing op YouTube by. Die Skriflesing staan in die beskrywing. Die snitlys skuif nie.
 
 ## Vloeie
-(word ná die bou met kritiek ingevul)
+Vorm: skerm → aksie → wat die app wys → foutpad. Daaronder die kritiek per persona (kliks, waar die persoon vassit, wat ek verander het). In die kode as `vloei: v1…v9` (definisies bo-aan `lib/app/shell.dart`) en `stap:`-reëls by die funksies; `kaart.py --check` is skoon.
+
+**V1 Verwerk nuutste diens** (die gewone Maandag)
+Preke → "Verwerk nuutste diens" → die lys verfris, die boonste diens kry 'n beplan-taak en Hersien maak oop met die laaistappe (onderskrifte, video, Ollama) → Hersien wys die hakies by die gebede, die titel, Skriflesing en beskrywing → "Keur goed en sny" → strook "Gestuur na Werk" met **Werk** → Werk wys vordering → "Laai op" → die skakel "Maak oop op YouTube". Met intro/outro in Instellings kom die klippies voor en ná die volle preek (nie op Shorts nie).
+Foutpad: geen internet → Werk: "Geen internet nie. Kyk die netwerk en probeer weer." + Probeer weer; Ollama af → "Ollama het nie geantwoord nie. Maak seker dit loop."; kwota op → "Vandag se 100 oplaaie is op; probeer môre weer.".
+- Oom Johan: 4 kliks (Verwerk nuutste diens, Keur goed en sny, Werk, Laai op). Vassit: ná "Keur goed en sny" was daar net 'n strook en hy moes self weet om na Werk te gaan. **Verander:** die strook het nou 'n knoppie **Werk** wat daarheen gaan. Steeds: "Laai op" is 'n aparte klik (doelbewus: 'n mens kyk die snit voor dit publiek word).
+- Schalk: dieselfde, maar met die sleutelbord in Hersien; die log in Werk wys elke ffmpeg-/yt-dlp-reël. Geen vassit nie.
+- Die predikant: kyk in Hersien die titel (twee reëls, nie afgekap nie), die beskrywing met die Skriflesing, en of die begin-hakie by die gebed staan (gebedsmerker op die tydlyn, "Gebed:" in die transkripsie). "Speel van begin" wys die eerste sekondes.
+
+**V2 'n Ou preek** (agterstand)
+Preke → chip "Nie opgelaai nie" → net preke sonder oplaai, nuutste bo → klik die ry → Hersien (beplan eers as dit nuut is) → verder soos V1.
+Foutpad: soos V1; 'n preek sonder onderskrifte wys die leë transkripsie met "stel self".
+- Oom Johan: 2 kliks tot Hersien. Vassit: die soekveld en die chip lyk eenders belangrik. Nie verander nie (die chip het 'n wolk-ikoon en staan eerste ná die soekveld).
+- Schalk: tik in die soekveld (titel of Skriflesing). Geen vassit nie.
+
+**V3 Voer opname in** (geen YouTube nie)
+Preke → "Voer opname in" (of sleep die lêer op Preke; oorleg "Los die video om dit as opname in te voer") → lêerkieser → dialoog: titel (lêernaam), datum (datumkieser) → "Voer in" → strook "Kopieer opname…" → die lêer word **gekopieer** na `<werk>/opname-JJJJMMDD-HHMMSS/video.mp4` met `info.json`, leë onderskrifte en 'n plan oor die hele lêer → Hersien met "Geen onderskrifte nie, stel die begin en einde self" → speel, I/O by die gebede → "Keur goed en sny".
+Foutpad: kanselleer → niks verander nie; skyf vol → "Die skyf is vol. Maak plek (ou video's in die werkgids) en probeer weer."; 'n lêer wat ffprobe nie ken nie → die strook met die rede.
+- Oom Johan: 5 kliks plus die hakies stel; die hakies sonder transkripsie is moeilik met net die muis (sleep op 'n uur lange tydlyn). Nie verander nie; Whisper sou dit oplos (oop vraag).
+- Schalk: I/O en ←/→ maak dit vinnig. Vassit: die dialoog vra die datum elke keer (verstek vandag); goed so.
+- Die predikant: geen KI-titel nie, die titel is die lêernaam tot iemand dit tik.
+
+**V4 Ollama het die grense verkeerd**
+Hersien → die hakie staan nie by 'n gebedsmerker nie → klik die gebed se reël in die transkripsie (video spring daarheen) → I (of sleep, of ←/→ en Shift) → "Speel van begin" om te kyk → Ctrl+Z as dit erger is → "Beplan weer" as die hele voorstel verkeerd is.
+Foutpad: Beplan weer vra bevestiging (handwerk gaan verlore); Ollama af → strook met die rede.
+- Oom Johan: 3 kliks (reël, dan sleep die hakie of klik die "I"-wenk se ekwivalent: hy sleep). Vassit: die sleutelwenk "I/O: begin/einde by speelkop" sê vir hom niks. Nie verander nie; die sleep werk met die muis en die ontdoen-pyle staan sigbaar regs.
+- Schalk: klik reël, I, klaar: 2 aksies.
+- Die predikant: sien "Gebed:" in die transkripsie en die merkers; kan bevestig dat die preek nie halfpad begin nie.
+
+**V5 Ineenstorting of kragonderbreking**
+Die app begin weer → `jobs.json` word gelees, 'n taak wat besig was, wag weer en loop van voor af → yt-dlp gaan voort met die halwe `.part`-lêer; 'n klaar `video.mp4` word oorgeslaan → 'n snit begin van voor (ffmpeg oorskryf).
+Foutpad: 'n taak wat misluk, staan in Werk met die rede en Probeer weer.
+- Oom Johan: 0 kliks; hy hoef niks te onthou nie. Vassit: geen boodskap sê "hervat" nie; Werk wys net weer vordering. Nie verander nie.
+- Schalk: die log wys die nuwe begin. Plan-redigering in Hersien word by elke verandering gestoor, dus verloor hy hoogstens die laaste tik.
+
+**V6 Eerste keer op die kerk-PC**
+Setup.exe → die app begin op Opstelling → "Begin Ollama" → "Laai model af" (vordering) → "Koppel kanaal" (Google-aanmelding in die blaaier) → "Maak gids" → "Begin werk" → Preke.
+Foutpad: geen kliënt-ID-lêer → "Kies eers die kliënt-ID-lêer in Instellings" + "Gaan na Instellings".
+- Oom Johan: 5 kliks, een gevulde knoppie op 'n slag. Vassit: die kliënt-ID-lêer; dit is Schalk se werk (een keer).
+- Schalk: kopieer `client_secret.json`, dan dieselfde 5 kliks.
+
+**V7 Vinnige WhatsApp-klank**
+Werk → by die gesnyde preek "WhatsApp-klank" → mp3 `JJJJ-MM-DD Tema.mp3` langs die preek → "Wys in gids" → sleep in WhatsApp.
+Foutpad: nog nie gesny nie → "Sny eers die preek."
+- Die WhatsApp-admin: 3 kliks (Werk, WhatsApp-klank, Wys in gids). Vassit: as die preek nog nie gesny is nie, is daar geen knoppie nie; dan moet hy Schalk of Oom Johan vra. Nie verander nie.
+- Oom Johan: dieselfde 3 kliks.
+
+**V8 Fout ná oplaai**
+Preke → die opgelaaide preek → Hersien → wysig titel of beskrywing → "Werk op YouTube by" (verskyn net vir 'n opgelaaide preek) → strook "3 video's op YouTube bygewerk".
+Foutpad: geen internet → strook met die internet-sin; video op YouTube uitgevee → "Video … is nie meer op YouTube nie.".
+- Die predikant: sien die fout op YouTube en vra; Schalk of Oom Johan doen dit in 3 kliks plus tik.
+- Oom Johan: vassit: "Keur goed en sny" staan ook nog daar (nou omlyn, nie gevul nie), sodat die gevulde knoppie "Werk op YouTube by" is. Die snit self skuif nie (aanname).
+
+**V9 Geen internet of vol skyf**
+'n Taak misluk → Werk: rooi ikoon, die sin uit `friendlyError` ("Geen internet nie …" / "Die skyf is vol …" / "Ollama het nie geantwoord nie. Maak seker dit loop.") en Probeer weer → die taak staan weer in die ry.
+- Oom Johan: 1 klik (Probeer weer), ná die regstelling. Die sin sê wat om te doen; "SocketException" verskyn nie meer nie.
+- Schalk: die log hou die rou fout.
 
 ## Persona's
-(word ná die bou ingevul)
+- **Schalk**: tegnies; wil die sleutelbord (I/O, ←/→, Shift, spasie, Ctrl+Z), spoed en die log. Hersien en Werk is vir hom gebou; die kortpaaie staan in 'n wenk regs bo die lyste.
+- **Oom Johan** (±65): net die muis, wil een knoppie, gewone Afrikaans en sekerheid. Elke skerm het een gevulde knoppie; toestande het 'n woord en ikoon, nie net kleur nie; foute sê wat om te doen. Sy vassit-punte: na Werk ná die snit (nou opgelos), die hakies sonder transkripsie (V3), die kliënt-ID (Schalk se werk).
+- **Die predikant**: kyk die titel, Skriflesing en beskrywing, en dat die preek nie halfpad begin nie. Hersien wys die titel in twee reëls, die gebede gemerk en "Speel van begin"; V8 maak 'n fout ná oplaai reg.
+- **Die WhatsApp-admin**: wil net die klank. V7: drie kliks in Werk, die lêer het die datum en tema in die naam.
 
 ## Log
+- 2026-11-19 stap 1: `SermonPlan.cuts` en `parts()`; models_test rooi → groen.
+- 2026-11-19 stap 2-3: `probeMedia`, `joinArgs`, `cutSermon(intro:, outro:)`; Instellings kies intro/outro met lengte; `cutJob` gee dit deur. cutter_test met regte ffmpeg op `testsrc` (320×240 @ 25 + 160×120 @ 30 sonder klank + outro): `ffprobe` 320×240, duur = som ±0,3 s, een klankstroom. jobs_test groen.
+- 2026-11-19 stap 4: redigeerder-beheerder (ontdoen/herdoen, nudge, I/O, uitknip, Shorts, voorskou); review_controller_test rooi → groen.
+- 2026-11-19 stap 5: redigeerder-UI; widget-toetse rooi → groen; kiekies `hersien-{light,dark}-{1100,1920}`, `hersien-opname-light-1100`.
+- 2026-11-19 stap 6: Preke-rye met twee reëls, "Verwerk nuutste diens", filter; kiekies `preke-*` en `preke-light-750` (titel tot die volle breedte, Skriflesing onder).
+- 2026-11-19 stap 7: "Voer opname in" (kieser, dialoog, insleep met `desktop_drop`); recording_test rooi → groen.
+- 2026-11-19 stap 8: `friendlyError` (Ollama-poort, geen internet, vol skyf); errors_test rooi → groen.
+- 2026-11-19 stap 9: `YouTube.updateVideo` + "Werk op YouTube by"; youtube_test (vals bediener, kategorie behou) rooi → groen.
+- 2026-11-19 stap 10: vloeie V1–V9 as `vloei:`/`stap:`; `kaart:` in CONTEXT.md (die kontrole het voorheen niks gelees nie) en `status: oop` → `bou` (oop is nie 'n geldige status nie); doc-reëls by die publieke klasse. Kritiek V1: strook ná "Keur goed en sny" kry **Werk** (widget-toets rooi → groen). `flutter test` 132 groen (1 oorgeslaan), `dart analyze` skoon, `kaart.py --check` skoon (net "Onvoltooid": status bou tot /bewys), `flutter build linux --debug` bou (ook `desktop_drop`).
 
 ## Verslag
+Hersien is nou die preekredigeerder: sleepbare hakies (←/→ 1 s, Shift 0,1 s, I/O by die speelkop), speel van 'n hakie en voorskou van die snit, 'n transkripsiestrook waar 'n klik soek en gebede gemerk is, uitgeknipte middelstukke (gestreep op die tydlyn, 'n lys segmente), Shorts wat sleep en wysig, en ontdoen/herdoen met Ctrl+Z / Ctrl+Shift+Z. Intro/outro kom voor en ná die volle preek. Preke het "Verwerk nuutste diens", die filter "Nie opgelaai nie", "Voer opname in" (kieser en insleep) en rye met die titel bo en die Skriflesing onder. Foute sê of dit die internet, Ollama of die skyf is. 'n Opgelaaide preek se titel en beskrywing kan met "Werk op YouTube by" reggemaak word.
+Kritiekrondes op die kiekies:
+- Hersien (1100/1920, lig/donker): een gevulde knoppie ("Keur goed en sny"); die titel was afgekap → twee reëls; die sleutelwenk staan stil regs. Opname-kiekie: die leë transkripsie sê wat om te doen.
+- Preke (750/1100/1920): titel tot die volle breedte, Skriflesing daaronder in kleiner tipe; die soekveld is na die filterry geskuif sodat dit by 750 nie platgedruk word nie.
+- Vloeie: ná "Keur goed en sny" kry die strook 'n knoppie Werk (Oom Johan).
+Ongetoets: regte insleep uit 'n lêerbestuurder (net die kode-pad), die regte YouTube `videos.update` (net teen 'n vals bediener), die lêerkieser en insleep op Windows, en herkodering van 'n volle 60 min-preek op die kerk-PC (die Ingryp-reël oor `veryfast` is reeds die verstek).

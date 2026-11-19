@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: <werkmap>/jobs.json | die ry; sermon.json van die preek wat verwerk word
 //   doel: een taak op 'n slag (plan, sny, klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
-//   status: oop
+//   status: bou
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -24,13 +24,16 @@ import 'store.dart';
 import 'tools.dart';
 import 'youtube.dart';
 
+/// What a job does: plan the bounds, cut, export audio or upload.
 enum JobKind { plan, cut, audio, upload }
 
+/// Where a job is: waiting, running, done, failed or cancelled.
 enum JobStatus { wag, besig, klaar, fout, gekanselleer }
 
 /// What a running job is busy with (the Werk-skerm maps it to text).
 enum JobPhase { meta, plan, download, cut, audio, upload }
 
+/// One queued piece of work for a sermon, persisted in jobs.json with its log.
 class Job {
   Job(
     this.sermon,
@@ -87,21 +90,43 @@ class JobCtx {
 
 typedef JobRun = Future<void> Function(JobCtx ctx);
 
+// stap: v9 1 Gewone-taal fout | internet, Ollama of vol skyf word elk sy eie sin met die regstelling
 /// Plain-language reason for a failed job.
 String friendlyError(Object e) {
+  const disk =
+      'Die skyf is vol. Maak plek (ou video\'s in die werkgids) en probeer weer.';
+  const net = 'Geen internet nie. Kyk die netwerk en probeer weer.';
+  const ollama = 'Ollama het nie geantwoord nie. Maak seker dit loop.';
   if (e is PlanException) return 'Die plan is nie aanvaar nie: $e';
+  if (e is FileSystemException &&
+      const {28, 112}.contains(e.osError?.errorCode)) {
+    return disk; // ENOSPC (Linux), ERROR_DISK_FULL (Windows)
+  }
   if (e is ProcessException) {
+    final m = e.message;
+    if (m.contains('No space left on device')) return disk;
+    if (RegExp(
+      r'Unable to download|name resolution|getaddrinfo|Failed to resolve|Network is unreachable',
+    ).hasMatch(m)) {
+      return net;
+    }
     return '${e.executable} het misluk. Kyk die tegniese log.';
   }
-  if (e is SocketException || e is HttpException) {
-    return 'Ollama het nie geantwoord nie. Maak seker dit loop.';
+  if (e is SocketException) {
+    return e.port == ollamaBase().port ? ollama : net;
   }
+  // A server answered, so the network works: keep its own message.
+  if (e is HttpException) {
+    return e.message.startsWith('Ollama') ? ollama : e.message;
+  }
+  if (e is TlsException) return net;
   if (e is StateError) return e.message;
   return '$e';
 }
 
 /// One-at-a-time work queue in a plain async loop (no timers); persisted so a restart resumes it.
 class JobQueue extends ChangeNotifier {
+  // stap: v5 1 Hervat ná 'n onderbreking | jobs.json word gelees; 'n taak wat besig was, wag weer en loop van voor af
   JobQueue(
     this.store, {
     JobRun? plan,
@@ -240,6 +265,7 @@ class JobQueue extends ChangeNotifier {
     if (c != null && !c.isCompleted) c.complete();
   }
 
+  // stap: v9 3 Probeer weer | die mislukte taak staan weer in die ry, die werk tot dusver bly
   /// Puts a failed or cancelled job back in the queue.
   void retry(Job job) {
     job.status = JobStatus.wag;
@@ -259,6 +285,8 @@ class JobQueue extends ChangeNotifier {
   }
 }
 
+// stap: v1 2 Beplan | onderskrifte + video af, Ollama kies die gebede; die preek loop van gebed tot gebed
+// tak: Ollama af → "Ollama het nie geantwoord nie" met Probeer weer in Werkry
 /// Fetches meta and captions, asks Ollama for a plan; fills the sermon's date.
 JobRun planJob(SermonStore store) => (c) async {
   c.phase(JobPhase.meta);
@@ -283,6 +311,8 @@ JobRun planJob(SermonStore store) => (c) async {
   ]);
 };
 
+// stap: v1 4 Sny | stroomkopie, of herkodeer met intro/outro en uitgeknipte stukke; uitset in die uitsetgids
+// stap: v3 4 Sny sonder YouTube | dieselfde snit; die opname het geen Shorts-onderskrifte nie
 /// Downloads the video and cuts the sermon and its Shorts from the saved plan.
 JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   c.phase(JobPhase.meta);
@@ -297,12 +327,24 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   );
   final plan = _plan(store, c.id);
   final segs = parseJson3(m.captions.readAsStringSync());
-  final dest = out ?? Directory(AppSettings.load(store.root).outDir);
+  final settings = AppSettings.load(store.root);
+  final dest = out ?? Directory(settings.outDir);
+  File? clip(String? path) => path == null ? null : File(path);
   final date = m.info.uploadDate;
   c.phase(JobPhase.cut);
   c.progress(null);
   final files = [
-    await cutSermon(video, plan, date, dest, cancel: c.cancel, log: c.log),
+    await cutSermon(
+      video,
+      plan,
+      date,
+      dest,
+      intro: clip(settings.intro),
+      outro: clip(settings.outro),
+      onProgress: c.progress,
+      cancel: c.cancel,
+      log: c.log,
+    ),
   ];
   void saveOutputs() =>
       store.save(store.byId(c.id)!..outputs = [for (final f in files) f.path]);
@@ -327,6 +369,8 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   }
 };
 
+// stap: v7 2 Klank uitvoer | mp3 `JJJJ-MM-DD Tema.mp3` langs die gesnyde preek
+// tak: preek nog nie gesny nie → "Sny eers die preek"
 /// Exports the cut sermon as `JJJJ-MM-DD Tema.mp3` next to it and adds the file to the sermon's outputs.
 JobRun audioJob(SermonStore store) => (c) async {
   final s = store.byId(c.id)!;
@@ -358,6 +402,52 @@ SermonPlan _plan(SermonStore store, String id) => SermonPlan.fromJson(
       as Map<String, dynamic>,
 );
 
+/// The YouTube description: the template filled from the plan and the sermon.
+String _description(Sermon s, SermonPlan plan, AppSettings settings) =>
+    describe(
+      settings.template,
+      tema: plan.title,
+      scripture: s.scripture,
+      date: s.date,
+      description: plan.description,
+    );
+
+/// Output [i]'s YouTube title: 0 = the sermon, then the Shorts; YouTube allows 100 characters.
+String _videoTitle(SermonPlan plan, int i) {
+  final t = i == 0 || i > plan.shorts.length
+      ? plan.title
+      : plan.shorts[i - 1].title;
+  return t.length > 100 ? t.substring(0, 100) : t;
+}
+
+// stap: v8 3 Stuur na elke opgelaaide video | titel en beskrywing uit die plan, per mp4-uitset
+/// "Werk op YouTube by": sends the plan's current title and description to every uploaded video; returns how many.
+Future<int> updateOnYouTube(
+  SermonStore store,
+  String id, {
+  required YouTube yt,
+  required AppSettings settings,
+}) async {
+  final s = store.byId(id)!;
+  final plan = _plan(store, id);
+  final description = _description(s, plan, settings);
+  final videos = s.outputs.where((o) => o.endsWith('.mp4')).toList();
+  var n = 0;
+  for (var i = 0; i < videos.length; i++) {
+    final vid = s.uploads[videos[i]];
+    if (vid == null) continue;
+    await yt.updateVideo(
+      vid,
+      title: _videoTitle(plan, i),
+      description: description,
+    );
+    n++;
+  }
+  return n;
+}
+
+// stap: v1 5 Laai op | volle preek en Shorts na YouTube, in die regte snitlys
+// tak: kwota op → "probeer môre weer"; geen internet → Probeer weer
 /// Uploads the cut sermon and its Shorts (privacy from settings), then puts the sermon in its playlist.
 JobRun uploadJob(
   SermonStore store, {
@@ -369,26 +459,18 @@ JobRun uploadJob(
   final videos = s.outputs.where((o) => o.endsWith('.mp4')).toList();
   if (videos.isEmpty) throw StateError('Sny eers die preek.');
   final plan = _plan(store, c.id);
-  final description = describe(
-    settings.template,
-    tema: plan.title,
-    scripture: s.scripture,
-    date: s.date,
-    description: plan.description,
-  );
+  final description = _description(s, plan, settings);
   c.phase(JobPhase.upload);
   for (var i = 0; i < videos.length; i++) {
     final path = videos[i];
     if (store.byId(c.id)!.uploads.containsKey(path)) continue;
-    final title = i == 0 || i > plan.shorts.length
-        ? plan.title
-        : plan.shorts[i - 1].title;
+    final title = _videoTitle(plan, i);
     final session = File(p.join(store.root.path, c.id, 'upload-$i.json'));
     // A resumed session was already counted when it started.
     if (!session.existsSync()) quota.take();
     final id = await yt.upload(
       File(path),
-      title: title.length > 100 ? title.substring(0, 100) : title,
+      title: title,
       description: description,
       privacy: settings.privacy,
       session: session,

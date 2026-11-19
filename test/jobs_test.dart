@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:preekverwerker/core/channel.dart';
 import 'package:preekverwerker/core/jobs.dart';
+import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/planner.dart';
 import 'package:preekverwerker/core/settings.dart';
 import 'package:preekverwerker/core/youtube.dart';
@@ -272,11 +273,112 @@ void main() {
       expect(q.jobs.single.error, contains('100 oplaaie'));
       expect(yt.uploaded, isEmpty);
     });
+
+    test('updateOnYouTube sends the edited title and description', () async {
+      q.enqueue('aaaaaaaaaaa', JobKind.upload);
+      await q.idle;
+      final dir = Directory(p.join(root.path, 'aaaaaaaaaaa'));
+      final plan = SermonPlan.fromJson(
+        jsonDecode(File(p.join(dir.path, kPlanFile)).readAsStringSync()),
+      )..title = 'Genade alleen';
+      savePlan(dir, plan);
+      final n = await updateOnYouTube(
+        store,
+        'aaaaaaaaaaa',
+        yt: yt,
+        settings: AppSettings.load(root),
+      );
+      expect(n, 2);
+      expect(yt.updated.map((u) => (u.$1, u.$2)), [
+        ('V1', 'Genade alleen'),
+        ('V2', 'Short een'),
+      ]);
+      expect(yt.updated.first.$3, contains('Skriflesing: Romeine 5:1-11'));
+    });
   });
+
+  test(
+    'cutJob joins the intro from Instellings before the sermon (real ffmpeg)',
+    () async {
+      final id = 'aaaaaaaaaaa', dir = Directory(p.join(root.path, id));
+      File(p.join(dir.path, '$id.info.json')).writeAsStringSync(
+        jsonEncode({
+          'title': 'A',
+          'description': '',
+          'upload_date': '20261116',
+          'duration': 6,
+        }),
+      );
+      File(p.join(dir.path, '$id.af-orig.json3'))
+          .writeAsStringSync('{"events":[]}');
+      Future<void> gen(String path, double secs) => Process.run('ffmpeg', [
+        '-y',
+        '-f',
+        'lavfi',
+        '-i',
+        'testsrc=size=160x120:rate=25:duration=$secs',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=duration=$secs',
+        '-pix_fmt',
+        'yuv420p',
+        '-shortest',
+        path,
+      ]);
+      await gen(p.join(dir.path, 'video.mp4'), 6);
+      final intro = p.join(root.path, 'intro.mp4');
+      await gen(intro, 2);
+      AppSettings.load(root)
+        ..intro = intro
+        ..save();
+      File(p.join(dir.path, 'plan.json')).writeAsStringSync(
+        jsonEncode({
+          'sermonStart': 1,
+          'sermonEnd': 5,
+          'title': 'Tema',
+          'description': '',
+          'shorts': [],
+          'cuts': [
+            {'start': 2, 'end': 3},
+          ],
+        }),
+      );
+      final out = Directory(p.join(root.path, 'uit'));
+      final q = JobQueue(store, plan: (_) async {}, out: out);
+      q.enqueue(id, JobKind.cut);
+      await q.idle;
+      expect(
+        q.jobs.single.status,
+        JobStatus.klaar,
+        reason: q.jobs.single.error,
+      );
+      final f = File(store.byId(id)!.outputs.single);
+      final r = await Process.run('ffprobe', [
+        '-v',
+        'error',
+        '-show_entries',
+        'format=duration',
+        '-of',
+        'csv=p=0',
+        f.path,
+      ]);
+      expect(double.parse((r.stdout as String).trim()), closeTo(2 + 3, 0.3));
+    },
+    skip: findExecutable('ffmpeg') == null ? 'ffmpeg ontbreek' : null,
+  );
 }
 
 class FakeYouTube implements YouTube {
   final uploaded = <(String, String, String, String)>[];
+  final updated = <(String, String, String)>[];
+
+  @override
+  Future<void> updateVideo(
+    String id, {
+    required String title,
+    required String description,
+  }) async => updated.add((id, title, description));
   final made = <String>[];
   final added = <(String, String)>[];
   String? failOn;

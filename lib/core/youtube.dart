@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: refresh-token (deur die roeper: Windows Credential Manager / libsecret); <werkmap>/quota.json; <werkmap>/<id>/upload-*.json | hervat-sessie
 //   doel: desktop-OAuth (loopback + PKCE), hervatbare oplaai, snitlyste en die 100-per-dag-teller; net dart:io, endpunte uit die kliëntlêer sodat toetse 'n vals bediener gebruik
-//   status: oop
+//   status: bou
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -297,6 +297,46 @@ class YouTube {
     return (jsonDecode(body) as Map)['id'] as String;
   }
 
+  // stap: v8 4 YouTube PUT | haal die snippet, verander titel en beskrywing, stuur dit terug
+  // tak: video weg → "Video … is nie meer op YouTube nie."
+  /// Changes an uploaded video's title and description; keeps its category and tags (the API wipes what a PUT leaves out).
+  Future<void> updateVideo(
+    String id, {
+    required String title,
+    required String description,
+  }) async {
+    final items =
+        (await _call(
+              'GET',
+              '/youtube/v3/videos',
+              query: {'part': 'snippet', 'id': id},
+            ))['items']
+            as List? ??
+        const [];
+    if (items.isEmpty)
+      throw StateError('Video $id is nie meer op YouTube nie.');
+    final old = items.first['snippet'] as Map<String, dynamic>;
+    await _call(
+      'PUT',
+      '/youtube/v3/videos',
+      query: {'part': 'snippet'},
+      json: {
+        'id': id,
+        'snippet': {
+          'title': title,
+          'description': description,
+          for (final k in const [
+            'categoryId',
+            'tags',
+            'defaultLanguage',
+            'defaultAudioLanguage',
+          ])
+            if (old[k] != null) k: old[k],
+        },
+      },
+    );
+  }
+
   /// The channel's playlists, title → ID (all pages).
   Future<Map<String, String>> playlists() async {
     final out = <String, String>{};
@@ -346,6 +386,7 @@ class YouTube {
   );
 }
 
+/// YouTube's daily upload quota is used up; try again tomorrow.
 class QuotaExceeded implements Exception {
   @override
   String toString() => 'Vandag se 100 oplaaie is op; probeer môre weer.';

@@ -19,6 +19,7 @@ class FakeGoogle {
   final playlistsMade = <String>[];
   final added = <(String, String)>[];
   final uploads = <Map<String, dynamic>>[];
+  final updates = <Map<String, dynamic>>[];
   var refreshes = 0;
 
   Future<void> start() async {
@@ -103,6 +104,29 @@ class FakeGoogle {
       }
       await r.close();
       return;
+    }
+    if (path == '/youtube/v3/videos' && q.method == 'GET') {
+      await q.drain<void>();
+      expect(q.uri.queryParameters, {'part': 'snippet', 'id': 'VID'});
+      return _json(r, {
+        'items': [
+          {
+            'id': 'VID',
+            'snippet': {
+              'title': 'Oud',
+              'description': 'Ou beskrywing',
+              'categoryId': '29',
+              'tags': ['preek'],
+              'channelTitle': 'read-only',
+            },
+          },
+        ],
+      });
+    }
+    if (path == '/youtube/v3/videos' && q.method == 'PUT') {
+      expect(q.uri.queryParameters['part'], 'snippet');
+      updates.add(jsonDecode(await utf8.decodeStream(q)));
+      return _json(r, {'id': 'VID'});
     }
     if (path == '/youtube/v3/playlists' && q.method == 'GET') {
       await q.drain<void>();
@@ -267,6 +291,30 @@ void main() {
       await yt.addToPlaylist('PLNEW', 'VID');
       expect(g.playlistsMade, ['Romeine']);
       expect(g.added, [('PLNEW', 'VID')]);
+    },
+  );
+
+  test(
+    'updateVideo keeps the category and tags, changes title and description',
+    () async {
+      stored = 'rt';
+      final yt = YouTube(auth, api: g.base);
+      await yt.updateVideo(
+        'VID',
+        title: 'Nuut',
+        description: 'Nuwe beskrywing',
+      );
+      expect(g.updates, [
+        {
+          'id': 'VID',
+          'snippet': {
+            'title': 'Nuut',
+            'description': 'Nuwe beskrywing',
+            'categoryId': '29',
+            'tags': ['preek'],
+          },
+        },
+      ]);
     },
   );
 
