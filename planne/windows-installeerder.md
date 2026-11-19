@@ -43,9 +43,21 @@ Fase 5 het `installer/setup.iss` en `.github/workflows/windows.yml` geskryf, maa
 Kodeondertekening, GitHub Release by 'n tag, outomatiese opdatering van die app, die model in die installeerder, 'n volledige `Afrikaans.isl`, toets van die Ollama-aflaai op CI (1,9 GB; die taak word daar afgeskakel).
 
 ## Vrae
+- **Geblokkeer: GitHub-token het nie die `workflow`-scope nie.** `git push -u origin bou/windows-installeerder` is geweier: "refusing to allow an OAuth App to create or update workflow `.github/workflows/windows.yml` without `workflow` scope" (scopes nou: gist, read:org, repo; die SSH-sleutel is ook nie by GitHub geregistreer nie). Stappe vir Schalk:
+  1. `gh auth refresh -h github.com -s workflow` (maak die blaaier oop; keur goed).
+  2. `cd ~/Projects/ytsermon-prosessor && git push -u origin bou/windows-installeerder`
+  3. `gh run watch $(gh run list -b bou/windows-installeerder -w Windows -L1 --json databaseId -q '.[0].databaseId')` (±15–20 min).
+  4. As groen: `gh run download <id> -n Setup -D /tmp/setup` en kyk na `inhoud.txt`; dan `git merge --no-ff bou/windows-installeerder` op main. As rooi: `gh run view <id> --log-failed`, of vra Claude om voort te gaan (`/bou windows-installeerder`).
 - (aanname) Deïnstalleer vra net oor die werkgids (afgelaaide dienste, instellings, kwota); die uitsetgids met gesnyde preke word nooit uitgevee nie, want dit is die gebruiker se eie gids en kan enige plek wees.
 - (aanname) Ollama word tydens installasie afgelaai eerder as ingebou (1,86 GB).
 
 ## Log
+- 2026-11-20 stap 1: plan geskryf.
+- 2026-11-20 stap 2: `tools_test` "exe-gids wen van PATH" groen (regressie-wag; `findExecutable` kyk reeds eers langs die exe).
+- 2026-11-20 stap 3: `setup.iss` herskryf (UTF-8 met BOM vir die Afrikaans): Ollama as taak, afgelaai met `DownloadTemporaryFile` + SHA-256 (OllamaSetup is 1,86 GB), `CloseApplications`, `[UninstallRun] taskkill`, deïnstalleer vra oor die werkgids (verstek Nee), `[Messages]` in Afrikaans, `MinVersion`, `DisableDirPage`.
+- 2026-11-20 stap 4: `windows.yml`: trigger op `bou/windows-installeerder`, SHA-256 vir yt-dlp en ffmpeg, rook-toets (stil installeer, lêerlys → `inhoud.txt`, Start-kieslys, app 20 s aan, opgradeer oor lopende app, stil deïnstalleer behou werkgids). YAML-parse OK; `dart analyze` skoon, `flutter test` 133 groen (1 oorgeslaan), `kaart.py --check` rc 0.
+- 2026-11-20 stap 5: push geweier (token sonder `workflow`-scope); sien Vrae. Gestop ná die plaaslike werk.
 
 ## Verslag
+Plaaslik gebou en gecommit op `bou/windows-installeerder` (nie gepush nie, nie in main gemerge nie). Die installeerder installeer per gebruiker sonder admin in `%LOCALAPPDATA%\Preekverwerker`, met die Flutter-bundel, libmpv, die inprop-DLL's, die VC++-looptyd en vasgepende yt-dlp/ffmpeg/ffprobe langs die exe; laai Ollama af en installeer dit stil as dit ontbreek; maak die lopende app toe by opgradering; en vra by deïnstalleer of die werkgids ook moet gaan (verstek nee).
+Ongetoets: die hele GitHub Actions-lopie (ISCC-kompilering, rook-toets, artefak), want die push is geweier; en 'n regte installasie op die kerk-PC (SmartScreen: "Meer inligting → Hardloop tog"; Ollama-aflaai; Opstelling-lys).
