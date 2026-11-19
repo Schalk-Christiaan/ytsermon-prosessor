@@ -3,8 +3,9 @@
 //   wanneer: by oopmaak van Instellings en voor elke aflaai/KI-oproep
 //   groep: core | Kern
 //   skryf: —
-//   doel: vind yt-dlp/ffmpeg/ffprobe (PATH of langs die exe) en toets Ollama + qwen3:8b
+//   doel: vind yt-dlp/ffmpeg/ffprobe (PATH of langs die exe), loop eksterne prosesse (runTool) en toets Ollama + qwen3:8b
 //   status: oop
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -35,6 +36,57 @@ String? findExecutable(String name, {String? path, String? exeDir}) {
   return null;
 }
 
+/// Thrown by [runTool] when its `cancel` future completes before the process ends.
+class JobCancelled implements Exception {
+  @override
+  String toString() => 'JobCancelled';
+}
+
+/// Runs [exe] (a tool name found via [findExecutable], or an absolute path) with [args];
+/// stdout lines go to [onLine], stderr is buffered. Non-zero exit throws [ProcessException]
+/// carrying stderr; completing [cancel] kills the process and throws [JobCancelled].
+Future<void> runTool(
+  String exe,
+  List<String> args, {
+  void Function(String line)? onLine,
+  String? cwd,
+  Future<void>? cancel,
+}) async {
+  final path = findExecutable(exe) ?? (p.isAbsolute(exe) ? exe : null);
+  if (path == null) throw StateError('$exe ontbreek');
+  final proc = await Process.start(path, args, workingDirectory: cwd);
+  var cancelled = false, finished = false;
+  cancel?.then((_) {
+    if (finished) return;
+    cancelled = true;
+    _killTree(proc);
+  });
+  final err = StringBuffer();
+  final errDone = proc.stderr.transform(utf8.decoder).forEach(err.write);
+  final done = proc.stdout
+      .transform(utf8.decoder)
+      .transform(const LineSplitter())
+      .forEach((l) => onLine?.call(l));
+  final code = await proc.exitCode;
+  finished = true;
+  await Future.wait([done, errDone]);
+  if (cancelled) throw JobCancelled();
+  if (code != 0) throw ProcessException(exe, args, err.toString(), code);
+}
+
+/// Kills [proc] and its children (yt-dlp starts ffmpeg): children first, or they are orphaned.
+void _killTree(Process proc) {
+  if (Platform.isWindows) {
+    Process.run('taskkill', ['/T', '/F', '/PID', '${proc.pid}']);
+  } else {
+    Process.run('pkill', [
+      '-TERM',
+      '-P',
+      '${proc.pid}',
+    ]).whenComplete(proc.kill);
+  }
+}
+
 /// Result of probing one external tool; [ok] false means [detail] says what is missing.
 class ToolStatus {
   const ToolStatus(this.name, this.ok, this.detail);
@@ -51,11 +103,24 @@ class ToolStatus {
       detail.startsWith('model:') ? detail.substring(6) : null;
 }
 
-/// Opens [d] in the system file manager.
-Future<void> openFolder(Directory d) => Process.run(
-  Platform.isWindows ? 'explorer' : (Platform.isMacOS ? 'open' : 'xdg-open'),
-  [d.path],
-);
+/// Opens [path] with the system default; with [select] shows the file in its folder
+/// (Windows selects it in Explorer, elsewhere the folder opens).
+Future<void> openPath(String path, {bool select = false}) async {
+  if (Platform.isWindows) {
+    await Process.start('explorer', [if (select) '/select,$path' else path]);
+  } else {
+    final opener = Platform.isMacOS ? 'open' : 'xdg-open';
+    await Process.start(opener, [select ? p.dirname(path) : path]);
+  }
+}
+
+/// `yt-dlp -U`; returns its output. Throws [ProcessException] when it cannot update
+/// (e.g. a system package on Linux).
+Future<String> updateYtDlp() async {
+  final out = StringBuffer();
+  await runTool('yt-dlp', ['-U'], onLine: (l) => out.writeln(l));
+  return out.toString().trim();
+}
 
 Future<ToolStatus> _probe(
   String name,

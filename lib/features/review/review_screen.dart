@@ -3,7 +3,7 @@
 //   wanneer: Hersien (rail)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: URL → plan → hersien op die dienstydlyn (ongeldige Shorts rooi gemerk, kan korter gesleep word) → keur goed en sny
+//   doel: preek uit Preke → plan → hersien op die dienstydlyn (ongeldige Shorts rooi gemerk, kan korter gesleep word) → keur goed en sny
 //   status: oop
 
 import 'package:flutter/material.dart';
@@ -13,32 +13,28 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../../core/captions.dart';
 import '../../core/models.dart';
 import '../../core/planner.dart';
-import '../../core/tools.dart';
 import '../../l10n/app_localizations.dart';
 import 'review_controller.dart';
 import 'service_timeline.dart';
 
 class ReviewScreen extends StatefulWidget {
-  const ReviewScreen({super.key, this.controller});
+  const ReviewScreen({super.key, required this.controller});
 
-  /// Injected by tests; the app lets the screen own its controller.
-  final ReviewController? controller;
+  /// Owned by the shell, which opens a sermon in it from Preke.
+  final ReviewController controller;
 
   @override
   State<ReviewScreen> createState() => _ReviewScreenState();
 }
 
 class _ReviewScreenState extends State<ReviewScreen> {
-  late final _c = widget.controller ?? ReviewController();
-  final _url = TextEditingController();
+  late final _c = widget.controller;
   final _title = TextEditingController();
   final _desc = TextEditingController();
   int _synced = -1;
 
   @override
   void dispose() {
-    if (widget.controller == null) _c.dispose();
-    _url.dispose();
     _title.dispose();
     _desc.dispose();
     super.dispose();
@@ -55,16 +51,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Future<void> _cut(L l) async {
     final m = ScaffoldMessenger.of(context);
     try {
-      final (s, sh, out) = await _c.approveAndCut();
-      m.showSnackBar(
-        SnackBar(
-          content: Text(l.cutDone(s, sh)),
-          action: SnackBarAction(
-            label: l.showInFolder,
-            onPressed: () => openFolder(out),
-          ),
-        ),
-      );
+      _c.approveAndCut();
+      m.showSnackBar(SnackBar(content: Text(l.cutQueued)));
     } on Object catch (e) {
       m.showSnackBar(SnackBar(content: Text(l.errorGeneric(e.toString()))));
     }
@@ -101,40 +89,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _urlBar(l),
-              const SizedBox(height: 16),
-              Expanded(child: _body(l)),
-            ],
+            children: [Expanded(child: _body(l))],
           ),
         );
       },
-    );
-  }
-
-  Widget _urlBar(L l) {
-    final busy = _c.state == ReviewState.loading;
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: _url,
-            autofocus: true,
-            enabled: !busy,
-            decoration: InputDecoration(
-              labelText: l.pasteUrl,
-              border: const OutlineInputBorder(),
-              isDense: true,
-            ),
-            onSubmitted: (v) => _c.load(v),
-          ),
-        ),
-        const SizedBox(width: 12),
-        FilledButton(
-          onPressed: busy ? null : () => _c.load(_url.text),
-          child: Text(l.load),
-        ),
-      ],
     );
   }
 
@@ -144,6 +102,17 @@ class _ReviewScreenState extends State<ReviewScreen> {
       case ReviewState.empty:
         return Center(
           child: Text(l.emptyReview, style: th.textTheme.titleMedium),
+        );
+      case ReviewState.unplanned:
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l.unplanned, style: th.textTheme.titleMedium),
+              const SizedBox(height: 16),
+              FilledButton(onPressed: _c.replan, child: Text(l.planNow)),
+            ],
+          ),
         );
       case ReviewState.loading:
         return Center(child: _Loading(c: _c));
@@ -162,10 +131,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  FilledButton(
-                    onPressed: () => _c.load(_url.text),
-                    child: Text(l.retry),
-                  ),
+                  FilledButton(onPressed: _c.replan, child: Text(l.retry)),
                   if (_c.meta != null) ...[
                     const SizedBox(width: 12),
                     OutlinedButton(
@@ -411,7 +377,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Widget _actions(L l, ThemeData th) => Row(
     mainAxisAlignment: MainAxisAlignment.end,
     children: [
-      TextButton(onPressed: _c.reset, child: Text(l.skip)),
+      TextButton(onPressed: _c.skip, child: Text(l.skip)),
       const SizedBox(width: 12),
       OutlinedButton(onPressed: () => _replan(l), child: Text(l.replan)),
       const SizedBox(width: 12),

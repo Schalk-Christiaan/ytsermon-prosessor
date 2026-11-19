@@ -3,9 +3,10 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: <app-support>/work/<id>/plan.json | die plan; elke wysiging stoor dadelik
-//   doel: laai meta, plan en video vir een preek, hou die plan, sny na out/
+//   doel: laai meta en plan van 'n preek uit die stoor, hou die plan; plan en sny loop deur die werkry
 //   status: oop
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -15,24 +16,26 @@ import 'package:path/path.dart' as p;
 
 import '../../core/captions.dart';
 import '../../core/channel.dart';
-import '../../core/cutter.dart';
+import '../../core/jobs.dart';
 import '../../core/models.dart';
-import '../../core/paths.dart';
 import '../../core/planner.dart';
+import '../../core/store.dart';
 
-enum ReviewState { empty, loading, error, ready }
+enum ReviewState { empty, loading, error, unplanned, ready }
 
 enum LoadStage { meta, plan, cut }
 
 class ReviewController extends ChangeNotifier {
   ReviewController({
-    this.work,
-    this.out,
-    this.font,
+    required this.store,
+    required this.jobs,
     this.download = downloadVideo,
     this.openVideo,
     this.positions,
   });
+
+  final SermonStore store;
+  final JobQueue jobs;
 
   /// Test seams: the downloader, and replacements for the media_kit player.
   final Future<File> Function(
@@ -42,11 +45,6 @@ class ReviewController extends ChangeNotifier {
   download;
   final Future<void> Function(File video)? openVideo;
   final Stream<Duration>? positions;
-
-  /// Overrides for tests: work cache root and output folder.
-  final Directory? work;
-  final Directory? out;
-  final File? font;
 
   /// Created only once the video is on disk (no libmpv work before that).
   late final player = Player();
@@ -60,13 +58,27 @@ class ReviewController extends ChangeNotifier {
   final downloadPct = ValueNotifier<double>(0);
 
   ReviewState state = ReviewState.empty;
-  LoadStage stage = LoadStage.meta;
   final stopwatch = Stopwatch();
   Object? error;
 
-  /// True when a rejected plan from Ollama can be corrected manually.
-  PlanException? get planError =>
-      error is PlanException ? error as PlanException : null;
+  /// The sermon being reviewed (null = none chosen in Preke).
+  String? id;
+  Sermon? get sermon => id == null ? null : store.byId(id!);
+
+  /// Where the queue is for this sermon (drives the loading text).
+  LoadStage get stage {
+    final cur = jobs.current;
+    final kind = cur?.sermon == id
+        ? cur!.kind
+        : jobs.jobs
+              .where((j) => j.sermon == id && j.status == JobStatus.wag)
+              .map((j) => j.kind)
+              .firstOrNull;
+    if (kind == JobKind.cut) return LoadStage.cut;
+    return jobs.phase.value == JobPhase.plan ? LoadStage.plan : LoadStage.meta;
+  }
+
+  double get cutFraction => jobs.progress.value ?? 0;
 
   FetchedMeta? meta;
   List<Segment> segments = [];
@@ -77,65 +89,97 @@ class ReviewController extends ChangeNotifier {
   /// Bumped when a new plan arrives, so the timeline plays its handle glide.
   int planRevision = 0;
   bool saved = false;
-  double cutFraction = 0;
   Completer<File>? _download;
   @visibleForTesting
   Future<File>? get downloadFuture => _download?.future;
-  String? _url;
   StreamSubscription<Duration>? _pos;
 
-  Future<void> load(String url) async {
-    _url = url;
+  /// Opens sermon [id] from the store: its plan if there is one, else follows the queue.
+  void open(String id) {
+    if (this.id != id) {
+      this.id = id;
+      _download = null;
+      videoReady = false;
+      downloadPct.value = 0;
+      jobs.removeListener(_onJobs);
+      jobs.addListener(_onJobs);
+    }
+    _load();
+  }
+
+  void _load() {
+    final dir = Directory(p.join(store.root.path, id!));
+    final info = File(p.join(dir.path, '$id.info.json'));
+    final m = FetchedMeta(id!, dir, {});
     error = null;
     plan = null;
-    state = ReviewState.loading;
-    stage = LoadStage.meta;
-    stopwatch
-      ..reset()
-      ..start();
-    notifyListeners();
-    try {
-      final m = await fetchMeta(url, work ?? await workRoot());
-      meta = m;
-      duration = m.info.durationSeconds;
+    meta = null;
+    if (info.existsSync() && m.captions.existsSync()) {
+      final j = jsonDecode(info.readAsStringSync()) as Map<String, dynamic>;
+      meta = FetchedMeta(id!, dir, j);
+      duration = j.durationSeconds;
       segments = parseJson3(m.captions.readAsStringSync());
       blocks = timeline(segments);
-      stage = LoadStage.plan;
-      notifyListeners();
-      plan = await Planner().loadOrPlan(
-        m.dir,
-        compactText: compact(segments),
-        duration: duration,
-        originalDescription: m.info.descriptionText,
+    }
+    final pf = File(p.join(dir.path, kPlanFile));
+    if (meta != null && pf.existsSync()) {
+      plan = SermonPlan.fromJson(
+        jsonDecode(pf.readAsStringSync()) as Map<String, dynamic>,
       );
-      state = ReviewState.ready;
+      state = _active(JobKind.cut) ? ReviewState.loading : ReviewState.ready;
       planRevision++;
-      stopwatch.stop();
-      notifyListeners();
-      _startDownload(m);
-    } on Object catch (e) {
-      error = e;
+      if (_download == null && !jobs.hasPending(id!)) _startDownload(meta!);
+    } else if (_active(JobKind.plan)) {
+      state = ReviewState.loading;
+    } else if (sermon?.state == SermonState.fout) {
+      error = sermon!.error;
       state = ReviewState.error;
+    } else {
+      state = ReviewState.unplanned;
+    }
+    if (state == ReviewState.loading && !stopwatch.isRunning) {
+      stopwatch
+        ..reset()
+        ..start();
+    } else if (state != ReviewState.loading) {
       stopwatch.stop();
+    }
+    notifyListeners();
+  }
+
+  bool _active(JobKind k) => jobs.hasPending(id!, k);
+
+  /// The queue changed: reload when the job we were waiting for has finished.
+  void _onJobs() {
+    if (id == null) return;
+    if (state == ReviewState.loading &&
+        !_active(JobKind.plan) &&
+        !_active(JobKind.cut)) {
+      _load();
+    } else {
       notifyListeners();
     }
   }
 
   void _startDownload(FetchedMeta m) {
     final c = _download = Completer<File>();
-    // Errors are shown through `error`; approveAndCut still sees them when it awaits.
+    // A download that finishes after reset()/open(other) must not touch the player.
+    bool stale() => _download != c;
     c.future.ignore();
     download(m, onProgress: (v) => downloadPct.value = v).then(
       (f) async {
+        if (stale()) return;
         _pos ??= (positions ?? player.stream.position).listen(
           (d) => position.value = d.inMilliseconds / 1000,
         );
         await (openVideo?.call(f) ?? player.open(Media(f.path), play: false));
+        if (stale()) return;
         videoReady = true;
         notifyListeners();
         c.complete(f);
       },
       onError: (Object e) {
+        if (stale()) return;
         c.completeError(e);
         error = e;
         notifyListeners();
@@ -143,31 +187,44 @@ class ReviewController extends ChangeNotifier {
     );
   }
 
-  /// "Stel self in": a plan spanning the whole video (or the rejected one) for manual correction.
+  /// "Stel self in": a plan spanning the whole video for manual correction.
   void setManually() {
     final m = meta!;
-    plan =
-        planError?.plan ??
-        SermonPlan(
-          sermonStart: 0,
-          sermonEnd: duration,
-          title: m.info.titleText,
-          description: m.info.descriptionText,
-          shorts: [],
-        );
+    plan = SermonPlan(
+      sermonStart: 0,
+      sermonEnd: duration,
+      title: m.info.titleText,
+      description: m.info.descriptionText,
+      shorts: [],
+    );
     error = null;
     state = ReviewState.ready;
     planRevision++;
     _save();
+    final s = sermon;
+    if (s != null) store.save(s..state = SermonState.beplan);
     notifyListeners();
     if (_download == null) _startDownload(m);
   }
 
-  /// Deletes plan.json and asks the model again (the caller has confirmed).
-  Future<void> replan() async {
-    final f = File(p.join(meta!.dir.path, kPlanFile));
+  /// Deletes plan.json and queues a new plan job (the caller has confirmed).
+  void replan() {
+    final f = File(p.join(store.root.path, id!, kPlanFile));
     if (f.existsSync()) f.deleteSync();
-    await load(_url!);
+    final s = sermon!;
+    store.save(
+      s
+        ..state = SermonState.nuut
+        ..error = null,
+    );
+    jobs.enqueue(id!, JobKind.plan);
+    _load();
+  }
+
+  /// "Slaan oor": marks the sermon skipped and leaves the review.
+  void skip() {
+    store.save(sermon!..state = SermonState.oorgeslaan);
+    reset();
   }
 
   void reset() {
@@ -176,6 +233,8 @@ class ReviewController extends ChangeNotifier {
     plan = null;
     meta = null;
     _download = null;
+    id = null;
+    jobs.removeListener(_onJobs);
     notifyListeners();
   }
 
@@ -246,50 +305,18 @@ class ReviewController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Cuts sermon + Shorts into `out/`; returns (sermons, shorts) counts and the out directory.
-  Future<(int, int, Directory)> approveAndCut() async {
-    final m = meta!;
-    final pl = plan!;
-    stage = LoadStage.cut;
-    cutFraction = 0;
-    state = ReviewState.loading;
-    stopwatch
-      ..reset()
-      ..start();
-    notifyListeners();
-    try {
-      final v = await _download!.future;
-      final date = m.info.uploadDate;
-      final out = this.out ?? outDir();
-      final font = this.font ?? bundledFont();
-      await cutSermon(v, pl, date, out);
-      for (var i = 0; i < pl.shorts.length; i++) {
-        await cutShort(
-          v,
-          i + 1,
-          pl.shorts[i],
-          segments,
-          font,
-          date,
-          out,
-          onProgress: (f) {
-            cutFraction = (i + f) / pl.shorts.length;
-            notifyListeners();
-          },
-        );
-      }
-      state = ReviewState.ready;
-      return (1, pl.shorts.length, out.absolute);
-    } finally {
-      stopwatch.stop();
-      if (state == ReviewState.loading) state = ReviewState.ready;
-      notifyListeners();
-    }
+  /// Marks the sermon `goedgekeur` and queues the cut job (it downloads the video itself).
+  void approveAndCut() {
+    _save();
+    store.save(sermon!..state = SermonState.goedgekeur);
+    jobs.enqueue(id!, JobKind.cut);
+    _load();
   }
 
   /// Test hook: jump straight to the reviewed state with a ready plan.
   @visibleForTesting
   void debugReady(FetchedMeta m, List<Segment> segs, SermonPlan p, double dur) {
+    id = m.id;
     meta = m;
     segments = segs;
     blocks = timeline(segs);
@@ -302,6 +329,7 @@ class ReviewController extends ChangeNotifier {
 
   @override
   void dispose() {
+    jobs.removeListener(_onJobs);
     _pos?.cancel();
     if (videoReady) player.dispose();
     super.dispose();

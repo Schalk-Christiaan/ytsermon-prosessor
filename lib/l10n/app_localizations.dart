@@ -129,11 +129,11 @@ abstract class L {
   /// **'Snitlyste'**
   String get navSnitlyste;
 
-  /// No description provided for @comingPhase2.
+  /// No description provided for @comingPhase3.
   ///
   /// In af, this message translates to:
-  /// **'Kom in fase 2'**
-  String get comingPhase2;
+  /// **'Kom in fase 3'**
+  String get comingPhase3;
 
   /// No description provided for @settingsSystem.
   ///
@@ -171,18 +171,6 @@ abstract class L {
   /// **'Ollama loop nie: begin die Ollama-diens'**
   String get ollamaNotRunning;
 
-  /// No description provided for @pasteUrl.
-  ///
-  /// In af, this message translates to:
-  /// **'Plak \'n YouTube-skakel'**
-  String get pasteUrl;
-
-  /// No description provided for @load.
-  ///
-  /// In af, this message translates to:
-  /// **'Laai'**
-  String get load;
-
   /// No description provided for @stageMeta.
   ///
   /// In af, this message translates to:
@@ -218,6 +206,198 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Iets het skeefgeloop: {message}'**
   String errorGeneric(String message);
+
+  /// No description provided for @unplanned.
+  ///
+  /// In af, this message translates to:
+  /// **'Hierdie preek is nog nie beplan nie'**
+  String get unplanned;
+
+  /// No description provided for @planNow.
+  ///
+  /// In af, this message translates to:
+  /// **'Beplan nou'**
+  String get planNow;
+
+  /// No description provided for @cutQueued.
+  ///
+  /// In af, this message translates to:
+  /// **'Gestuur na Werk'**
+  String get cutQueued;
+
+  /// No description provided for @searchSermons.
+  ///
+  /// In af, this message translates to:
+  /// **'Soek preke'**
+  String get searchSermons;
+
+  /// No description provided for @processNext.
+  ///
+  /// In af, this message translates to:
+  /// **'Verwerk volgende'**
+  String get processNext;
+
+  /// No description provided for @noSermons.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen preke gevind nie'**
+  String get noSermons;
+
+  /// No description provided for @listError.
+  ///
+  /// In af, this message translates to:
+  /// **'Die kanaal se lys kon nie gelaai word nie: {message}'**
+  String listError(String message);
+
+  /// No description provided for @updateYtDlp.
+  ///
+  /// In af, this message translates to:
+  /// **'Werk yt-dlp by'**
+  String get updateYtDlp;
+
+  /// No description provided for @updateYtDlpDone.
+  ///
+  /// In af, this message translates to:
+  /// **'yt-dlp: {result}'**
+  String updateYtDlpDone(String result);
+
+  /// No description provided for @newServices.
+  ///
+  /// In af, this message translates to:
+  /// **'{n, plural, =1{1 nuwe diens} other{{n} nuwe dienste}}'**
+  String newServices(int n);
+
+  /// No description provided for @dismiss.
+  ///
+  /// In af, this message translates to:
+  /// **'Maak toe'**
+  String get dismiss;
+
+  /// No description provided for @noDate.
+  ///
+  /// In af, this message translates to:
+  /// **'—'**
+  String get noDate;
+
+  /// No description provided for @inQueue.
+  ///
+  /// In af, this message translates to:
+  /// **'In die ry'**
+  String get inQueue;
+
+  /// No description provided for @stateNuut.
+  ///
+  /// In af, this message translates to:
+  /// **'Nuut'**
+  String get stateNuut;
+
+  /// No description provided for @stateBeplan.
+  ///
+  /// In af, this message translates to:
+  /// **'Beplan'**
+  String get stateBeplan;
+
+  /// No description provided for @stateGoedgekeur.
+  ///
+  /// In af, this message translates to:
+  /// **'Goedgekeur'**
+  String get stateGoedgekeur;
+
+  /// No description provided for @stateGesny.
+  ///
+  /// In af, this message translates to:
+  /// **'Gesny'**
+  String get stateGesny;
+
+  /// No description provided for @stateOpgelaai.
+  ///
+  /// In af, this message translates to:
+  /// **'Opgelaai'**
+  String get stateOpgelaai;
+
+  /// No description provided for @stateFout.
+  ///
+  /// In af, this message translates to:
+  /// **'Fout'**
+  String get stateFout;
+
+  /// No description provided for @stateOorgeslaan.
+  ///
+  /// In af, this message translates to:
+  /// **'Oorgeslaan'**
+  String get stateOorgeslaan;
+
+  /// No description provided for @workNow.
+  ///
+  /// In af, this message translates to:
+  /// **'Besig'**
+  String get workNow;
+
+  /// No description provided for @workWaiting.
+  ///
+  /// In af, this message translates to:
+  /// **'Wag'**
+  String get workWaiting;
+
+  /// No description provided for @workDone.
+  ///
+  /// In af, this message translates to:
+  /// **'Klaar'**
+  String get workDone;
+
+  /// No description provided for @workFailed.
+  ///
+  /// In af, this message translates to:
+  /// **'Foute'**
+  String get workFailed;
+
+  /// No description provided for @workEmpty.
+  ///
+  /// In af, this message translates to:
+  /// **'Niks in die ry nie.'**
+  String get workEmpty;
+
+  /// No description provided for @play.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel'**
+  String get play;
+
+  /// No description provided for @technicalLog.
+  ///
+  /// In af, this message translates to:
+  /// **'Tegniese log'**
+  String get technicalLog;
+
+  /// No description provided for @taskPlan.
+  ///
+  /// In af, this message translates to:
+  /// **'Plan'**
+  String get taskPlan;
+
+  /// No description provided for @taskCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Sny'**
+  String get taskCut;
+
+  /// No description provided for @taskCancelled.
+  ///
+  /// In af, this message translates to:
+  /// **'Gekanselleer'**
+  String get taskCancelled;
+
+  /// No description provided for @percent.
+  ///
+  /// In af, this message translates to:
+  /// **'{pct}%'**
+  String percent(int pct);
+
+  /// No description provided for @taskLine.
+  ///
+  /// In af, this message translates to:
+  /// **'{kind}: {title}'**
+  String taskLine(String kind, String title);
 
   /// No description provided for @retry.
   ///
@@ -333,12 +513,6 @@ abstract class L {
   /// **'Kanselleer'**
   String get cancel;
 
-  /// No description provided for @cutDone.
-  ///
-  /// In af, this message translates to:
-  /// **'Gesny: {sermons} preek, {shorts} Shorts'**
-  String cutDone(int sermons, int shorts);
-
   /// No description provided for @showInFolder.
   ///
   /// In af, this message translates to:
@@ -348,7 +522,7 @@ abstract class L {
   /// No description provided for @emptyReview.
   ///
   /// In af, this message translates to:
-  /// **'Plak \'n skakel om \'n preek te hersien.'**
+  /// **'Kies \'n preek in Preke.'**
   String get emptyReview;
 
   /// No description provided for @skipped.

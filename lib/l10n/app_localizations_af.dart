@@ -28,7 +28,7 @@ class LAf extends L {
   String get navSnitlyste => 'Snitlyste';
 
   @override
-  String get comingPhase2 => 'Kom in fase 2';
+  String get comingPhase3 => 'Kom in fase 3';
 
   @override
   String get settingsSystem => 'Stelsel';
@@ -55,12 +55,6 @@ class LAf extends L {
   String get ollamaNotRunning => 'Ollama loop nie: begin die Ollama-diens';
 
   @override
-  String get pasteUrl => 'Plak \'n YouTube-skakel';
-
-  @override
-  String get load => 'Laai';
-
-  @override
   String get stageMeta => 'Lees onderskrifte…';
 
   @override
@@ -80,6 +74,118 @@ class LAf extends L {
   @override
   String errorGeneric(String message) {
     return 'Iets het skeefgeloop: $message';
+  }
+
+  @override
+  String get unplanned => 'Hierdie preek is nog nie beplan nie';
+
+  @override
+  String get planNow => 'Beplan nou';
+
+  @override
+  String get cutQueued => 'Gestuur na Werk';
+
+  @override
+  String get searchSermons => 'Soek preke';
+
+  @override
+  String get processNext => 'Verwerk volgende';
+
+  @override
+  String get noSermons => 'Geen preke gevind nie';
+
+  @override
+  String listError(String message) {
+    return 'Die kanaal se lys kon nie gelaai word nie: $message';
+  }
+
+  @override
+  String get updateYtDlp => 'Werk yt-dlp by';
+
+  @override
+  String updateYtDlpDone(String result) {
+    return 'yt-dlp: $result';
+  }
+
+  @override
+  String newServices(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n nuwe dienste',
+      one: '1 nuwe diens',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dismiss => 'Maak toe';
+
+  @override
+  String get noDate => '—';
+
+  @override
+  String get inQueue => 'In die ry';
+
+  @override
+  String get stateNuut => 'Nuut';
+
+  @override
+  String get stateBeplan => 'Beplan';
+
+  @override
+  String get stateGoedgekeur => 'Goedgekeur';
+
+  @override
+  String get stateGesny => 'Gesny';
+
+  @override
+  String get stateOpgelaai => 'Opgelaai';
+
+  @override
+  String get stateFout => 'Fout';
+
+  @override
+  String get stateOorgeslaan => 'Oorgeslaan';
+
+  @override
+  String get workNow => 'Besig';
+
+  @override
+  String get workWaiting => 'Wag';
+
+  @override
+  String get workDone => 'Klaar';
+
+  @override
+  String get workFailed => 'Foute';
+
+  @override
+  String get workEmpty => 'Niks in die ry nie.';
+
+  @override
+  String get play => 'Speel';
+
+  @override
+  String get technicalLog => 'Tegniese log';
+
+  @override
+  String get taskPlan => 'Plan';
+
+  @override
+  String get taskCut => 'Sny';
+
+  @override
+  String get taskCancelled => 'Gekanselleer';
+
+  @override
+  String percent(int pct) {
+    return '$pct%';
+  }
+
+  @override
+  String taskLine(String kind, String title) {
+    return '$kind: $title';
   }
 
   @override
@@ -146,15 +252,10 @@ class LAf extends L {
   String get cancel => 'Kanselleer';
 
   @override
-  String cutDone(int sermons, int shorts) {
-    return 'Gesny: $sermons preek, $shorts Shorts';
-  }
-
-  @override
   String get showInFolder => 'Wys in gids';
 
   @override
-  String get emptyReview => 'Plak \'n skakel om \'n preek te hersien.';
+  String get emptyReview => 'Kies \'n preek in Preke.';
 
   @override
   String get skipped => 'Oorgeslaan';

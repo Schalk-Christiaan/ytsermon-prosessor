@@ -5,7 +5,6 @@
 //   skryf: out/
 //   doel: sny die preek (stroomkopie) en Shorts (9:16 met ingebrande onderskrif) met ffmpeg
 //   status: oop
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -82,32 +81,38 @@ Future<void> _ffmpeg(
   String? cwd,
   double? duration,
   void Function(double frac)? onProgress,
-}) async {
-  final exe = findExecutable('ffmpeg');
-  if (exe == null) throw StateError('ffmpeg ontbreek');
-  final proc = await Process.start(exe, args, workingDirectory: cwd);
-  final err = StringBuffer();
-  proc.stderr.transform(utf8.decoder).listen(err.write);
-  await for (final l
-      in proc.stdout.transform(utf8.decoder).transform(const LineSplitter())) {
+  Future<void>? cancel,
+  void Function(String line)? log,
+}) => runTool(
+  'ffmpeg',
+  args,
+  cwd: cwd,
+  cancel: cancel,
+  onLine: (l) {
+    log?.call(l);
     final t = parseFfmpegProgress(l);
-    if (t != null && duration != null && duration > 0)
+    if (t != null && duration != null && duration > 0) {
       onProgress?.call((t / duration).clamp(0, 1));
-  }
-  final code = await proc.exitCode;
-  if (code != 0) throw ProcessException('ffmpeg', args, err.toString(), code);
-}
+    }
+  },
+);
 
 /// Cuts the sermon (stream copy) into [outDir]; returns the file.
 Future<File> cutSermon(
   File video,
   SermonPlan plan,
   String date,
-  Directory outDir,
-) async {
+  Directory outDir, {
+  Future<void>? cancel,
+  void Function(String line)? log,
+}) async {
   outDir.createSync(recursive: true);
   final out = p.join(outDir.path, sermonFileName(date, plan.title));
-  await _ffmpeg(sermonArgs(video.path, plan.sermonStart, plan.sermonEnd, out));
+  await _ffmpeg(
+    sermonArgs(video.path, plan.sermonStart, plan.sermonEnd, out),
+    cancel: cancel,
+    log: log,
+  );
   return File(out);
 }
 
@@ -122,6 +127,8 @@ Future<File> cutShort(
   String date,
   Directory outDir, {
   void Function(double frac)? onProgress,
+  Future<void>? cancel,
+  void Function(String line)? log,
 }) async {
   outDir.createSync(recursive: true);
   final work = video.parent;
@@ -139,6 +146,8 @@ Future<File> cutShort(
     cwd: work.path,
     duration: s.end - s.start,
     onProgress: onProgress,
+    cancel: cancel,
+    log: log,
   );
   return File(out);
 }

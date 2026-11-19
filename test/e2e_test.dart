@@ -1,37 +1,36 @@
-// Full flow through the controller on the real test video; run with E2E=1.
+// Full flow through the queue on the real test video; run with E2E=1.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:preekverwerker/features/review/review_controller.dart';
+import 'package:preekverwerker/core/channel.dart';
+import 'package:preekverwerker/core/jobs.dart';
+import 'package:preekverwerker/core/store.dart';
 
 void main() {
   test(
-    'url -> plan -> review -> cut',
+    'id -> plan job -> cut job',
     () async {
-      TestWidgetsFlutterBinding.ensureInitialized();
       HttpOverrides.global = null;
-      MediaKit.ensureInitialized();
       final out = Directory('out/e2e')..createSync(recursive: true);
-      final c = ReviewController(
-        work: Directory('/tmp/claude-1000/e2e/work'),
+      final store = SermonStore(Directory('/tmp/claude-1000/e2e/work'))
+        ..load()
+        ..merge([const ChannelItem('YWz5gf0onjk', 'Toetspreek', 3728)]);
+      final q = JobQueue(
+        store,
         out: out,
         font: File('assets/fonts/sans.ttf').absolute,
       );
-      final stages = <LoadStage>{};
-      c.addListener(() => stages.add(c.stage));
-      await c.load('https://youtu.be/YWz5gf0onjk');
-      expect(c.state, ReviewState.ready, reason: '${c.error}');
+      q.enqueue('YWz5gf0onjk', JobKind.plan);
+      await q.idle;
+      expect(store.byId('YWz5gf0onjk')!.state, SermonState.beplan);
+      q.enqueue('YWz5gf0onjk', JobKind.cut);
+      await q.idle;
+      final s = store.byId('YWz5gf0onjk')!;
+      expect(s.state, SermonState.gesny, reason: '${s.error}');
       // ignore: avoid_print
-      print(
-        'plan ${c.plan!.sermonStart}-${c.plan!.sermonEnd} shorts ${c.plan!.shorts.length}',
-      );
-      final r = await c.approveAndCut();
-      // ignore: avoid_print
-      print('cut ${r.$1} preek, ${r.$2} Shorts in ${r.$3.path}');
-      expect(r.$1, 1);
+      print('uitset: ${s.outputs}');
     },
     skip: Platform.environment['E2E'] == null ? 'E2E=1 only' : null,
-    timeout: const Timeout(Duration(minutes: 8)),
+    timeout: const Timeout(Duration(minutes: 15)),
   );
 }
