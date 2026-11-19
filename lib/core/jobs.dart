@@ -297,7 +297,7 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   );
   final plan = _plan(store, c.id);
   final segs = parseJson3(m.captions.readAsStringSync());
-  final dest = out ?? outDir();
+  final dest = out ?? Directory(AppSettings.load(store.root).outDir);
   final date = m.info.uploadDate;
   c.phase(JobPhase.cut);
   c.progress(null);

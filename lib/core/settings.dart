@@ -3,13 +3,14 @@
 //   wanneer: by begin gelaai; gestoor as Instellings of Snitlyste verander
 //   groep: core | Kern
 //   skryf: <werkmap>/settings.json | atomies
-//   doel: Schalk se keuses: kliënt-ID-lêer, oplaai-privaatheid, beskrywingsjabloon, snitlysreëls
+//   doel: Schalk se keuses: kliënt-ID-lêer, oplaai-privaatheid, beskrywingsjabloon, snitlysreëls, uitsetgids, of Opstelling klaar is
 //   status: oop
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'paths.dart';
 import 'store.dart';
 
 const kDefaultTemplate =
@@ -24,6 +25,8 @@ class AppSettings {
           p.join(p.dirname(_file.path), 'client_secret.json'),
       privacy = j['privacy'] as String? ?? 'private',
       template = j['template'] as String? ?? kDefaultTemplate,
+      outDir = j['outDir'] as String? ?? defaultOutDir(),
+      setupDone = j['setupDone'] as bool? ?? false,
       rules = [...?(j['rules'] as List?)?.cast<String>()] {
     if (!j.containsKey('rules')) rules = ['book', 'year'];
   }
@@ -50,10 +53,18 @@ class AppSettings {
   /// Playlist rules in order: `book`, `year`.
   List<String> rules;
 
+  /// Where cut sermons, Shorts and audio go.
+  String outDir;
+
+  /// The Opstelling list was completed once; the app then starts on Preke.
+  bool setupDone;
+
   void save() => writeJson(_file, {
     'clientFile': clientFile,
     'privacy': privacy,
     'template': template,
     'rules': rules,
+    'outDir': outDir,
+    'setupDone': setupDone,
   });
 }
