@@ -151,6 +151,10 @@ final _prayerCue = RegExp(
 /// Longest stretch counted as one prayer; a longer "cue … Amen" run is sermon text.
 const kMaxPrayer = 15 * 60.0;
 
+/// Shortest stretch counted as a prayer: the seëngroet, geloofsbelydenis and short formulas end in
+/// "Amen" too but run under ~30 s, while the prayers around the sermon run 1-9 min.
+const kMinPrayer = 45.0;
+
 /// Candidate prayers: the captions are split into chunks that each end at an "Amen" (text after the
 /// Amen on the same line starts the next chunk); a chunk with a prayer cue is a prayer from its first
 /// cue to the end of the Amen line.
@@ -177,7 +181,7 @@ List<Prayer> prayers(List<Segment> segs) {
       words.add(before);
     }
     final a = start;
-    if (a != null && s.end - a <= kMaxPrayer) {
+    if (a != null && s.end - a >= kMinPrayer && s.end - a <= kMaxPrayer) {
       final text = words.join(' ').split(RegExp(r'\s+'));
       String take(Iterable<String> w) => w.join(' ');
       out.add(

@@ -9,16 +9,24 @@ void main() {
     const s = [
       Segment(0, 5, 'Liewe gemeente ons lees'),
       Segment(5, 10, 'Amen. Kom ons dank saam.'),
-      Segment(10, 15, 'Onse Vader ons dank U'),
-      Segment(15, 20, 'in Jesus se Naam. Amen.'),
-      Segment(20, 25, '[musiek]', kind: SegmentKind.music),
+      Segment(10, 50, 'Onse Vader ons dank U'),
+      Segment(50, 60, 'in Jesus se Naam. Amen.'),
+      Segment(60, 65, '[musiek]', kind: SegmentKind.music),
     ];
     final p = prayers(s);
     expect(p.length, 1);
     expect(p.single.start, 5);
-    expect(p.single.end, 20);
+    expect(p.single.end, 60);
     expect(p.single.first, startsWith('Kom ons dank saam'));
     expect(p.single.last, endsWith('Amen.'));
+  });
+
+  test('a short formula (seëngroet, geloofsbelydenis) is no candidate', () {
+    const s = [
+      Segment(0, 5, 'Almagtige Vader, genade en vrede van God ons Vader'),
+      Segment(5, 10, 'deur die werking van die Heilige Gees. Amen.'),
+    ];
+    expect(prayers(s), isEmpty);
   });
 
   for (final f in fixtureSermons()) {
