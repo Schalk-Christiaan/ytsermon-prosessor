@@ -38,30 +38,9 @@ class FetchedMeta {
   File get video => File(p.join(dir.path, 'video.mp4'));
 }
 
-String _ytdlp() {
-  final exe = findExecutable('yt-dlp');
-  if (exe == null) throw StateError('yt-dlp ontbreek');
-  return exe;
-}
-
 List<String> _ffmpegArgs() {
   final f = findExecutable('ffmpeg');
   return f == null ? [] : ['--ffmpeg-location', f];
-}
-
-Future<void> _run(
-  List<String> args, {
-  void Function(String line)? onLine,
-}) async {
-  final proc = await Process.start(_ytdlp(), args);
-  final err = StringBuffer();
-  proc.stderr.transform(utf8.decoder).listen(err.write);
-  await for (final line
-      in proc.stdout.transform(utf8.decoder).transform(const LineSplitter())) {
-    onLine?.call(line);
-  }
-  final code = await proc.exitCode;
-  if (code != 0) throw ProcessException('yt-dlp', args, err.toString(), code);
 }
 
 /// Downloads info.json and the af-orig json3 captions to `<root>/<id>/`; skips what already exists.
@@ -72,7 +51,7 @@ Future<FetchedMeta> fetchMeta(String url, Directory root) async {
   final infoFile = File(p.join(dir.path, '$id.info.json'));
   final meta = FetchedMeta(id, dir, {});
   if (!infoFile.existsSync() || !meta.captions.existsSync()) {
-    await _run([
+    await runTool('yt-dlp', [
       '--write-info-json',
       '--write-auto-subs',
       '--sub-langs',
@@ -105,7 +84,8 @@ Future<File> downloadVideo(
     onProgress?.call(100);
     return meta.video;
   }
-  await _run(
+  await runTool(
+    'yt-dlp',
     [
       '-f',
       'bv*[height<=1080]+ba/b',

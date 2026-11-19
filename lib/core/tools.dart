@@ -3,8 +3,9 @@
 //   wanneer: by oopmaak van Instellings en voor elke aflaai/KI-oproep
 //   groep: core | Kern
 //   skryf: —
-//   doel: vind yt-dlp/ffmpeg/ffprobe (PATH of langs die exe) en toets Ollama + qwen3:8b
+//   doel: vind yt-dlp/ffmpeg/ffprobe (PATH of langs die exe), loop eksterne prosesse (runTool) en toets Ollama + qwen3:8b
 //   status: oop
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -33,6 +34,42 @@ String? findExecutable(String name, {String? path, String? exeDir}) {
     if (File(f).existsSync()) return f;
   }
   return null;
+}
+
+/// Thrown by [runTool] when its `cancel` future completes before the process ends.
+class JobCancelled implements Exception {
+  @override
+  String toString() => 'JobCancelled';
+}
+
+/// Runs [exe] (a tool name found via [findExecutable], or an absolute path) with [args];
+/// stdout lines go to [onLine], stderr is buffered. Non-zero exit throws [ProcessException]
+/// carrying stderr; completing [cancel] kills the process and throws [JobCancelled].
+Future<void> runTool(
+  String exe,
+  List<String> args, {
+  void Function(String line)? onLine,
+  String? cwd,
+  Future<void>? cancel,
+}) async {
+  final path = findExecutable(exe) ?? (p.isAbsolute(exe) ? exe : null);
+  if (path == null) throw StateError('$exe ontbreek');
+  final proc = await Process.start(path, args, workingDirectory: cwd);
+  var cancelled = false;
+  cancel?.then((_) {
+    cancelled = true;
+    proc.kill();
+  });
+  final err = StringBuffer();
+  proc.stderr.transform(utf8.decoder).listen(err.write);
+  final done = proc.stdout
+      .transform(utf8.decoder)
+      .transform(const LineSplitter())
+      .forEach((l) => onLine?.call(l));
+  final code = await proc.exitCode;
+  await done;
+  if (cancelled) throw JobCancelled();
+  if (code != 0) throw ProcessException(exe, args, err.toString(), code);
 }
 
 /// Result of probing one external tool; [ok] false means [detail] says what is missing.

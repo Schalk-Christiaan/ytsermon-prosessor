@@ -5,7 +5,6 @@
 //   skryf: out/
 //   doel: sny die preek (stroomkopie) en Shorts (9:16 met ingebrande onderskrif) met ffmpeg
 //   status: oop
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -82,21 +81,17 @@ Future<void> _ffmpeg(
   String? cwd,
   double? duration,
   void Function(double frac)? onProgress,
-}) async {
-  final exe = findExecutable('ffmpeg');
-  if (exe == null) throw StateError('ffmpeg ontbreek');
-  final proc = await Process.start(exe, args, workingDirectory: cwd);
-  final err = StringBuffer();
-  proc.stderr.transform(utf8.decoder).listen(err.write);
-  await for (final l
-      in proc.stdout.transform(utf8.decoder).transform(const LineSplitter())) {
+}) => runTool(
+  'ffmpeg',
+  args,
+  cwd: cwd,
+  onLine: (l) {
     final t = parseFfmpegProgress(l);
-    if (t != null && duration != null && duration > 0)
+    if (t != null && duration != null && duration > 0) {
       onProgress?.call((t / duration).clamp(0, 1));
-  }
-  final code = await proc.exitCode;
-  if (code != 0) throw ProcessException('ffmpeg', args, err.toString(), code);
-}
+    }
+  },
+);
 
 /// Cuts the sermon (stream copy) into [outDir]; returns the file.
 Future<File> cutSermon(
