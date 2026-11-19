@@ -16,7 +16,12 @@ import 'package:preekverwerker/features/review/review_controller.dart';
   final store = SermonStore(Directory.systemTemp.createTempSync('work'))
     ..load()
     ..merge([if (seed) const ChannelItem('x', 'Preek', 100)]);
-  final jobs = JobQueue(store, plan: (_) async {}, cut: cut ?? (_) async {});
+  final jobs = JobQueue(
+    store,
+    plan: (_) async {},
+    cut: cut ?? (_) async {},
+    audio: (_) async {},
+  );
   final c = ReviewController(
     store: store,
     jobs: jobs,

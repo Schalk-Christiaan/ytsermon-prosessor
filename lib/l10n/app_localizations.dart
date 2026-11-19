@@ -381,6 +381,24 @@ abstract class L {
   /// **'Sny'**
   String get taskCut;
 
+  /// No description provided for @taskAudio.
+  ///
+  /// In af, this message translates to:
+  /// **'Klank'**
+  String get taskAudio;
+
+  /// No description provided for @stageAudio.
+  ///
+  /// In af, this message translates to:
+  /// **'Maak klank…'**
+  String get stageAudio;
+
+  /// No description provided for @whatsappAudio.
+  ///
+  /// In af, this message translates to:
+  /// **'Klank vir WhatsApp'**
+  String get whatsappAudio;
+
   /// No description provided for @taskCancelled.
   ///
   /// In af, this message translates to:
