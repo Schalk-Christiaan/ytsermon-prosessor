@@ -25,7 +25,23 @@ enum ReviewState { empty, loading, error, ready }
 enum LoadStage { meta, plan, cut }
 
 class ReviewController extends ChangeNotifier {
-  ReviewController({this.work, this.out, this.font});
+  ReviewController({
+    this.work,
+    this.out,
+    this.font,
+    this.download = downloadVideo,
+    this.openVideo,
+    this.positions,
+  });
+
+  /// Test seams: the downloader, and replacements for the media_kit player.
+  final Future<File> Function(
+    FetchedMeta meta, {
+    void Function(double pct)? onProgress,
+  })
+  download;
+  final Future<void> Function(File video)? openVideo;
+  final Stream<Duration>? positions;
 
   /// Overrides for tests: work cache root and output folder.
   final Directory? work;
@@ -63,6 +79,8 @@ class ReviewController extends ChangeNotifier {
   bool saved = false;
   double cutFraction = 0;
   Completer<File>? _download;
+  @visibleForTesting
+  Future<File>? get downloadFuture => _download?.future;
   String? _url;
   StreamSubscription<Duration>? _pos;
 
@@ -105,12 +123,14 @@ class ReviewController extends ChangeNotifier {
 
   void _startDownload(FetchedMeta m) {
     final c = _download = Completer<File>();
-    downloadVideo(m, onProgress: (v) => downloadPct.value = v).then(
+    // Errors are shown through `error`; approveAndCut still sees them when it awaits.
+    c.future.ignore();
+    download(m, onProgress: (v) => downloadPct.value = v).then(
       (f) async {
-        _pos = player.stream.position.listen(
+        _pos ??= (positions ?? player.stream.position).listen(
           (d) => position.value = d.inMilliseconds / 1000,
         );
-        await player.open(Media(f.path), play: false);
+        await (openVideo?.call(f) ?? player.open(Media(f.path), play: false));
         videoReady = true;
         notifyListeners();
         c.complete(f);
