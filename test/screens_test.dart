@@ -503,7 +503,7 @@ void main() {
         Shell(store: tc.$2, jobs: tc.$3, list: () async => []),
       ),
     );
-    await t.pump();
+    await t.pump(const Duration(milliseconds: 10));
     await t.tap(find.text('Hersien'));
     await t.pump();
     expect(find.text("Kies 'n preek in Preke."), findsOneWidget);
