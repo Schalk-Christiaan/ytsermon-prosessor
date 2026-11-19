@@ -18,6 +18,8 @@ import 'package:preekverwerker/core/settings.dart';
 import 'package:preekverwerker/core/youtube.dart';
 import 'package:preekverwerker/features/playlists/playlists_screen.dart';
 import 'package:preekverwerker/features/settings/settings_screen.dart';
+import 'package:preekverwerker/features/setup/setup_screen.dart';
+import 'package:preekverwerker/core/tools.dart';
 import 'package:preekverwerker/features/sermons/sermons_screen.dart';
 import 'package:preekverwerker/features/work/work_screen.dart';
 import 'package:preekverwerker/features/review/review_controller.dart';
@@ -144,7 +146,12 @@ void main() {
           b,
           RepaintBoundary(
             key: key,
-            child: Shell(store: tc.$2, jobs: tc.$3, list: () async => []),
+            child: Shell(
+              store: tc.$2,
+              jobs: tc.$3,
+              list: () async => [],
+              settings: AppSettings.load(tc.$2.root)..setupDone = true,
+            ),
           ),
         ),
       );
@@ -588,7 +595,12 @@ void main() {
     await t.pumpWidget(
       _app(
         Brightness.light,
-        Shell(store: tc.$2, jobs: tc.$3, list: () async => []),
+        Shell(
+          store: tc.$2,
+          jobs: tc.$3,
+          list: () async => [],
+          settings: AppSettings.load(tc.$2.root)..setupDone = true,
+        ),
       ),
     );
     await t.pump(const Duration(milliseconds: 10));
@@ -776,6 +788,133 @@ void main() {
           expect(t.takeException(), isNull);
           await _shot(t, key, '$name-${b.name}-${w.toInt()}');
         }
+        await t.pumpWidget(const SizedBox());
+      });
+    }
+  }
+
+  /// A SetupScreen whose four checks the test flips by hand.
+  (Widget, AppSettings, List<String>) setup({
+    String ollama = 'notRunning',
+    bool signedIn = false,
+    bool client = true,
+  }) {
+    final root = Directory.systemTemp.createTempSync('setup');
+    final set = AppSettings.load(root)..outDir = p.join(root.path, 'Preke');
+    if (client) File(set.clientFile).writeAsStringSync('{"installed":{}}');
+    var status = ollama;
+    String? token = signedIn ? 'rt' : null;
+    final calls = <String>[];
+    final w = SetupScreen(
+      settings: set,
+      auth: GoogleAuth(
+        File(set.clientFile),
+        read: () async => token,
+        write: (v) async => token = v,
+      ),
+      probe: () async => ToolStatus('ollama', status == 'ok', status),
+      startOllama: () async {
+        calls.add('start');
+        status = 'model:qwen3:8b';
+      },
+      pull: ({required onProgress}) async {
+        calls.add('pull');
+        onProgress(0.5);
+        status = 'ok';
+      },
+      signIn: () async {
+        calls.add('signIn');
+        token = 'rt';
+      },
+      onSettings: () => calls.add('settings'),
+      onDone: () => calls.add('done'),
+    );
+    return (w, set, calls);
+  }
+
+  testWidgets('opstelling: one button per step; Begin werk once all four', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final (w, set, calls) = setup();
+    await t.pumpWidget(_app(Brightness.light, Scaffold(body: w)));
+    await t.pumpAndSettle();
+    expect(find.text('Nog nie'), findsNWidgets(4));
+    FilledButton begin() =>
+        t.widget<FilledButton>(find.widgetWithText(FilledButton, 'Begin werk'));
+    expect(begin().onPressed, isNull);
+    await t.tap(find.text('Begin Ollama'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Laai model af'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Koppel kanaal'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Maak gids'));
+    await t.pumpAndSettle();
+    expect(calls, ['start', 'pull', 'signIn']);
+    expect(Directory(set.outDir).existsSync(), isTrue);
+    expect(find.text('Klaar'), findsNWidgets(4));
+    await t.tap(find.text('Begin werk'));
+    await t.pumpAndSettle();
+    expect(calls.last, 'done');
+    expect(AppSettings.load(set.root).setupDone, isTrue);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('opstelling: no client file points to Instellings', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final (w, _, calls) = setup(client: false);
+    await t.pumpWidget(_app(Brightness.light, Scaffold(body: w)));
+    await t.pumpAndSettle();
+    expect(
+      find.text('Kies eers die kliënt-ID-lêer in Instellings'),
+      findsOneWidget,
+    );
+    await t.tap(find.text('Gaan na Instellings'));
+    expect(calls, ['settings']);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('shell: starts on Opstelling until it is done', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final tc = testController();
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Shell(store: tc.$2, jobs: tc.$3, list: () async => []),
+      ),
+    );
+    await t.pump();
+    expect(find.text('Begin werk'), findsOneWidget);
+    await t.pump(const Duration(seconds: 6)); // probe timeout
+    await t.pumpWidget(const SizedBox());
+  });
+
+  for (final b in Brightness.values) {
+    for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
+      testWidgets('opstelling skermkiekie ${b.name} ${w.toInt()}', (t) async {
+        await _fonts();
+        t.view.physicalSize = Size(w, h);
+        t.view.devicePixelRatio = 1;
+        final (screen, _, _) = setup(ollama: 'model:qwen3:8b');
+        final key = GlobalKey();
+        await t.pumpWidget(
+          _app(
+            b,
+            RepaintBoundary(
+              key: key,
+              child: Scaffold(body: screen),
+            ),
+          ),
+        );
+        await t.pumpAndSettle();
+        await _shot(t, key, 'opstelling-${b.name}-${w.toInt()}');
         await t.pumpWidget(const SizedBox());
       });
     }

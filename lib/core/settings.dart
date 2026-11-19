@@ -42,6 +42,7 @@ class AppSettings {
   }
 
   final File _file;
+  Directory get root => _file.parent;
 
   /// Google's downloaded `client_secret_*.json` (Desktop app).
   String clientFile;

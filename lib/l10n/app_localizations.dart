@@ -781,6 +781,102 @@ abstract class L {
     String datum,
     String beskrywing,
   );
+
+  /// No description provided for @navSetup.
+  ///
+  /// In af, this message translates to:
+  /// **'Opstelling'**
+  String get navSetup;
+
+  /// No description provided for @setupIntro.
+  ///
+  /// In af, this message translates to:
+  /// **'Vier dinge, een keer. Daarna begin die app by Preke.'**
+  String get setupIntro;
+
+  /// No description provided for @setupOllama.
+  ///
+  /// In af, this message translates to:
+  /// **'Ollama (die KI op hierdie rekenaar) loop'**
+  String get setupOllama;
+
+  /// No description provided for @setupModel.
+  ///
+  /// In af, this message translates to:
+  /// **'Die KI-model is afgelaai (5 GB)'**
+  String get setupModel;
+
+  /// No description provided for @setupChannel.
+  ///
+  /// In af, this message translates to:
+  /// **'Die kerk se YouTube-kanaal is gekoppel'**
+  String get setupChannel;
+
+  /// No description provided for @setupFolder.
+  ///
+  /// In af, this message translates to:
+  /// **'Gids vir gesnyde preke: {path}'**
+  String setupFolder(String path);
+
+  /// No description provided for @stepDone.
+  ///
+  /// In af, this message translates to:
+  /// **'Klaar'**
+  String get stepDone;
+
+  /// No description provided for @stepTodo.
+  ///
+  /// In af, this message translates to:
+  /// **'Nog nie'**
+  String get stepTodo;
+
+  /// No description provided for @startOllama.
+  ///
+  /// In af, this message translates to:
+  /// **'Begin Ollama'**
+  String get startOllama;
+
+  /// No description provided for @downloadModel.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai model af'**
+  String get downloadModel;
+
+  /// No description provided for @clientFirst.
+  ///
+  /// In af, this message translates to:
+  /// **'Kies eers die kliënt-ID-lêer in Instellings'**
+  String get clientFirst;
+
+  /// No description provided for @goSettings.
+  ///
+  /// In af, this message translates to:
+  /// **'Gaan na Instellings'**
+  String get goSettings;
+
+  /// No description provided for @makeFolder.
+  ///
+  /// In af, this message translates to:
+  /// **'Maak gids'**
+  String get makeFolder;
+
+  /// No description provided for @startWork.
+  ///
+  /// In af, this message translates to:
+  /// **'Begin werk'**
+  String get startWork;
+
+  /// No description provided for @checkAgain.
+  ///
+  /// In af, this message translates to:
+  /// **'Kontroleer weer'**
+  String get checkAgain;
+
+  /// No description provided for @outFolder.
+  ///
+  /// In af, this message translates to:
+  /// **'Gids vir gesnyde preke'**
+  String get outFolder;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

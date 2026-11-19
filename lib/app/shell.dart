@@ -3,7 +3,7 @@
 //   wanneer: by opstart
 //   groep: app | App-raam
 //   skryf: —
-//   doel: NavigationRail: Preke (tuis), Hersien, Werk, Snitlyste, Instellings (Kanaal + Stelsel)
+//   doel: NavigationRail: Preke (tuis), Hersien, Werk, Snitlyste, Instellings (Kanaal + Stelsel); begin op Opstelling tot dit klaar is
 //   status: oop
 import 'dart:io';
 
@@ -22,6 +22,7 @@ import '../features/review/review_screen.dart';
 import '../features/sermons/sermons_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/settings/system_status.dart';
+import '../features/setup/setup_screen.dart';
 import '../features/work/work_screen.dart';
 import '../l10n/app_localizations.dart';
 
@@ -51,7 +52,8 @@ class Shell extends StatefulWidget {
 }
 
 class _ShellState extends State<Shell> {
-  int _i = 0; // 0 Preke, 1 Hersien, 2 Werk, 3 Snitlyste, 4 Instellings
+  // 0 Preke, 1 Hersien, 2 Werk, 3 Snitlyste, 4 Instellings, 5 Opstelling (no rail item)
+  late int _i = _settings.setupDone ? 0 : 5;
   late final _review = ReviewController(store: widget.store, jobs: widget.jobs);
   late final _settings = widget.settings ?? AppSettings.load(widget.store.root);
   late final _quota =
@@ -120,7 +122,19 @@ class _ShellState extends State<Shell> {
                   auth: _auth,
                   signIn: () => _auth.signIn(openPath),
                   system: const SystemStatus(),
+                  onSetup: () => setState(() => _i = 5),
                 ),
+                // Built only while shown, so it probes Ollama when opened, not at every start.
+                if (_i == 5)
+                  SetupScreen(
+                    settings: _settings,
+                    auth: _auth,
+                    signIn: () => _auth.signIn(openPath),
+                    onSettings: () => setState(() => _i = 4),
+                    onDone: () => setState(() => _i = 0),
+                  )
+                else
+                  const SizedBox(),
               ],
             ),
           ),

@@ -415,4 +415,55 @@ class LAf extends L {
   ) {
     return '$tema, $skriflesing, $datum en $beskrywing word ingevul.';
   }
+
+  @override
+  String get navSetup => 'Opstelling';
+
+  @override
+  String get setupIntro =>
+      'Vier dinge, een keer. Daarna begin die app by Preke.';
+
+  @override
+  String get setupOllama => 'Ollama (die KI op hierdie rekenaar) loop';
+
+  @override
+  String get setupModel => 'Die KI-model is afgelaai (5 GB)';
+
+  @override
+  String get setupChannel => 'Die kerk se YouTube-kanaal is gekoppel';
+
+  @override
+  String setupFolder(String path) {
+    return 'Gids vir gesnyde preke: $path';
+  }
+
+  @override
+  String get stepDone => 'Klaar';
+
+  @override
+  String get stepTodo => 'Nog nie';
+
+  @override
+  String get startOllama => 'Begin Ollama';
+
+  @override
+  String get downloadModel => 'Laai model af';
+
+  @override
+  String get clientFirst => 'Kies eers die kliënt-ID-lêer in Instellings';
+
+  @override
+  String get goSettings => 'Gaan na Instellings';
+
+  @override
+  String get makeFolder => 'Maak gids';
+
+  @override
+  String get startWork => 'Begin werk';
+
+  @override
+  String get checkAgain => 'Kontroleer weer';
+
+  @override
+  String get outFolder => 'Gids vir gesnyde preke';
 }
