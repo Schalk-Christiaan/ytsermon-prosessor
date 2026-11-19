@@ -114,12 +114,6 @@ class _SermonsScreenState extends State<SermonsScreen> {
     setState(_selected.clear);
   }
 
-  bool _queued(Sermon s) => widget.jobs.jobs.any(
-    (j) =>
-        j.sermon == s.id &&
-        (j.status == JobStatus.wag || j.status == JobStatus.besig),
-  );
-
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
@@ -269,7 +263,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
   }
 
   Widget _row(L l, ThemeData th, Sermon s) {
-    final queued = _queued(s);
+    final queued = widget.jobs.hasPending(s.id);
     return InkWell(
       onTap: () => widget.onOpen(s.id),
       child: Row(

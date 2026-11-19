@@ -70,7 +70,7 @@ void main() {
     c.setManually();
     await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(c.error, 'stuk');
-    // approveAndCut still sees the failure when it awaits the download.
+    // The failure also reaches anyone awaiting the download.
     await expectLater(c.downloadFuture, throwsA('stuk'));
   });
 
@@ -112,7 +112,7 @@ void main() {
       null,
     );
     c.setManually();
-    await c.approveAndCut();
+    c.approveAndCut();
     expect(
       store.byId('x')!.state,
       anyOf(SermonState.goedgekeur, SermonState.gesny),
@@ -123,5 +123,74 @@ void main() {
     c.skip();
     expect(store.byId('x')!.state, SermonState.oorgeslaan);
     expect(c.state, ReviewState.empty);
+  });
+
+  /// Writes info.json, captions and a plan for sermon [id] in [store].
+  void seedPlan(SermonStore store, String id) {
+    final dir = Directory(p.join(store.root.path, id))..createSync();
+    File(p.join(dir.path, '$id.info.json')).writeAsStringSync(
+      '{"title":"T","duration":100,"upload_date":"20261115"}',
+    );
+    File(p.join(dir.path, '$id.af-orig.json3'))
+        .writeAsStringSync('{"events":[]}');
+    savePlan(
+      dir,
+      SermonPlan(
+        sermonStart: 1,
+        sermonEnd: 90,
+        title: 'Plan',
+        description: '',
+        shorts: [],
+      ),
+    );
+  }
+
+  test('approveAndCut does not wait for the preview download', () async {
+    final gate = Completer<File>();
+    final (c, store, jobs) = testController(
+      download: (m, {onProgress}) => gate.future,
+      cut: (_) => Completer<void>().future,
+    );
+    seedPlan(store, 'x');
+    c.open('x');
+    c.approveAndCut();
+    expect(jobs.jobs.single.kind, JobKind.cut);
+    expect(store.byId('x')!.state, SermonState.goedgekeur);
+  });
+
+  test('a download that finishes after open(other) is ignored', () async {
+    final gate = Completer<File>();
+    final opened = <File>[];
+    final (_, store, jobs) = testController();
+    store.merge([const ChannelItem('y', 'Twee', 100)]);
+    seedPlan(store, 'x');
+    final c = ReviewController(
+      store: store,
+      jobs: jobs,
+      download: (m, {onProgress}) => gate.future,
+      openVideo: (f) async => opened.add(f),
+    );
+    c.open('x');
+    c.open('y');
+    gate.complete(File('vorige.mp4'));
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(opened, isEmpty);
+    expect(c.videoReady, isFalse);
+  });
+
+  test('no preview download while a job for the sermon is pending', () async {
+    var downloads = 0;
+    final (c, store, jobs) = testController(
+      download: (m, {onProgress}) async {
+        downloads++;
+        return File('v.mp4');
+      },
+      cut: (_) => Completer<void>().future,
+    );
+    seedPlan(store, 'x');
+    jobs.enqueue('x', JobKind.cut);
+    c.open('x');
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(downloads, 0);
   });
 }

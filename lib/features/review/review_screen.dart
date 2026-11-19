@@ -51,7 +51,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Future<void> _cut(L l) async {
     final m = ScaffoldMessenger.of(context);
     try {
-      await _c.approveAndCut();
+      _c.approveAndCut();
       m.showSnackBar(SnackBar(content: Text(l.cutQueued)));
     } on Object catch (e) {
       m.showSnackBar(SnackBar(content: Text(l.errorGeneric(e.toString()))));

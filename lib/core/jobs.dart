@@ -133,15 +133,17 @@ class JobQueue extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// True while [sermon] has a waiting or running job (of [kind], if given).
+  bool hasPending(String sermon, [JobKind? kind]) => jobs.any(
+    (j) =>
+        j.sermon == sermon &&
+        (kind == null || j.kind == kind) &&
+        (j.status == JobStatus.wag || j.status == JobStatus.besig),
+  );
+
   /// Adds a job unless the same one is already waiting or running; call [start] to run.
   void enqueue(String sermon, JobKind kind) {
-    final dup = jobs.any(
-      (j) =>
-          j.sermon == sermon &&
-          j.kind == kind &&
-          (j.status == JobStatus.wag || j.status == JobStatus.besig),
-    );
-    if (dup) return;
+    if (hasPending(sermon, kind)) return;
     jobs.add(Job(sermon, kind));
     _persist();
     start();

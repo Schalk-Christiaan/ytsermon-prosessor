@@ -128,7 +128,7 @@ class ReviewController extends ChangeNotifier {
       );
       state = _active(JobKind.cut) ? ReviewState.loading : ReviewState.ready;
       planRevision++;
-      if (_download == null) _startDownload(meta!);
+      if (_download == null && !jobs.hasPending(id!)) _startDownload(meta!);
     } else if (_active(JobKind.plan)) {
       state = ReviewState.loading;
     } else if (sermon?.state == SermonState.fout) {
@@ -147,12 +147,7 @@ class ReviewController extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool _active(JobKind k) => jobs.jobs.any(
-    (j) =>
-        j.sermon == id &&
-        j.kind == k &&
-        (j.status == JobStatus.wag || j.status == JobStatus.besig),
-  );
+  bool _active(JobKind k) => jobs.hasPending(id!, k);
 
   /// The queue changed: reload when the job we were waiting for has finished.
   void _onJobs() {
@@ -168,19 +163,23 @@ class ReviewController extends ChangeNotifier {
 
   void _startDownload(FetchedMeta m) {
     final c = _download = Completer<File>();
-    // Errors are shown through `error`; approveAndCut still sees them when it awaits.
+    // A download that finishes after reset()/open(other) must not touch the player.
+    bool stale() => _download != c;
     c.future.ignore();
     download(m, onProgress: (v) => downloadPct.value = v).then(
       (f) async {
+        if (stale()) return;
         _pos ??= (positions ?? player.stream.position).listen(
           (d) => position.value = d.inMilliseconds / 1000,
         );
         await (openVideo?.call(f) ?? player.open(Media(f.path), play: false));
+        if (stale()) return;
         videoReady = true;
         notifyListeners();
         c.complete(f);
       },
       onError: (Object e) {
+        if (stale()) return;
         c.completeError(e);
         error = e;
         notifyListeners();
@@ -306,10 +305,8 @@ class ReviewController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Waits for the preview download (so the cut job finds the video on disk),
-  /// then marks the sermon `goedgekeur` and queues the cut job.
-  Future<void> approveAndCut() async {
-    await _download!.future;
+  /// Marks the sermon `goedgekeur` and queues the cut job (it downloads the video itself).
+  void approveAndCut() {
     _save();
     store.save(sermon!..state = SermonState.goedgekeur);
     jobs.enqueue(id!, JobKind.cut);
