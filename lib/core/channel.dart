@@ -3,7 +3,7 @@
 //   wanneer: as 'n preek-URL gelaai word
 //   groep: core | Kern
 //   skryf: werkmap/<id>/ (info.json, onderskrifte, video.mp4)
-//   doel: video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af
+//   doel: lys die kanaal (flat), video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af
 //   status: oop
 import 'dart:convert';
 import 'dart:io';
@@ -11,6 +11,48 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import 'tools.dart';
+
+/// The church channel (see CONTEXT.md, Name).
+const kChannelUrl = 'https://www.youtube.com/@gereformeerdekerkoranjeriv5791';
+
+/// One channel entry from the flat list. The flat list carries no upload date, so none here:
+/// the date is filled in later by `fetchMeta` (lazy, per sermon).
+class ChannelItem {
+  const ChannelItem(this.id, this.title, this.duration);
+  final String id;
+  final String title;
+  final double duration;
+}
+
+/// Merges yt-dlp flat playlists (`-J` output) on video ID, keeping list order (newest first).
+List<ChannelItem> parseChannel(Iterable<dynamic> playlists) {
+  final seen = <String>{};
+  return [
+    for (final pl in playlists)
+      for (final e in (pl['entries'] as List? ?? const []))
+        if (e is Map && e['id'] is String && seen.add(e['id'] as String))
+          ChannelItem(
+            e['id'] as String,
+            '${e['title'] ?? ''}',
+            (e['duration'] as num?)?.toDouble() ?? 0,
+          ),
+  ];
+}
+
+/// Lists the whole channel (`/streams` then `/videos`) with one yt-dlp call per tab.
+Future<List<ChannelItem>> listChannel() async {
+  final tabs = <dynamic>[];
+  for (final tab in ['streams', 'videos']) {
+    final out = StringBuffer();
+    await runTool('yt-dlp', [
+      '--flat-playlist',
+      '-J',
+      '$kChannelUrl/$tab',
+    ], onLine: out.write);
+    tabs.add(jsonDecode(out.toString()));
+  }
+  return parseChannel(tabs);
+}
 
 /// Video ID from a youtu.be / watch?v= / live/ / shorts/ URL or a bare 11-char ID; null if none.
 String? videoIdFromUrl(String url) {

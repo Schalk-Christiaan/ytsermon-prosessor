@@ -1,0 +1,64 @@
+{
+ "streams": {
+  "entries": [
+   {
+    "id": "YWz5gf0onjk",
+    "title": "Uit die oorvloed van die hart praat die mond",
+    "duration": 3728,
+    "timestamp": null,
+    "live_status": "was_live",
+    "url": "https://www.youtube.com/watch?v=YWz5gf0onjk",
+    "_type": "url"
+   },
+   {
+    "id": "6s_FFatG0so",
+    "title": "Bewapen deur God, bekragtig deur die Opstanding en waaksaam deur die Gees",
+    "duration": 4504,
+    "timestamp": null,
+    "live_status": "was_live",
+    "url": "https://www.youtube.com/watch?v=6s_FFatG0so",
+    "_type": "url"
+   },
+   {
+    "id": "uub_CnO7bd0",
+    "title": "Die goeie boodskap van die nagmaal",
+    "duration": 3456,
+    "timestamp": null,
+    "live_status": "was_live",
+    "url": "https://www.youtube.com/watch?v=uub_CnO7bd0",
+    "_type": "url"
+   },
+   {
+    "id": "wa0cYz3mfwQ",
+    "title": "Hou jou oë deur die geloof op ons Here Jesus Christus en moet jou nieblindstaar teen reuse in en op",
+    "duration": 3762,
+    "timestamp": null,
+    "live_status": "was_live",
+    "url": "https://www.youtube.com/watch?v=wa0cYz3mfwQ",
+    "_type": "url"
+   }
+  ]
+ },
+ "videos": {
+  "entries": [
+   {
+    "id": "6s_FFatG0so",
+    "title": "Bewapen deur God, bekragtig deur die Opstanding en waaksaam deur die Gees",
+    "duration": 4504,
+    "timestamp": null,
+    "live_status": "was_live",
+    "url": "https://www.youtube.com/watch?v=6s_FFatG0so",
+    "_type": "url"
+   },
+   {
+    "id": "vdlbtntrhts",
+    "title": "Deur die Geloof verwonderd oor God se beloftes",
+    "duration": 4362,
+    "timestamp": null,
+    "live_status": null,
+    "url": "https://www.youtube.com/watch?v=vdlbtntrhts",
+    "_type": "url"
+   }
+  ]
+ }
+}
