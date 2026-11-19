@@ -1,0 +1,450 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_af.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of L
+/// returned by `L.of(context)`.
+///
+/// Applications need to include `L.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: L.localizationsDelegates,
+///   supportedLocales: L.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the L.supportedLocales
+/// property.
+abstract class L {
+  L(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static L of(BuildContext context) {
+    return Localizations.of<L>(context, L)!;
+  }
+
+  static const LocalizationsDelegate<L> delegate = _LDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[Locale('af')];
+
+  /// No description provided for @appTitle.
+  ///
+  /// In af, this message translates to:
+  /// **'Preekverwerker'**
+  String get appTitle;
+
+  /// No description provided for @navReview.
+  ///
+  /// In af, this message translates to:
+  /// **'Hersien'**
+  String get navReview;
+
+  /// No description provided for @navSettings.
+  ///
+  /// In af, this message translates to:
+  /// **'Instellings'**
+  String get navSettings;
+
+  /// No description provided for @navPreke.
+  ///
+  /// In af, this message translates to:
+  /// **'Preke'**
+  String get navPreke;
+
+  /// No description provided for @navWerk.
+  ///
+  /// In af, this message translates to:
+  /// **'Werk'**
+  String get navWerk;
+
+  /// No description provided for @navSnitlyste.
+  ///
+  /// In af, this message translates to:
+  /// **'Snitlyste'**
+  String get navSnitlyste;
+
+  /// No description provided for @comingPhase2.
+  ///
+  /// In af, this message translates to:
+  /// **'Kom in fase 2'**
+  String get comingPhase2;
+
+  /// No description provided for @settingsSystem.
+  ///
+  /// In af, this message translates to:
+  /// **'Stelsel'**
+  String get settingsSystem;
+
+  /// No description provided for @toolReady.
+  ///
+  /// In af, this message translates to:
+  /// **'Gereed'**
+  String get toolReady;
+
+  /// No description provided for @toolReadyVersion.
+  ///
+  /// In af, this message translates to:
+  /// **'Gereed · {version}'**
+  String toolReadyVersion(String version);
+
+  /// No description provided for @toolMissing.
+  ///
+  /// In af, this message translates to:
+  /// **'Ontbreek: installeer {name}'**
+  String toolMissing(String name);
+
+  /// No description provided for @modelMissing.
+  ///
+  /// In af, this message translates to:
+  /// **'Model {model} ontbreek: hardloop ollama pull {model}'**
+  String modelMissing(String model);
+
+  /// No description provided for @ollamaNotRunning.
+  ///
+  /// In af, this message translates to:
+  /// **'Ollama loop nie: begin die Ollama-diens'**
+  String get ollamaNotRunning;
+
+  /// No description provided for @pasteUrl.
+  ///
+  /// In af, this message translates to:
+  /// **'Plak \'n YouTube-skakel'**
+  String get pasteUrl;
+
+  /// No description provided for @load.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai'**
+  String get load;
+
+  /// No description provided for @stageMeta.
+  ///
+  /// In af, this message translates to:
+  /// **'Lees onderskrifte…'**
+  String get stageMeta;
+
+  /// No description provided for @stagePlan.
+  ///
+  /// In af, this message translates to:
+  /// **'Soek die preek…'**
+  String get stagePlan;
+
+  /// No description provided for @stageDownload.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai video af…'**
+  String get stageDownload;
+
+  /// No description provided for @stageCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Sny…'**
+  String get stageCut;
+
+  /// No description provided for @elapsed.
+  ///
+  /// In af, this message translates to:
+  /// **'{time} verloop'**
+  String elapsed(String time);
+
+  /// No description provided for @errorGeneric.
+  ///
+  /// In af, this message translates to:
+  /// **'Iets het skeefgeloop: {message}'**
+  String errorGeneric(String message);
+
+  /// No description provided for @retry.
+  ///
+  /// In af, this message translates to:
+  /// **'Probeer weer'**
+  String get retry;
+
+  /// No description provided for @setManually.
+  ///
+  /// In af, this message translates to:
+  /// **'Stel self in'**
+  String get setManually;
+
+  /// No description provided for @title.
+  ///
+  /// In af, this message translates to:
+  /// **'Titel'**
+  String get title;
+
+  /// No description provided for @description.
+  ///
+  /// In af, this message translates to:
+  /// **'Beskrywing'**
+  String get description;
+
+  /// No description provided for @counter.
+  ///
+  /// In af, this message translates to:
+  /// **'{n} / {max}'**
+  String counter(int n, int max);
+
+  /// No description provided for @saved.
+  ///
+  /// In af, this message translates to:
+  /// **'Gestoor'**
+  String get saved;
+
+  /// No description provided for @serviceTimeline.
+  ///
+  /// In af, this message translates to:
+  /// **'Dienstydlyn'**
+  String get serviceTimeline;
+
+  /// No description provided for @speech.
+  ///
+  /// In af, this message translates to:
+  /// **'Spraak'**
+  String get speech;
+
+  /// No description provided for @music.
+  ///
+  /// In af, this message translates to:
+  /// **'Sang'**
+  String get music;
+
+  /// No description provided for @sermonHandleStart.
+  ///
+  /// In af, this message translates to:
+  /// **'Preek begin {time}'**
+  String sermonHandleStart(String time);
+
+  /// No description provided for @sermonHandleEnd.
+  ///
+  /// In af, this message translates to:
+  /// **'Preek eindig {time}'**
+  String sermonHandleEnd(String time);
+
+  /// No description provided for @shorts.
+  ///
+  /// In af, this message translates to:
+  /// **'Shorts'**
+  String get shorts;
+
+  /// No description provided for @addShort.
+  ///
+  /// In af, this message translates to:
+  /// **'Voeg Short by'**
+  String get addShort;
+
+  /// No description provided for @remove.
+  ///
+  /// In af, this message translates to:
+  /// **'Verwyder'**
+  String get remove;
+
+  /// No description provided for @approveAndCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Keur goed en sny'**
+  String get approveAndCut;
+
+  /// No description provided for @replan.
+  ///
+  /// In af, this message translates to:
+  /// **'Beplan weer'**
+  String get replan;
+
+  /// No description provided for @skip.
+  ///
+  /// In af, this message translates to:
+  /// **'Slaan oor'**
+  String get skip;
+
+  /// No description provided for @replanConfirm.
+  ///
+  /// In af, this message translates to:
+  /// **'Jou wysigings aan titel en snit gaan verlore'**
+  String get replanConfirm;
+
+  /// No description provided for @cancel.
+  ///
+  /// In af, this message translates to:
+  /// **'Kanselleer'**
+  String get cancel;
+
+  /// No description provided for @cutDone.
+  ///
+  /// In af, this message translates to:
+  /// **'Gesny: {sermons} preek, {shorts} Shorts'**
+  String cutDone(int sermons, int shorts);
+
+  /// No description provided for @showInFolder.
+  ///
+  /// In af, this message translates to:
+  /// **'Wys in gids'**
+  String get showInFolder;
+
+  /// No description provided for @emptyReview.
+  ///
+  /// In af, this message translates to:
+  /// **'Plak \'n skakel om \'n preek te hersien.'**
+  String get emptyReview;
+
+  /// No description provided for @skipped.
+  ///
+  /// In af, this message translates to:
+  /// **'Oorgeslaan'**
+  String get skipped;
+
+  /// No description provided for @downloadProgress.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai video af: {pct}%'**
+  String downloadProgress(int pct);
+
+  /// No description provided for @shortRange.
+  ///
+  /// In af, this message translates to:
+  /// **'{start} – {end}'**
+  String shortRange(String start, String end);
+
+  /// No description provided for @newShortTitle.
+  ///
+  /// In af, this message translates to:
+  /// **'Nuwe Short'**
+  String get newShortTitle;
+
+  /// No description provided for @stageCutPct.
+  ///
+  /// In af, this message translates to:
+  /// **'Sny… {pct}%'**
+  String stageCutPct(int pct);
+
+  /// No description provided for @shortTooLong.
+  ///
+  /// In af, this message translates to:
+  /// **'{s} s; maks 90 s'**
+  String shortTooLong(int s);
+
+  /// No description provided for @shortTooShort.
+  ///
+  /// In af, this message translates to:
+  /// **'{s} s; minstens 20 s'**
+  String shortTooShort(int s);
+
+  /// No description provided for @shortOutside.
+  ///
+  /// In af, this message translates to:
+  /// **'Lê buite die preek'**
+  String get shortOutside;
+
+  /// No description provided for @shortLength.
+  ///
+  /// In af, this message translates to:
+  /// **'Lengte van Short {n}'**
+  String shortLength(int n);
+
+  /// No description provided for @approveBlocked.
+  ///
+  /// In af, this message translates to:
+  /// **'Herstel eers die Shorts wat rooi gemerk is'**
+  String get approveBlocked;
+
+  /// No description provided for @shortPreview.
+  ///
+  /// In af, this message translates to:
+  /// **'Short {n}'**
+  String shortPreview(int n);
+}
+
+class _LDelegate extends LocalizationsDelegate<L> {
+  const _LDelegate();
+
+  @override
+  Future<L> load(Locale locale) {
+    return SynchronousFuture<L>(lookupL(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['af'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_LDelegate old) => false;
+}
+
+L lookupL(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'af':
+      return LAf();
+  }
+
+  throw FlutterError(
+    'L.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}
