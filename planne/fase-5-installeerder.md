@@ -1,4 +1,4 @@
-status: oop
+status: hersien
 
 # Fase 5: Installeerder en Opstelling
 
@@ -43,8 +43,16 @@ Kodeondertekening (SmartScreen: "Meer inligting → Hardloop tog"), GitHub Relea
 - **Ongetoets: die GitHub Actions-lopie en `Setup.exe`.** Stappe vir Schalk: (1) `git push` (die werkvloei loop by elke push na `main` en met die hand via Actions → "Windows" → "Run workflow"); (2) wag ±15 min, Actions → die lopie → Artifacts → `Setup` aflaai en uitpak; (3) op die kerk-PC: `Setup.exe` dubbelklik → SmartScreen "Meer inligting → Hardloop tog" → Volgende tot Klaar (geen admin-vraag nie; Ollama installeer stil saam); (4) die app maak oop op die Opstelling-lys: "Laai model af" (5 GB, ±10–30 min), kopieer `client_secret.json` na die gids wat Instellings → Kanaal wys, "Koppel kanaal", "Maak gids", "Begin werk"; (5) Instellings → Stelsel moet yt-dlp/ffmpeg/ffprobe/Ollama groen wys.
 - (aanname) Uitsetgids-verstek `%USERPROFILE%\Videos\Preke` (Linux `~/Videos/Preke`).
 - (aanname) Ollama word net geïnstalleer as `%LOCALAPPDATA%\Programs\Ollama\ollama.exe` nog nie bestaan nie; die model word deur die app afgelaai, nie die installeerder nie (5 GB in 'n installeerder is te groot vir 'n artefak).
+- (aanname) Inno Setup het geen Afrikaanse vertaling nie; die installeerder se knoppies is in Nederlands (`Dutch.isl`), ons eie teks in Afrikaans.
 - (aanname) Die werkvloei loop op push na `main`, op tags `v*` en met die hand; die artefak hou 30 dae.
 
 ## Log
+- 2026-11-19 stap 1: `AppSettings.outDir` (verstek `<tuis>/Videos/Preke`) en `setupDone`; `outDir()` (`./out`) weg, `cutJob` lees die instelling; settings_test rooi → groen, jobs_test groen.
+- 2026-11-19 stap 2: `pullModel` (gestroomde `/api/pull`, fout-reël en voortydige einde → gewone-taal fout), `startOllama` (losgekoppelde `ollama serve`), `findExecutable` kyk in `%LOCALAPPDATA%\Programs\Ollama`; tools_test teen 'n vals Ollama rooi → groen.
+- 2026-11-19 stap 3: Opstelling-skerm; Shell begin daar tot `setupDone`; Instellings kry "Opstelling" en die uitsetgids-veld; "Stelsel" een opskrifvlak laer. Widget-toetse rooi → groen; kiekies `out/shots/opstelling-{light,dark}-{1100,1920}.png`. Kritiek: twee gevulde knoppies het meegeding → net die eerste oop stap se knoppie is gevul.
+- 2026-11-19 stap 4: `.github/workflows/windows.yml` + `installer/setup.iss`; `actionlint` skoon (rc 0). ISCC nie op Linux nie.
+- 2026-11-19 stap 5: `flutter test` 108 groen (1 oorgeslaan), `dart analyze` skoon, `kaart.py --check` skoon, `flutter build linux --debug` bou.
 
 ## Verslag
+Gebou op `bou/fase-5-installeerder`. Die app begin by die eerste keer op die Opstelling-lys: vier genommerde stappe met ikoon + woord, elk een knoppie, net die volgende oop stap s'n gevul; "Begin werk" word aktief as al vier klaar is en die lys verskyn dan nie weer nie (Instellings → "Opstelling" bring dit terug). Gesnyde preke gaan na `Videos\Preke` (instelbaar), nie meer na 'n gids relatief tot waar die app begin is nie. Die werkvloei bou `Setup.exe` met vasgepende weergawes (yt-dlp 2026.10.26, ffmpeg 9.0.2 essentials, Ollama v0.40.16) en die VC++-runtime langs die exe.
+Ongetoets: die GitHub Actions-lopie, `Setup.exe` en die Opstelling op die kerk-PC (stappe onder Vrae); `ISCC` het nie plaaslik geloop nie, so 'n tikfout in `setup.iss` wys eers op die runner.
