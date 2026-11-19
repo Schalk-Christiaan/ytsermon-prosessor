@@ -23,8 +23,12 @@ void main() {
   });
   tearDown(() => root.deleteSync(recursive: true));
 
-  JobQueue queue({JobRun? plan, JobRun? cut}) =>
-      JobQueue(store, plan: plan ?? (_) async {}, cut: cut ?? (_) async {});
+  JobQueue queue({JobRun? plan, JobRun? cut, JobRun? audio}) => JobQueue(
+    store,
+    plan: plan ?? (_) async {},
+    cut: cut ?? (_) async {},
+    audio: audio,
+  );
 
   test('runs in order, one at a time, sets states', () async {
     final log = <String>[];
@@ -149,4 +153,33 @@ void main() {
       expect(q.jobs.last.status, JobStatus.klaar);
     },
   );
+
+  test('an audio job keeps the sermon state, also when it fails', () async {
+    store.save(store.byId('aaaaaaaaaaa')!..state = SermonState.gesny);
+    var fail = false;
+    final q = queue(
+      audio: (_) async {
+        if (fail) throw StateError('stuk');
+      },
+    );
+    q.enqueue('aaaaaaaaaaa', JobKind.audio);
+    await q.idle;
+    expect(q.jobs.single.status, JobStatus.klaar);
+    expect(store.byId('aaaaaaaaaaa')!.state, SermonState.gesny);
+    fail = true;
+    q.enqueue('aaaaaaaaaaa', JobKind.audio);
+    await q.idle;
+    expect(q.jobs.last.status, JobStatus.fout);
+    expect(store.byId('aaaaaaaaaaa')!.state, SermonState.gesny);
+    q.retry(q.jobs.last);
+    expect(store.byId('aaaaaaaaaaa')!.state, SermonState.gesny);
+  });
+
+  test('audioJob without a cut sermon fails in plain language', () async {
+    final q = queue(audio: audioJob(store));
+    q.enqueue('aaaaaaaaaaa', JobKind.audio);
+    await q.idle;
+    expect(q.jobs.single.status, JobStatus.fout);
+    expect(q.jobs.single.error, 'Sny eers die preek.');
+  });
 }

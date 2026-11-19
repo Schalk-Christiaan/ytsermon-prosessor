@@ -382,7 +382,7 @@ void main() {
   }
 
   // --- Werk ---
-  (SermonStore, JobQueue) workQueue() {
+  (SermonStore, JobQueue) workQueue({bool audio = false}) {
     final tc = testController(seed: false);
     final st = tc.$2
       ..merge([
@@ -405,11 +405,19 @@ void main() {
         error: 'Ollama het nie geantwoord nie.',
         log: ['Connection refused', 'tweede reël'],
       ),
-      Job('aaaaaaaaaaa', JobKind.cut, status: JobStatus.besig),
+      Job(
+        'aaaaaaaaaaa',
+        audio ? JobKind.audio : JobKind.cut,
+        status: JobStatus.besig,
+      ),
       Job('bbbbbbbbbbb', JobKind.plan),
+      if (audio) Job('ccccccccccc', JobKind.audio, status: JobStatus.klaar),
     ]);
+    if (audio) {
+      st.byId('ccccccccccc')!.outputs.add('/tmp/2026-11-15 Preek.mp3');
+    }
     q.current = q.jobs[2];
-    q.phase.value = JobPhase.download;
+    q.phase.value = audio ? JobPhase.audio : JobPhase.download;
     q.progress.value = 0.42;
     return (st, q);
   }
@@ -458,37 +466,89 @@ void main() {
     await t.pumpWidget(const SizedBox());
   });
 
+  testWidgets('werk: "Klank vir WhatsApp" queues audio; mp3 shows in folder', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final tc = testController(seed: false);
+    final st = tc.$2
+      ..merge([
+        const ChannelItem('ccccccccccc', 'Preek c', 100),
+        const ChannelItem('eeeeeeeeeee', 'Preek e', 100),
+      ]);
+    st.byId('ccccccccccc')!.outputs = ['/tmp/2026-11-15 Preek.mp4'];
+    st.byId('eeeeeeeeeee')!.outputs = [
+      '/tmp/2026-11-08 E.mp4',
+      '/tmp/2026-11-08 E.mp3',
+    ];
+    final q = tc.$3;
+    q.jobs.addAll([
+      Job('eeeeeeeeeee', JobKind.audio, status: JobStatus.klaar),
+      Job('ccccccccccc', JobKind.cut, status: JobStatus.klaar),
+    ]);
+    final opened = <(String, bool)>[];
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: WorkScreen(
+            store: st,
+            jobs: q,
+            onBack: () {},
+            open: (path, {select = false}) async => opened.add((path, select)),
+          ),
+        ),
+      ),
+    );
+    await t.pump();
+    expect(find.text('Klank: Preek e'), findsOneWidget);
+    await t.tap(find.text('Wys in gids').last);
+    expect(opened, [('/tmp/2026-11-08 E.mp3', true)]);
+    await t.tap(find.text('Klank vir WhatsApp'));
+    await t.pump();
+    expect(
+      q.jobs.any((j) => j.sermon == 'ccccccccccc' && j.kind == JobKind.audio),
+      isTrue,
+    );
+    await t.pumpWidget(const SizedBox());
+  });
+
   for (final b in Brightness.values) {
     for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
-      testWidgets('werk skermkiekie ${b.name} ${w.toInt()}', (t) async {
-        await _fonts();
-        t.view.physicalSize = Size(w, h);
-        t.view.devicePixelRatio = 1;
-        final key = GlobalKey();
-        final (st, q) = workQueue();
-        await t.pumpWidget(
-          _app(
-            b,
-            RepaintBoundary(
-              key: key,
-              child: Scaffold(
-                body: WorkScreen(store: st, jobs: q, onBack: () {}),
+      for (final audio in [false, true]) {
+        final name = audio ? 'werk-klank' : 'werk';
+        testWidgets('$name skermkiekie ${b.name} ${w.toInt()}', (t) async {
+          await _fonts();
+          t.view.physicalSize = Size(w, h);
+          t.view.devicePixelRatio = 1;
+          final key = GlobalKey();
+          final (st, q) = workQueue(audio: audio);
+          await t.pumpWidget(
+            _app(
+              b,
+              RepaintBoundary(
+                key: key,
+                child: Scaffold(
+                  body: WorkScreen(store: st, jobs: q, onBack: () {}),
+                ),
               ),
             ),
-          ),
-        );
-        await t.pump();
-        expect(t.takeException(), isNull);
-        await t.runAsync(() async {
-          final r =
-              key.currentContext!.findRenderObject() as RenderRepaintBoundary;
-          final img = await r.toImage();
-          final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
-          File(p.join(shots.path, 'werk-${b.name}-${w.toInt()}.png'))
-              .writeAsBytesSync(bytes!.buffer.asUint8List());
+          );
+          await t.pump();
+          expect(t.takeException(), isNull);
+          await t.runAsync(() async {
+            final r =
+                key.currentContext!.findRenderObject() as RenderRepaintBoundary;
+            final img = await r.toImage();
+            final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
+            File(p.join(shots.path, '$name-${b.name}-${w.toInt()}.png'))
+                .writeAsBytesSync(bytes!.buffer.asUint8List());
+          });
+          await t.pumpWidget(const SizedBox());
         });
-        await t.pumpWidget(const SizedBox());
-      });
+      }
     }
   }
 

@@ -176,6 +176,15 @@ class LAf extends L {
   String get taskCut => 'Sny';
 
   @override
+  String get taskAudio => 'Klank';
+
+  @override
+  String get stageAudio => 'Maak klank…';
+
+  @override
+  String get whatsappAudio => 'Klank vir WhatsApp';
+
+  @override
   String get taskCancelled => 'Gekanselleer';
 
   @override

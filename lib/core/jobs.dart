@@ -1,9 +1,9 @@
 // @stelsel jobs
 //   soort: module
-//   wanneer: "Verwerk volgende", "Keur goed en sny", "Beplan weer" en by begin (hervat)
+//   wanneer: "Verwerk volgende", "Keur goed en sny", "Beplan weer", "Klank vir WhatsApp" en by begin (hervat)
 //   groep: core | Kern
 //   skryf: <werkmap>/jobs.json | die ry; sermon.json van die preek wat verwerk word
-//   doel: een taak op 'n slag (plan of sny), hervat ná herbegin, kanselleer, probeer weer
+//   doel: een taak op 'n slag (plan, sny of klank), hervat ná herbegin, kanselleer, probeer weer
 //   status: oop
 import 'dart:async';
 import 'dart:convert';
@@ -21,12 +21,12 @@ import 'planner.dart';
 import 'store.dart';
 import 'tools.dart';
 
-enum JobKind { plan, cut }
+enum JobKind { plan, cut, audio }
 
 enum JobStatus { wag, besig, klaar, fout, gekanselleer }
 
 /// What a running job is busy with (the Werk-skerm maps it to text).
-enum JobPhase { meta, plan, download, cut }
+enum JobPhase { meta, plan, download, cut, audio }
 
 class Job {
   Job(
@@ -99,9 +99,16 @@ String friendlyError(Object e) {
 
 /// One-at-a-time work queue in a plain async loop (no timers); persisted so a restart resumes it.
 class JobQueue extends ChangeNotifier {
-  JobQueue(this.store, {JobRun? plan, JobRun? cut, Directory? out, File? font})
-    : _plan = plan ?? planJob(store),
-      _cut = cut ?? cutJob(store, out: out, font: font) {
+  JobQueue(
+    this.store, {
+    JobRun? plan,
+    JobRun? cut,
+    JobRun? audio,
+    Directory? out,
+    File? font,
+  }) : _plan = plan ?? planJob(store),
+       _cut = cut ?? cutJob(store, out: out, font: font),
+       _audio = audio ?? audioJob(store) {
     final f = _file;
     if (f.existsSync()) {
       jobs.addAll([
@@ -115,7 +122,7 @@ class JobQueue extends ChangeNotifier {
   }
 
   final SermonStore store;
-  final JobRun _plan, _cut;
+  final JobRun _plan, _cut, _audio;
   final jobs = <Job>[];
 
   /// The running job; its fraction (null = unknown) and phase.
@@ -179,23 +186,31 @@ class JobQueue extends ChangeNotifier {
         s = store.byId(job.sermon);
         if (s == null)
           throw StateError('Preek ${job.sermon} bestaan nie meer nie.');
-        await (job.kind == JobKind.plan ? _plan : _cut)(
-          JobCtx(job.sermon, cancel.future, this),
-        );
+        final run = switch (job.kind) {
+          JobKind.plan => _plan,
+          JobKind.cut => _cut,
+          JobKind.audio => _audio,
+        };
+        await run(JobCtx(job.sermon, cancel.future, this));
         job.status = JobStatus.klaar;
-        s.state = job.kind == JobKind.plan
-            ? SermonState.beplan
-            : SermonState.gesny;
-        s.error = null;
+        // An audio export leaves the sermon's state (gesny/opgelaai) alone.
+        if (job.kind != JobKind.audio) {
+          s.state = job.kind == JobKind.plan
+              ? SermonState.beplan
+              : SermonState.gesny;
+          s.error = null;
+        }
       } on JobCancelled {
         job.status = JobStatus.gekanselleer;
       } on Object catch (e) {
         job.status = JobStatus.fout;
         job.error = friendlyError(e);
         job.addLog('$e'.split('\n'));
-        s
-          ?..state = SermonState.fout
-          ..error = job.error;
+        if (job.kind != JobKind.audio) {
+          s
+            ?..state = SermonState.fout
+            ..error = job.error;
+        }
       }
       current = null;
       _cancel = null;
@@ -220,7 +235,7 @@ class JobQueue extends ChangeNotifier {
     job.status = JobStatus.wag;
     job.error = null;
     final s = store.byId(job.sermon)!;
-    if (s.state == SermonState.fout) {
+    if (s.state == SermonState.fout && job.kind != JobKind.audio) {
       s.state = job.kind == JobKind.plan
           ? SermonState.nuut
           : SermonState.goedgekeur;
@@ -300,5 +315,35 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
       ),
     );
     saveOutputs();
+  }
+};
+
+/// Exports the cut sermon as `JJJJ-MM-DD Tema.mp3` next to it and adds the file to the sermon's outputs.
+JobRun audioJob(SermonStore store) => (c) async {
+  final s = store.byId(c.id)!;
+  final video = s.outputs.where((o) => o.endsWith('.mp4')).firstOrNull;
+  if (video == null || !File(video).existsSync()) {
+    throw StateError('Sny eers die preek.');
+  }
+  final plan = SermonPlan.fromJson(
+    jsonDecode(
+      File(p.join(store.root.path, c.id, kPlanFile)).readAsStringSync(),
+    ) as Map<String, dynamic>,
+  );
+  c.phase(JobPhase.audio);
+  c.progress(0);
+  final out = await cutAudio(
+    File(video),
+    plan.title,
+    s.date ?? p.basename(video).substring(0, 10),
+    File(video).parent,
+    duration: plan.sermonEnd - plan.sermonStart,
+    onProgress: c.progress,
+    cancel: c.cancel,
+    log: c.log,
+  );
+  final latest = store.byId(c.id)!;
+  if (!latest.outputs.contains(out.path)) {
+    store.save(latest..outputs = [...latest.outputs, out.path]);
   }
 };

@@ -3,7 +3,7 @@
 //   wanneer: Werk (rail)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag-, klaar- en fout-lyste
+//   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag-, klaar- en fout-lyste; klaar-items: Speel, Wys in gids, Klank vir WhatsApp
 //   status: oop
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,13 +32,18 @@ class WorkScreen extends StatelessWidget {
 
   String _title(Job j) => store.byId(j.sermon)?.title ?? j.sermon;
 
-  String _kind(L l, Job j) => j.kind == JobKind.plan ? l.taskPlan : l.taskCut;
+  String _kind(L l, Job j) => switch (j.kind) {
+    JobKind.plan => l.taskPlan,
+    JobKind.cut => l.taskCut,
+    JobKind.audio => l.taskAudio,
+  };
 
   String _phase(L l, JobPhase? p) => switch (p) {
     JobPhase.meta || null => l.stageMeta,
     JobPhase.plan => l.stagePlan,
     JobPhase.download => l.stageDownload,
     JobPhase.cut => l.stageCut,
+    JobPhase.audio => l.stageAudio,
   };
 
   @override
@@ -142,25 +147,29 @@ class WorkScreen extends StatelessWidget {
   );
 
   Widget _done(L l, ThemeData th, Job j) {
-    final out = store.byId(j.sermon)?.outputs ?? const [];
+    final out = store.byId(j.sermon)?.outputs ?? const <String>[];
+    // A cut job offers its sermon video; an audio job its mp3.
+    final ext = j.kind == JobKind.audio ? '.mp3' : '.mp4';
+    final file = out.where((o) => o.endsWith(ext)).firstOrNull;
+    if (j.kind == JobKind.plan || file == null) return _line(l, th, j);
     return _line(
       l,
       th,
       j,
-      trailing: j.kind == JobKind.cut && out.isNotEmpty
-          ? Row(
-              children: [
-                TextButton(
-                  onPressed: () => open(out.first),
-                  child: Text(l.play),
-                ),
-                TextButton(
-                  onPressed: () => open(out.first, select: true),
-                  child: Text(l.showInFolder),
-                ),
-              ],
-            )
-          : null,
+      trailing: Row(
+        children: [
+          TextButton(onPressed: () => open(file), child: Text(l.play)),
+          TextButton(
+            onPressed: () => open(file, select: true),
+            child: Text(l.showInFolder),
+          ),
+          if (j.kind == JobKind.cut)
+            TextButton(
+              onPressed: () => jobs.enqueue(j.sermon, JobKind.audio),
+              child: Text(l.whatsappAudio),
+            ),
+        ],
+      ),
     );
   }
 
