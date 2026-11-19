@@ -89,13 +89,33 @@ typedef JobRun = Future<void> Function(JobCtx ctx);
 
 /// Plain-language reason for a failed job.
 String friendlyError(Object e) {
+  const disk =
+      'Die skyf is vol. Maak plek (ou video\'s in die werkgids) en probeer weer.';
+  const net = 'Geen internet nie. Kyk die netwerk en probeer weer.';
+  const ollama = 'Ollama het nie geantwoord nie. Maak seker dit loop.';
   if (e is PlanException) return 'Die plan is nie aanvaar nie: $e';
+  if (e is FileSystemException &&
+      const {28, 112}.contains(e.osError?.errorCode)) {
+    return disk; // ENOSPC (Linux), ERROR_DISK_FULL (Windows)
+  }
   if (e is ProcessException) {
+    final m = e.message;
+    if (m.contains('No space left on device')) return disk;
+    if (RegExp(
+      r'Unable to download|name resolution|getaddrinfo|Failed to resolve|Network is unreachable',
+    ).hasMatch(m)) {
+      return net;
+    }
     return '${e.executable} het misluk. Kyk die tegniese log.';
   }
-  if (e is SocketException || e is HttpException) {
-    return 'Ollama het nie geantwoord nie. Maak seker dit loop.';
+  if (e is SocketException) {
+    return e.port == ollamaBase().port ? ollama : net;
   }
+  // A server answered, so the network works: keep its own message.
+  if (e is HttpException) {
+    return e.message.startsWith('Ollama') ? ollama : e.message;
+  }
+  if (e is TlsException) return net;
   if (e is StateError) return e.message;
   return '$e';
 }
