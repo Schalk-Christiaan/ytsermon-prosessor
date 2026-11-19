@@ -55,12 +55,6 @@ class LAf extends L {
   String get ollamaNotRunning => 'Ollama loop nie: begin die Ollama-diens';
 
   @override
-  String get pasteUrl => 'Plak \'n YouTube-skakel';
-
-  @override
-  String get load => 'Laai';
-
-  @override
   String get stageMeta => 'Lees onderskrifte…';
 
   @override
@@ -81,6 +75,15 @@ class LAf extends L {
   String errorGeneric(String message) {
     return 'Iets het skeefgeloop: $message';
   }
+
+  @override
+  String get unplanned => 'Hierdie preek is nog nie beplan nie';
+
+  @override
+  String get planNow => 'Beplan nou';
+
+  @override
+  String get cutQueued => 'Gestuur na Werk';
 
   @override
   String get retry => 'Probeer weer';
@@ -146,15 +149,10 @@ class LAf extends L {
   String get cancel => 'Kanselleer';
 
   @override
-  String cutDone(int sermons, int shorts) {
-    return 'Gesny: $sermons preek, $shorts Shorts';
-  }
-
-  @override
   String get showInFolder => 'Wys in gids';
 
   @override
-  String get emptyReview => 'Plak \'n skakel om \'n preek te hersien.';
+  String get emptyReview => 'Kies \'n preek in Preke.';
 
   @override
   String get skipped => 'Oorgeslaan';

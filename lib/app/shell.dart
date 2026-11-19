@@ -7,12 +7,17 @@
 //   status: oop
 import 'package:flutter/material.dart';
 
+import '../core/jobs.dart';
+import '../core/store.dart';
+import '../features/review/review_controller.dart';
 import '../features/review/review_screen.dart';
 import '../features/settings/system_status.dart';
 import '../l10n/app_localizations.dart';
 
 class Shell extends StatefulWidget {
-  const Shell({super.key});
+  const Shell({super.key, required this.store, required this.jobs});
+  final SermonStore store;
+  final JobQueue jobs;
 
   @override
   State<Shell> createState() => _ShellState();
@@ -20,6 +25,13 @@ class Shell extends StatefulWidget {
 
 class _ShellState extends State<Shell> {
   int _i = 0; // 0 = Hersien, 1 = Instellings
+  late final _review = ReviewController(store: widget.store, jobs: widget.jobs);
+
+  @override
+  void dispose() {
+    _review.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +75,10 @@ class _ShellState extends State<Shell> {
           Expanded(
             child: IndexedStack(
               index: _i,
-              children: const [ReviewScreen(), SystemStatus()],
+              children: [
+                ReviewScreen(controller: _review),
+                const SystemStatus(),
+              ],
             ),
           ),
         ],

@@ -171,18 +171,6 @@ abstract class L {
   /// **'Ollama loop nie: begin die Ollama-diens'**
   String get ollamaNotRunning;
 
-  /// No description provided for @pasteUrl.
-  ///
-  /// In af, this message translates to:
-  /// **'Plak \'n YouTube-skakel'**
-  String get pasteUrl;
-
-  /// No description provided for @load.
-  ///
-  /// In af, this message translates to:
-  /// **'Laai'**
-  String get load;
-
   /// No description provided for @stageMeta.
   ///
   /// In af, this message translates to:
@@ -218,6 +206,24 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Iets het skeefgeloop: {message}'**
   String errorGeneric(String message);
+
+  /// No description provided for @unplanned.
+  ///
+  /// In af, this message translates to:
+  /// **'Hierdie preek is nog nie beplan nie'**
+  String get unplanned;
+
+  /// No description provided for @planNow.
+  ///
+  /// In af, this message translates to:
+  /// **'Beplan nou'**
+  String get planNow;
+
+  /// No description provided for @cutQueued.
+  ///
+  /// In af, this message translates to:
+  /// **'Gestuur na Werk'**
+  String get cutQueued;
 
   /// No description provided for @retry.
   ///
@@ -333,12 +339,6 @@ abstract class L {
   /// **'Kanselleer'**
   String get cancel;
 
-  /// No description provided for @cutDone.
-  ///
-  /// In af, this message translates to:
-  /// **'Gesny: {sermons} preek, {shorts} Shorts'**
-  String cutDone(int sermons, int shorts);
-
   /// No description provided for @showInFolder.
   ///
   /// In af, this message translates to:
@@ -348,7 +348,7 @@ abstract class L {
   /// No description provided for @emptyReview.
   ///
   /// In af, this message translates to:
-  /// **'Plak \'n skakel om \'n preek te hersien.'**
+  /// **'Kies \'n preek in Preke.'**
   String get emptyReview;
 
   /// No description provided for @skipped.

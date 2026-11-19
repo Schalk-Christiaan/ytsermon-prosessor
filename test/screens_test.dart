@@ -13,6 +13,9 @@ import 'package:preekverwerker/core/captions.dart';
 import 'package:preekverwerker/core/channel.dart';
 import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/features/review/review_controller.dart';
+
+import 'helpers.dart';
+
 import 'package:preekverwerker/features/review/review_screen.dart';
 import 'package:preekverwerker/l10n/app_localizations.dart';
 
@@ -51,7 +54,7 @@ void main() {
     final segs = parseJson3(
       File('test/fixtures/sample.af-orig.json3').readAsStringSync(),
     );
-    final c = ReviewController();
+    final c = testController().$1;
     c.debugReady(
       FetchedMeta('x', Directory.systemTemp, {'title': 'Preek'}),
       segs,
@@ -103,8 +106,15 @@ void main() {
       t.view.physicalSize = const Size(1100, 720);
       t.view.devicePixelRatio = 1;
       final key = GlobalKey();
+      final tc = testController();
       await t.pumpWidget(
-        _app(b, RepaintBoundary(key: key, child: const Shell())),
+        _app(
+          b,
+          RepaintBoundary(
+            key: key,
+            child: Shell(store: tc.$2, jobs: tc.$3),
+          ),
+        ),
       );
       await t.pump();
       await t.tap(find.text('Instellings'));
@@ -128,7 +138,7 @@ void main() {
     t.view.physicalSize = const Size(1100, 720);
     t.view.devicePixelRatio = 1;
     final dir = Directory.systemTemp.createTempSync('plan');
-    final c = ReviewController();
+    final c = testController().$1;
     c.debugReady(
       FetchedMeta('x', dir, {'title': 'Preek'}),
       parseJson3(File('test/fixtures/sample.af-orig.json3').readAsStringSync()),
@@ -171,7 +181,7 @@ void main() {
     t.view.physicalSize = const Size(1100, 720);
     t.view.devicePixelRatio = 1;
     final dir = Directory.systemTemp.createTempSync('plan');
-    final c = ReviewController();
+    final c = testController().$1;
     c.debugReady(
       FetchedMeta('x', dir, {'title': 'Preek'}),
       parseJson3(File('test/fixtures/sample.af-orig.json3').readAsStringSync()),

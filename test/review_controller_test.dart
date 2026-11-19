@@ -4,21 +4,23 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:preekverwerker/core/channel.dart';
+import 'package:path/path.dart' as p;
+import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/models.dart';
+import 'package:preekverwerker/core/planner.dart';
+import 'package:preekverwerker/core/store.dart';
 import 'package:preekverwerker/features/review/review_controller.dart';
 
-ReviewController _ready(
-  Directory dir,
+import 'helpers.dart';
+
+(ReviewController, SermonStore, JobQueue) _ready(
   Future<File> Function(FetchedMeta, {void Function(double)? onProgress}) dl,
   Stream<Duration>? positions,
 ) {
-  final c = ReviewController(
-    download: dl,
-    openVideo: (_) async {},
-    positions: positions,
-  );
-  c.debugReady(
-    FetchedMeta('x', dir, {}),
+  final r = testController(download: dl, positions: positions);
+  Directory(p.join(r.$2.root.path, 'x')).createSync(recursive: true);
+  r.$1.debugReady(
+    FetchedMeta('x', Directory(p.join(r.$2.root.path, 'x')), {}),
     [],
     SermonPlan(
       sermonStart: 0,
@@ -29,22 +31,24 @@ ReviewController _ready(
     ),
     100,
   );
-  return c;
+  return r;
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   test('repeated downloads keep one position subscription', () async {
-    final dir = Directory.systemTemp.createTempSync();
     var listens = 0;
     final positions = Stream<Duration>.multi((_) => listens++);
-    final c = _ready(dir, (m, {onProgress}) async => File('v.mp4'), positions);
+    final (c, _, _) = _ready(
+      (m, {onProgress}) async => File('v.mp4'),
+      positions,
+    );
     c.setManually();
     await c.downloadFuture;
     c.reset();
     c.debugReady(
-      FetchedMeta('x', dir, {}),
+      FetchedMeta('x', Directory.systemTemp, {}),
       [],
       c.plan ??
           SermonPlan(
@@ -62,12 +66,62 @@ void main() {
   });
 
   test('a download error leaves no unhandled async error', () async {
-    final dir = Directory.systemTemp.createTempSync();
-    final c = _ready(dir, (m, {onProgress}) async => throw 'stuk', null);
+    final (c, _, _) = _ready((m, {onProgress}) async => throw 'stuk', null);
     c.setManually();
     await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(c.error, 'stuk');
     // approveAndCut still sees the failure when it awaits the download.
     await expectLater(c.downloadFuture, throwsA('stuk'));
+  });
+
+  test('open(id) loads the saved plan from the store', () {
+    final (c, store, _) = testController();
+    final dir = Directory(p.join(store.root.path, 'x'))..createSync();
+    File(p.join(dir.path, 'x.info.json')).writeAsStringSync(
+      '{"title":"T","duration":100,"upload_date":"20261115"}',
+    );
+    File(p.join(dir.path, 'x.af-orig.json3'))
+        .writeAsStringSync('{"events":[]}');
+    savePlan(
+      dir,
+      SermonPlan(
+        sermonStart: 1,
+        sermonEnd: 90,
+        title: 'Plan',
+        description: '',
+        shorts: [],
+      ),
+    );
+    c.open('x');
+    expect(c.state, ReviewState.ready);
+    expect(c.plan!.title, 'Plan');
+  });
+
+  test('open without plan or job is unplanned; replan queues a plan job', () {
+    final (c, store, jobs) = testController();
+    c.open('x');
+    expect(c.state, ReviewState.unplanned);
+    c.replan();
+    expect(jobs.jobs.single.kind, JobKind.plan);
+    expect(c.state, ReviewState.loading);
+  });
+
+  test('approveAndCut marks goedgekeur and queues a cut job; skip marks oorgeslaan', () async {
+    final (c, store, jobs) = _ready(
+      (m, {onProgress}) async => File('v.mp4'),
+      null,
+    );
+    c.setManually();
+    await c.approveAndCut();
+    expect(
+      store.byId('x')!.state,
+      anyOf(SermonState.goedgekeur, SermonState.gesny),
+    );
+    expect(jobs.jobs.single.kind, JobKind.cut);
+    await jobs.idle;
+    expect(store.byId('x')!.state, SermonState.gesny);
+    c.skip();
+    expect(store.byId('x')!.state, SermonState.oorgeslaan);
+    expect(c.state, ReviewState.empty);
   });
 }

@@ -4,16 +4,22 @@ import 'package:media_kit/media_kit.dart';
 
 import 'app/shell.dart';
 import 'app/theme.dart';
+import 'core/jobs.dart';
+import 'core/paths.dart';
+import 'core/store.dart';
 import 'l10n/app_localizations.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  runApp(const PreekApp());
+  final store = SermonStore(await workRoot())..load();
+  runApp(PreekApp(store: store, jobs: JobQueue(store)..start()));
 }
 
 class PreekApp extends StatelessWidget {
-  const PreekApp({super.key});
+  const PreekApp({super.key, required this.store, required this.jobs});
+  final SermonStore store;
+  final JobQueue jobs;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -27,6 +33,6 @@ class PreekApp extends StatelessWidget {
       GlobalCupertinoLocalizations.delegate,
     ],
     supportedLocales: L.supportedLocales,
-    home: const Shell(),
+    home: Shell(store: store, jobs: jobs),
   );
 }
