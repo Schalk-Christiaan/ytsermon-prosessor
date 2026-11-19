@@ -15,6 +15,12 @@ SermonPlan okPlan() => SermonPlan(
   shorts: [Short(start: 1500, end: 1560, title: 'a')],
 );
 
+/// Candidates G1 (opening, 23:00–24:00) and G2 (closing, 51:00–52:00).
+const prayers = [
+  Prayer(23 * 60, 24 * 60, 'Onse Vader', 'Amen.'),
+  Prayer(51 * 60, 52 * 60, 'Kom ons dank saam', 'Amen.'),
+];
+
 void main() {
   const duration = 3728.0;
 
@@ -67,8 +73,8 @@ void main() {
           return {
             'message': {
               'content': jsonEncode({
-                'sermonStart': '23:00',
-                'sermonEnd': '52:00',
+                'openingPrayer': 1,
+                'closingPrayer': 2,
                 'title': 'T',
                 'description': 'D',
                 'shorts': [
@@ -81,6 +87,7 @@ void main() {
       );
       final p = await planner.plan(
         compactText: '[23:00] hallo',
+        prayers: prayers,
         duration: duration,
         originalDescription: 'Psalm 1',
       );
@@ -92,6 +99,11 @@ void main() {
       expect(seen!['options']['num_ctx'], 16384);
       expect(seen!['format'], isA<Map>());
       expect(jsonEncode(seen!['messages']), contains('Psalm 1'));
+      expect(
+        seen!['messages'][1]['content'],
+        contains('G2 51:00–52:00 (01:00): "Kom ons dank saam" … "Amen."'),
+      );
+      expect(p.sermonEnd, 52 * 60, reason: 'cut includes the closing prayer');
     },
   );
 
@@ -102,8 +114,8 @@ void main() {
         chat: (_) async => {
           'message': {
             'content': jsonEncode({
-              'sermonStart': '23:00',
-              'sermonEnd': '52:00',
+              'openingPrayer': 1,
+              'closingPrayer': 2,
               'title': 'T',
               'description': 'D',
               'shorts': [
@@ -115,6 +127,7 @@ void main() {
       );
       final p = await planner.plan(
         compactText: 'x',
+        prayers: prayers,
         duration: 3728,
         originalDescription: '',
       );
@@ -128,8 +141,8 @@ void main() {
       chat: (_) async => {
         'message': {
           'content': jsonEncode({
-            'sermonStart': '00:10',
-            'sermonEnd': '03:10',
+            'openingPrayer': 1,
+            'closingPrayer': 1,
             'title': 'T',
             'description': 'D',
             'shorts': <dynamic>[],
@@ -140,6 +153,7 @@ void main() {
     expect(
       planner.plan(
         compactText: 'x',
+        prayers: prayers,
         duration: duration,
         originalDescription: '',
       ),
@@ -159,6 +173,7 @@ void main() {
       final p = await planner.loadOrPlan(
         dir,
         compactText: 'x',
+        prayers: prayers,
         duration: duration,
         originalDescription: '',
       );
@@ -178,8 +193,8 @@ void main() {
           return {
             'message': {
               'content': jsonEncode({
-                'sermonStart': '00:10',
-                'sermonEnd': '30:00',
+                'openingPrayer': 1,
+                'closingPrayer': 2,
                 'title': 'T',
                 'description': 'D',
                 'shorts': <dynamic>[],
@@ -191,6 +206,7 @@ void main() {
       final f = planner.loadOrPlan(
         dir,
         compactText: 'x',
+        prayers: prayers,
         duration: duration,
         originalDescription: '',
         cancel: cancel.future,
@@ -201,4 +217,42 @@ void main() {
       dir.deleteSync(recursive: true);
     },
   );
+
+  test('plan() rejects a prayer number outside the list', () async {
+    final planner = Planner(
+      chat: (_) async => {
+        'message': {
+          'content': jsonEncode({
+            'openingPrayer': 1,
+            'closingPrayer': 7,
+            'title': 'T',
+            'description': 'D',
+            'shorts': <dynamic>[],
+          }),
+        },
+      },
+    );
+    expect(
+      planner.plan(
+        compactText: 'x',
+        prayers: prayers,
+        duration: duration,
+        originalDescription: '',
+      ),
+      throwsA(isA<PlanException>()),
+    );
+  });
+
+  test('plan() needs two candidate prayers', () {
+    final planner = Planner(chat: (_) async => throw StateError('no call'));
+    expect(
+      planner.plan(
+        compactText: 'x',
+        prayers: prayers.take(1).toList(),
+        duration: duration,
+        originalDescription: '',
+      ),
+      throwsA(isA<PlanException>()),
+    );
+  });
 }

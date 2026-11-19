@@ -248,6 +248,7 @@ JobRun planJob(SermonStore store) => (c) async {
     Planner().loadOrPlan(
       m.dir,
       compactText: compact(segs),
+      prayers: prayers(segs),
       duration: s.duration,
       originalDescription: m.info.descriptionText,
       cancel: c.cancel,
