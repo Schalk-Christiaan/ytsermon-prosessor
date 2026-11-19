@@ -59,4 +59,4 @@ Whisper, middelstukke uitsny (fase 6), UI-veranderinge in Hersien.
 Stappe vir Schalk:
 1. `systemctl restart ollama` (of herbegin die rekenaar), sodat die vasgehaakte versoek ophou.
 2. `cd ../.bou/ytsermon-prosessor-preekgrense-gebed && BOUNDS=1 flutter test test/bounds_bench_test.dart --reporter expanded` (~10 min).
-3. As al 9 lopies binne ±30 s val: `git merge --no-ff bou/preekgrense-gebed` op main (konflik in `jobs.dart` `planJob` en `planner.dart`: hou albei kante), en vul dan in `ReviewController` `prayerMarks` uit `prayers(segments)` (die transkripsie en tydlyn wys dit reeds).
+3. As al 9 lopies binne ±30 s val: `git merge --no-ff bou/preekgrense-gebed` op main (konflikte in `captions.dart`, `models.dart` en `planner.dart`, meestal `status: oop` → `bou` en doc-reëls van fase 6: hou albei kante, status `bou`), en vul dan in `ReviewController` `prayerMarks` uit `prayers(segments)` (die transkripsie en tydlyn wys dit reeds).
