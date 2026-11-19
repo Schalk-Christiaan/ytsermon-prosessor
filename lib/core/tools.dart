@@ -88,11 +88,24 @@ class ToolStatus {
       detail.startsWith('model:') ? detail.substring(6) : null;
 }
 
-/// Opens [d] in the system file manager.
-Future<void> openFolder(Directory d) => Process.run(
-  Platform.isWindows ? 'explorer' : (Platform.isMacOS ? 'open' : 'xdg-open'),
-  [d.path],
-);
+/// Opens [path] with the system default; with [select] shows the file in its folder
+/// (Windows selects it in Explorer, elsewhere the folder opens).
+Future<void> openPath(String path, {bool select = false}) async {
+  if (Platform.isWindows) {
+    await Process.start('explorer', [if (select) '/select,$path' else path]);
+  } else {
+    final opener = Platform.isMacOS ? 'open' : 'xdg-open';
+    await Process.start(opener, [select ? p.dirname(path) : path]);
+  }
+}
+
+/// `yt-dlp -U`; returns its output. Throws [ProcessException] when it cannot update
+/// (e.g. a system package on Linux).
+Future<String> updateYtDlp() async {
+  final out = StringBuffer();
+  await runTool('yt-dlp', ['-U'], onLine: (l) => out.writeln(l));
+  return out.toString().trim();
+}
 
 Future<ToolStatus> _probe(
   String name,

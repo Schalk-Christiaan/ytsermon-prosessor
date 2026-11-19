@@ -225,6 +225,108 @@ abstract class L {
   /// **'Gestuur na Werk'**
   String get cutQueued;
 
+  /// No description provided for @searchSermons.
+  ///
+  /// In af, this message translates to:
+  /// **'Soek preke'**
+  String get searchSermons;
+
+  /// No description provided for @processNext.
+  ///
+  /// In af, this message translates to:
+  /// **'Verwerk volgende'**
+  String get processNext;
+
+  /// No description provided for @noSermons.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen preke gevind nie'**
+  String get noSermons;
+
+  /// No description provided for @listError.
+  ///
+  /// In af, this message translates to:
+  /// **'Die kanaal se lys kon nie gelaai word nie: {message}'**
+  String listError(String message);
+
+  /// No description provided for @updateYtDlp.
+  ///
+  /// In af, this message translates to:
+  /// **'Werk yt-dlp by'**
+  String get updateYtDlp;
+
+  /// No description provided for @updateYtDlpDone.
+  ///
+  /// In af, this message translates to:
+  /// **'yt-dlp: {result}'**
+  String updateYtDlpDone(String result);
+
+  /// No description provided for @newServices.
+  ///
+  /// In af, this message translates to:
+  /// **'{n, plural, =1{1 nuwe diens} other{{n} nuwe dienste}}'**
+  String newServices(int n);
+
+  /// No description provided for @dismiss.
+  ///
+  /// In af, this message translates to:
+  /// **'Maak toe'**
+  String get dismiss;
+
+  /// No description provided for @noDate.
+  ///
+  /// In af, this message translates to:
+  /// **'—'**
+  String get noDate;
+
+  /// No description provided for @inQueue.
+  ///
+  /// In af, this message translates to:
+  /// **'In die ry'**
+  String get inQueue;
+
+  /// No description provided for @stateNuut.
+  ///
+  /// In af, this message translates to:
+  /// **'Nuut'**
+  String get stateNuut;
+
+  /// No description provided for @stateBeplan.
+  ///
+  /// In af, this message translates to:
+  /// **'Beplan'**
+  String get stateBeplan;
+
+  /// No description provided for @stateGoedgekeur.
+  ///
+  /// In af, this message translates to:
+  /// **'Goedgekeur'**
+  String get stateGoedgekeur;
+
+  /// No description provided for @stateGesny.
+  ///
+  /// In af, this message translates to:
+  /// **'Gesny'**
+  String get stateGesny;
+
+  /// No description provided for @stateOpgelaai.
+  ///
+  /// In af, this message translates to:
+  /// **'Opgelaai'**
+  String get stateOpgelaai;
+
+  /// No description provided for @stateFout.
+  ///
+  /// In af, this message translates to:
+  /// **'Fout'**
+  String get stateFout;
+
+  /// No description provided for @stateOorgeslaan.
+  ///
+  /// In af, this message translates to:
+  /// **'Oorgeslaan'**
+  String get stateOorgeslaan;
+
   /// No description provided for @retry.
   ///
   /// In af, this message translates to:

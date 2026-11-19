@@ -86,6 +86,69 @@ class LAf extends L {
   String get cutQueued => 'Gestuur na Werk';
 
   @override
+  String get searchSermons => 'Soek preke';
+
+  @override
+  String get processNext => 'Verwerk volgende';
+
+  @override
+  String get noSermons => 'Geen preke gevind nie';
+
+  @override
+  String listError(String message) {
+    return 'Die kanaal se lys kon nie gelaai word nie: $message';
+  }
+
+  @override
+  String get updateYtDlp => 'Werk yt-dlp by';
+
+  @override
+  String updateYtDlpDone(String result) {
+    return 'yt-dlp: $result';
+  }
+
+  @override
+  String newServices(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n nuwe dienste',
+      one: '1 nuwe diens',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dismiss => 'Maak toe';
+
+  @override
+  String get noDate => '—';
+
+  @override
+  String get inQueue => 'In die ry';
+
+  @override
+  String get stateNuut => 'Nuut';
+
+  @override
+  String get stateBeplan => 'Beplan';
+
+  @override
+  String get stateGoedgekeur => 'Goedgekeur';
+
+  @override
+  String get stateGesny => 'Gesny';
+
+  @override
+  String get stateOpgelaai => 'Opgelaai';
+
+  @override
+  String get stateFout => 'Fout';
+
+  @override
+  String get stateOorgeslaan => 'Oorgeslaan';
+
+  @override
   String get retry => 'Probeer weer';
 
   @override

@@ -217,6 +217,7 @@ JobRun planJob(SermonStore store) => (c) async {
   final m = await fetchMeta(c.id, store.root, cancel: c.cancel);
   final s = store.byId(c.id)!
     ..date = m.info.uploadDate
+    ..scripture = scriptureFrom(m.info.descriptionText)
     ..duration = m.info.durationSeconds;
   store.save(s);
   c.phase(JobPhase.plan);

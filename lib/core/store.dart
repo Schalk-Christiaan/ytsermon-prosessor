@@ -14,6 +14,13 @@ import 'package:path/path.dart' as p;
 import 'channel.dart';
 import 'planner.dart';
 
+/// The reading from a `Skriflesing: Mattheus 12:22-37` line in [description]; null if absent.
+String? scriptureFrom(String description) => RegExp(
+  r'^Skriflesing:\s*(.+)$',
+  multiLine: true,
+  caseSensitive: false,
+).firstMatch(description)?.group(1)?.trim();
+
 enum SermonState { nuut, beplan, goedgekeur, gesny, opgelaai, fout, oorgeslaan }
 
 /// One service on the channel with its processing state.
@@ -23,6 +30,7 @@ class Sermon {
     this.title,
     this.duration, {
     this.date,
+    this.scripture,
     this.state = SermonState.nuut,
     this.error,
     this.outputs = const [],
@@ -36,6 +44,9 @@ class Sermon {
 
   /// `JJJJ-MM-DD`; null until `fetchMeta` has run (the flat channel list has no date).
   String? date;
+
+  /// The `Skriflesing:` line of the YouTube description, once known.
+  String? scripture;
   SermonState state;
   String? error;
   List<String> outputs;
@@ -48,6 +59,7 @@ class Sermon {
     'title': title,
     'duration': duration,
     'date': date,
+    'scripture': scripture,
     'state': state.name,
     'error': error,
     'outputs': outputs,
@@ -59,6 +71,7 @@ class Sermon {
     j['title'] as String,
     (j['duration'] as num).toDouble(),
     date: j['date'] as String?,
+    scripture: j['scripture'] as String?,
     state: SermonState.values.byName(j['state'] as String),
     error: j['error'] as String?,
     outputs: [...?(j['outputs'] as List?)?.cast<String>()],
@@ -101,6 +114,7 @@ class SermonStore extends ChangeNotifier {
           '${j['title'] ?? id}',
           (j['duration'] as num?)?.toDouble() ?? 0,
           date: j.containsKey('upload_date') ? j.uploadDate : null,
+          scripture: scriptureFrom(j.descriptionText),
         );
       }
       if (s == null) continue;
