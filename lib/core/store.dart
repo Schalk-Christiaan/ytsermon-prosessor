@@ -42,6 +42,8 @@ class Sermon {
     this.state = SermonState.nuut,
     this.error,
     this.outputs = const [],
+    this.uploads = const {},
+    this.playlist,
     this.order = _unlisted,
   });
   static const _unlisted = 1 << 30;
@@ -59,6 +61,12 @@ class Sermon {
   String? error;
   List<String> outputs;
 
+  /// Uploaded output file → YouTube video ID (a retried upload job skips these).
+  Map<String, String> uploads;
+
+  /// The playlist the uploaded sermon was added to.
+  String? playlist;
+
   /// Position in the channel list (0 = newest).
   int order;
 
@@ -71,6 +79,8 @@ class Sermon {
     'state': state.name,
     'error': error,
     'outputs': outputs,
+    'uploads': uploads,
+    'playlist': playlist,
     'order': order,
   };
 
@@ -83,6 +93,8 @@ class Sermon {
     state: SermonState.values.byName(j['state'] as String),
     error: j['error'] as String?,
     outputs: [...?(j['outputs'] as List?)?.cast<String>()],
+    uploads: {...?(j['uploads'] as Map?)?.cast<String, String>()},
+    playlist: j['playlist'] as String?,
     order: j['order'] as int? ?? _unlisted,
   );
 }
