@@ -39,5 +39,11 @@ Outomatiese stuur na WhatsApp; `share_plus` (sien Vrae); kritiekronde op alle sk
 - (aanname) Klank-uitvoer is per preek met die hand ("Klank vir WhatsApp"), nie outomaties ná elke sny nie.
 
 ## Log
+- 2026-11-19 stap 1: `audioArgs`/`cutAudio`, `sermonFileName(ext:)`; cutter_test rooi (kompileer nie) → groen; regte ffmpeg + ffprobe: mp3, 1 kanaal, 64000 b/s, titel-tag.
+- 2026-11-19 stap 2: `JobKind.audio`/`JobPhase.audio`/`audioJob`; jobs_test rooi → groen (toestand bly `gesny` by klaar én fout; sonder mp4 → "Sny eers die preek.").
+- 2026-11-19 stap 3: Werk-skerm-knoppies; widget-toets rooi → groen; kiekies `out/shots/werk-klank-{light,dark}-{1100,1920}.png`.
+- 2026-11-19 stap 4: E2E op die toetsvideo se gesnyde preek (30:26): 6 s, 14,6 MB, mp3 mono 64 kb/s, titel-tag reg. `flutter test` 79 groen, `dart analyze` skoon, `kaart.py --check` skoon.
 
 ## Verslag
+Klaar gebou op `bou/fase-4-whatsapp-klank`. "Klank vir WhatsApp" op 'n klaar sny-item sit 'n klank-taak in die ry (vordering "Maak klank…", Kanselleer, Probeer weer by fout); klaar klank-item wys Speel en Wys in gids op die mp3. Die mp3 kom langs die preek-mp4 en word by `outputs` gevoeg. Self-hersiening: geen nuwe proses buiten een ffmpeg deur die werkry; plan-lees volg dieselfde patroon as `cutJob` (twee gevalle, nog nie 'n helper werd nie).
+Ongetoets: "Deel" na WhatsApp Desktop (sien Vrae); ikone in die toets-kiekies is blokkies (toetsfont; word in fase 6 reggemaak).
