@@ -385,6 +385,8 @@ void main() {
     JobQueue q, {
     Future<List<ChannelItem>> Function()? list,
     void Function(String)? onOpen,
+    Future<String?> Function()? pickVideo,
+    Future<Sermon> Function(File, String, DateTime)? importFile,
   }) => Scaffold(
     body: SermonsScreen(
       key: UniqueKey(),
@@ -392,6 +394,8 @@ void main() {
       jobs: q,
       list: list ?? () async => items,
       onOpen: onOpen ?? (_) {},
+      pickVideo: pickVideo ?? () async => null,
+      importFile: importFile,
     ),
   );
 
@@ -466,6 +470,59 @@ void main() {
     await t.pumpAndSettle();
     expect(find.text('Preek 3'), findsNothing);
     expect(find.text('Preek 4'), findsOneWidget);
+  });
+
+  testWidgets('preke: "Voer opname in" picks, asks title and date, opens', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final (st, q) = seeded();
+    final opened = <String>[];
+    final got = <String>[];
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        preke(
+          st,
+          q,
+          onOpen: opened.add,
+          pickVideo: () async => p.join('usb', 'Kersdiens.mp4'),
+          importFile: (f, title, date) async {
+            got.add('${p.basename(f.path)}|$title');
+            return Sermon('opname-1', title, 60, state: SermonState.beplan);
+          },
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.text('Voer opname in'));
+    await t.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'Kersdiens'), findsOneWidget);
+    await t.enterText(find.widgetWithText(TextField, 'Kersdiens'), 'Kersdag');
+    await t.tap(find.text('Voer in'));
+    await t.pumpAndSettle();
+    expect(got, ['Kersdiens.mp4|Kersdag']);
+    expect(opened, ['opname-1']);
+  });
+
+  testWidgets('preke: "Verwerk nuutste diens" skips a local recording', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final (st, q) = seeded();
+    st.save(Sermon('opname-20261226-090507', 'Opname', 60, order: -5));
+    final opened = <String>[];
+    await t.pumpWidget(
+      _app(Brightness.light, preke(st, q, onOpen: opened.add)),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.text('Verwerk nuutste diens'));
+    await t.pumpAndSettle();
+    expect(opened, ['id000000000']);
   });
 
   testWidgets('preke: new services strip, empty and error states', (t) async {

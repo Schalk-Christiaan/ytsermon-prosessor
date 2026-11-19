@@ -386,5 +386,17 @@
   "redo": "Herdoen (Ctrl+Shift+Z)",
   "noShorts": "Nog geen Shorts nie. Speel na 'n sterk stuk van die preek en kies \"Voeg Short by\".",
   "processLatest": "Verwerk nuutste diens",
-  "filterNotUploaded": "Nie opgelaai nie"
+  "filterNotUploaded": "Nie opgelaai nie",
+  "importRecording": "Voer opname in",
+  "importConfirm": "Voer in",
+  "importing": "Kopieer opname…",
+  "dropToImport": "Los die video om dit as opname in te voer",
+  "serviceDate": "Diens op {date}",
+  "@serviceDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }

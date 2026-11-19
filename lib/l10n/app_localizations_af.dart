@@ -568,4 +568,21 @@ class LAf extends L {
 
   @override
   String get filterNotUploaded => 'Nie opgelaai nie';
+
+  @override
+  String get importRecording => 'Voer opname in';
+
+  @override
+  String get importConfirm => 'Voer in';
+
+  @override
+  String get importing => 'Kopieer opname…';
+
+  @override
+  String get dropToImport => 'Los die video om dit as opname in te voer';
+
+  @override
+  String serviceDate(String date) {
+    return 'Diens op $date';
+  }
 }

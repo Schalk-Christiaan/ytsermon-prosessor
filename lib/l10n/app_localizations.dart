@@ -1051,6 +1051,36 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Nie opgelaai nie'**
   String get filterNotUploaded;
+
+  /// No description provided for @importRecording.
+  ///
+  /// In af, this message translates to:
+  /// **'Voer opname in'**
+  String get importRecording;
+
+  /// No description provided for @importConfirm.
+  ///
+  /// In af, this message translates to:
+  /// **'Voer in'**
+  String get importConfirm;
+
+  /// No description provided for @importing.
+  ///
+  /// In af, this message translates to:
+  /// **'Kopieer opname…'**
+  String get importing;
+
+  /// No description provided for @dropToImport.
+  ///
+  /// In af, this message translates to:
+  /// **'Los die video om dit as opname in te voer'**
+  String get dropToImport;
+
+  /// No description provided for @serviceDate.
+  ///
+  /// In af, this message translates to:
+  /// **'Diens op {date}'**
+  String serviceDate(String date);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

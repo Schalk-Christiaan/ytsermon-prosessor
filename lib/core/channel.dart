@@ -92,7 +92,8 @@ Future<FetchedMeta> fetchMeta(
   Future<void>? cancel,
   void Function(String line)? log,
 }) async {
-  final id = videoIdFromUrl(url);
+  // A local recording (`opname-…`) already has its files from importRecording.
+  final id = url.startsWith('opname-') ? url : videoIdFromUrl(url);
   if (id == null) throw ArgumentError('Geen YouTube-skakel nie: $url');
   final dir = Directory(p.join(root.path, id))..createSync(recursive: true);
   final infoFile = File(p.join(dir.path, '$id.info.json'));

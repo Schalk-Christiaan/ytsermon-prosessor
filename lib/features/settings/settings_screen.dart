@@ -27,7 +27,7 @@ class SettingsScreen extends StatefulWidget {
     required this.signIn,
     required this.system,
     this.onSetup,
-    this.pickVideo = _pickVideo,
+    this.pickVideo = pickVideoFile,
     this.probe = probeMedia,
   });
   final AppSettings settings;
@@ -50,7 +50,8 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-Future<String?> _pickVideo() async => (await openFile(
+/// File dialog for one video; null when cancelled. Shared by intro/outro and "Voer opname in".
+Future<String?> pickVideoFile() async => (await openFile(
   acceptedTypeGroups: const [
     XTypeGroup(
       label: 'Video',
