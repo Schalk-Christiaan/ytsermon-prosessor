@@ -102,11 +102,96 @@ void main() {
           Short(start: 1500, end: 1561, title: 'Genade is nie verdien nie'),
           Short(start: 2400, end: 2450, title: 'Die kruis as middelpunt'),
         ],
+        cuts: [Span(2050, 2140)],
       ),
       3600,
     );
+    c.prayerMarks = [Span(1384, 1500), Span(3100, 3210)];
     return c;
   }
+
+  testWidgets('editor: I/O at the playhead, Ctrl+Z, transcript seeks', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final c = ready();
+    final dir = Directory.systemTemp.createTempSync('plan');
+    c.meta = FetchedMeta('x', dir, {});
+    await t.pumpWidget(
+      _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
+    );
+    await t.pump(const Duration(seconds: 1));
+    c.position.value = 1400;
+    await t.sendKeyEvent(LogicalKeyboardKey.keyI);
+    await t.pump();
+    expect(c.plan!.sermonStart, 1400);
+    c.position.value = 3000;
+    await t.sendKeyEvent(LogicalKeyboardKey.keyO);
+    await t.pump();
+    expect(c.plan!.sermonEnd, 3000);
+    await t.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await t.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await t.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await t.pump();
+    expect(c.plan!.sermonEnd, 3210);
+    await t.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await t.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await t.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await t.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await t.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await t.pump();
+    expect(c.plan!.sermonEnd, 3000);
+    // Typing an "i" in the title is text, not a shortcut.
+    await t.enterText(find.byKey(const ValueKey('title')), 'i');
+    await t.sendKeyEvent(LogicalKeyboardKey.keyI);
+    expect(c.plan!.sermonStart, 1400);
+    final line = find.byKey(ValueKey('line-${c.segments[2].start}'));
+    await t.ensureVisible(line);
+    await t.tap(line);
+    expect(c.position.value, c.segments[2].start);
+    await t.tap(find.text('Uitgeknip (1)'));
+    await t.pump();
+    expect(find.text('Uitgeknip 1'), findsOneWidget);
+    expect(find.text('34:10 – 35:40'), findsOneWidget);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('hersien opname sonder onderskrifte', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final c = testController().$1
+      ..debugReady(
+        FetchedMeta('opname-20261115-093000', Directory.systemTemp, {}),
+        [],
+        SermonPlan(
+          sermonStart: 0,
+          sermonEnd: 4200,
+          title: 'Erediens 15 November',
+          description: '',
+          shorts: [],
+        ),
+        4200,
+      );
+    final key = GlobalKey();
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        RepaintBoundary(
+          key: key,
+          child: Scaffold(body: ReviewScreen(controller: c)),
+        ),
+      ),
+    );
+    await t.pump(const Duration(seconds: 1));
+    expect(
+      find.text('Geen onderskrifte nie, stel die begin en einde self'),
+      findsOneWidget,
+    );
+    await _shot(t, key, 'hersien-opname-light-1100');
+  });
 
   for (final b in Brightness.values) {
     for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
@@ -195,18 +280,23 @@ void main() {
       _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
     );
     await t.pump(const Duration(seconds: 1));
-    final start = find.bySemanticsLabel(RegExp('23:'));
+    final start = find.bySemanticsLabel(RegExp('Preek begin 23:'));
     expect(start, findsWidgets);
     await t.tap(start.first);
     await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await t.pump();
-    expect(c.plan!.sermonStart, 1389);
+    expect(c.plan!.sermonStart, 1385);
+    await t.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await t.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await t.pump();
+    expect(c.plan!.sermonStart, closeTo(1385.1, 1e-9));
     await t.drag(
-      find.bySemanticsLabel(RegExp('23:')).first,
+      find.bySemanticsLabel(RegExp('Preek begin 23:')).first,
       const Offset(60, 0),
     );
     await t.pump();
-    expect(c.plan!.sermonStart, greaterThan(1389));
+    expect(c.plan!.sermonStart, greaterThan(1386));
     await t.runAsync(
       () async => await Future<void>.delayed(const Duration(milliseconds: 200)),
     );

@@ -88,6 +88,12 @@ class ReviewController extends ChangeNotifier {
   SermonPlan? plan;
   double duration = 0;
 
+  /// Candidate prayers in the captions, marked on the timeline and in the transcript.
+  List<Span> prayerMarks = [];
+
+  /// Bumped by undo/redo, so the text fields reload from the plan.
+  int edits = 0;
+
   /// Bumped when a new plan arrives, so the timeline plays its handle glide.
   int planRevision = 0;
   bool saved = false;
@@ -270,6 +276,7 @@ class ReviewController extends ChangeNotifier {
       jsonDecode(from.removeLast()) as Map<String, dynamic>,
     );
     _group = null;
+    edits++;
     _save();
     notifyListeners();
   }

@@ -495,4 +495,71 @@ class LAf extends L {
   String clipUnreadable(String name) {
     return '$name kan nie gelees word nie';
   }
+
+  @override
+  String get noCaptions =>
+      'Geen onderskrifte nie, stel die begin en einde self';
+
+  @override
+  String get transcript => 'Transkripsie';
+
+  @override
+  String get prayer => 'Gebed';
+
+  @override
+  String get cutOut => 'Uitgeknip';
+
+  @override
+  String cutsTab(int n) {
+    return 'Uitgeknip ($n)';
+  }
+
+  @override
+  String shortsTab(int n) {
+    return 'Shorts ($n)';
+  }
+
+  @override
+  String cutN(int n) {
+    return 'Uitgeknip $n';
+  }
+
+  @override
+  String get addCut => 'Knip uit by speelkop';
+
+  @override
+  String get noCuts =>
+      'Niks uitgeknip nie. Speel na \'n stuk wat uit moet, soos \'n lied, en kies \"Knip uit by speelkop\".';
+
+  @override
+  String get startHere => 'Begin hier';
+
+  @override
+  String get endHere => 'Einde hier';
+
+  @override
+  String get playPause => 'Speel of pouse (spasie)';
+
+  @override
+  String get playFromStart => 'Speel van begin';
+
+  @override
+  String get playEnd => 'Speel die einde';
+
+  @override
+  String get previewCut => 'Voorskou van die snit';
+
+  @override
+  String get editorKeys =>
+      'I/O: begin/einde by speelkop; ←/→: hakie 1 s, Shift 0,1 s';
+
+  @override
+  String get undo => 'Ontdoen (Ctrl+Z)';
+
+  @override
+  String get redo => 'Herdoen (Ctrl+Shift+Z)';
+
+  @override
+  String get noShorts =>
+      'Nog geen Shorts nie. Speel na \'n sterk stuk van die preek en kies \"Voeg Short by\".';
 }

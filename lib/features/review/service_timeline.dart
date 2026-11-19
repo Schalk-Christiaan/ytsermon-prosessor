@@ -3,7 +3,7 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: —
-//   doel: dienstydlyn: spraak/musiek, sleepbare preek-hakie, Shorts (ongeldige met foutkleur), speelposisie
+//   doel: dienstydlyn: spraak/musiek, gebedsmerkers, sleepbare preek-hakies (sleutels 1 s / Shift 0,1 s), uitgeknipte stukke gestreep, sleepbare Shorts (ongeldige met foutkleur), speelposisie
 //   status: oop
 import 'dart:ui' show lerpDouble;
 
@@ -27,12 +27,16 @@ class ServiceTimeline extends StatefulWidget {
     required this.sermonStart,
     required this.sermonEnd,
     required this.shorts,
+    this.cuts = const [],
+    this.prayers = const [],
     this.faulty = const {},
     required this.position,
     required this.animateKey,
     required this.onSeek,
     required this.onSermonChanged,
     required this.onSermonCommit,
+    required this.onNudge,
+    required this.onShortMove,
   });
 
   final double duration;
@@ -40,6 +44,9 @@ class ServiceTimeline extends StatefulWidget {
   final double sermonStart;
   final double sermonEnd;
   final List<Short> shorts;
+
+  /// Cut-out pieces (hatched) and candidate prayers (a line above the track).
+  final List<Span> cuts, prayers;
 
   /// Invalid Shorts, drawn in the error colour with an outline (not colour alone).
   final Set<Short> faulty;
@@ -50,6 +57,10 @@ class ServiceTimeline extends StatefulWidget {
   final ValueChanged<double> onSeek;
   final void Function(double start, double end) onSermonChanged;
   final VoidCallback onSermonCommit;
+  final void Function(bool isStart, double secs) onNudge;
+
+  /// A Short dragged by [dt] seconds; the drag ends with [onSermonCommit].
+  final void Function(Short s, double dt) onShortMove;
 
   @override
   State<ServiceTimeline> createState() => _ServiceTimelineState();
@@ -111,21 +122,6 @@ class _ServiceTimelineState extends State<ServiceTimeline>
     widget.onSeek(isStart ? s : e);
   }
 
-  void _nudge(bool isStart, double secs) {
-    final s = isStart
-        ? (widget.sermonStart + secs).clamp(0.0, widget.sermonEnd - 1)
-        : widget.sermonStart;
-    final e = isStart
-        ? widget.sermonEnd
-        : (widget.sermonEnd + secs).clamp(
-            widget.sermonStart + 1,
-            widget.duration,
-          );
-    widget.onSermonChanged(s, e);
-    widget.onSeek(isStart ? s : e);
-    widget.onSermonCommit();
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
@@ -152,7 +148,7 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                   label: label,
                   onDrag: (dx) => _drag(isStart, dx, w),
                   onEnd: widget.onSermonCommit,
-                  onNudge: (secs) => _nudge(isStart, secs),
+                  onNudge: (secs) => widget.onNudge(isStart, secs),
                 ),
               );
             }
@@ -177,6 +173,9 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                               duration: widget.duration,
                               blocks: widget.blocks,
                               shorts: widget.shorts,
+                              cuts: widget.cuts,
+                              prayers: widget.prayers,
+                              cutLabel: l.cutOut,
                               faulty: widget.faulty,
                               error: th.colorScheme.error,
                               start: s,
@@ -196,6 +195,25 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                           ),
                         ),
                       ),
+                      for (final sh in widget.shorts)
+                        Positioned(
+                          left: _x(sh.start, w),
+                          width: (_x(sh.end, w) - _x(sh.start, w)).clamp(8, w),
+                          bottom: 6,
+                          height: 24,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.grab,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onHorizontalDragUpdate: (d) => widget.onShortMove(
+                                sh,
+                                d.delta.dx / w * widget.duration,
+                              ),
+                              onHorizontalDragEnd: (_) =>
+                                  widget.onSermonCommit(),
+                            ),
+                          ),
+                        ),
                       handle(true),
                       handle(false),
                     ],
@@ -265,7 +283,7 @@ class _HandleState extends State<_Handle> {
 
   KeyEventResult _key(FocusNode n, KeyEvent e) {
     if (e is KeyUpEvent) return KeyEventResult.ignored;
-    final step = HardwareKeyboard.instance.isShiftPressed ? 1.0 : 5.0;
+    final step = HardwareKeyboard.instance.isShiftPressed ? 0.1 : 1.0;
     if (e.logicalKey == LogicalKeyboardKey.arrowLeft) {
       widget.onNudge(-step);
       return KeyEventResult.handled;
@@ -319,6 +337,9 @@ class _TimelinePainter extends CustomPainter {
     required this.duration,
     required this.blocks,
     required this.shorts,
+    required this.cuts,
+    required this.prayers,
+    required this.cutLabel,
     required this.faulty,
     required this.error,
     required this.start,
@@ -337,6 +358,8 @@ class _TimelinePainter extends CustomPainter {
   final double duration, start, end;
   final List<TimeBlock> blocks;
   final List<Short> shorts;
+  final List<Span> cuts, prayers;
+  final String cutLabel;
   final Set<Short> faulty;
   final Color error;
   final ValueListenable<double> position;
@@ -388,6 +411,44 @@ class _TimelinePainter extends CustomPainter {
       Rect.fromLTRB(sr.left, sr.bottom - 3, sr.right, sr.bottom),
       bar,
     );
+    for (final p in prayers) {
+      canvas.drawRect(
+        Rect.fromLTRB(
+          x(p.start),
+          0,
+          x(p.end).clamp(x(p.start) + 2, size.width),
+          3,
+        ),
+        Paint()..color = ink,
+      );
+    }
+    for (final c in cuts) {
+      final r = Rect.fromLTRB(x(c.start), 8, x(c.end), size.height - 8);
+      canvas.save();
+      canvas.clipRect(r);
+      canvas.drawRect(r, Paint()..color = surface.withValues(alpha: 0.7));
+      final stripe = Paint()
+        ..color = ink.withValues(alpha: 0.5)
+        ..strokeWidth = 1.5;
+      for (var sx = r.left - r.height; sx < r.right; sx += 6) {
+        canvas.drawLine(
+          Offset(sx, r.bottom),
+          Offset(sx + r.height, r.top),
+          stripe,
+        );
+      }
+      if (r.width > 60) {
+        final tp = TextPainter(
+          text: TextSpan(
+            text: cutLabel,
+            style: labelStyle.copyWith(backgroundColor: surface),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: r.width - 8);
+        tp.paint(canvas, Offset(r.left + 4, r.center.dy - tp.height / 2));
+      }
+      canvas.restore();
+    }
     for (final s in shorts) {
       final bad = faulty.contains(s);
       final r = RRect.fromRectAndRadius(

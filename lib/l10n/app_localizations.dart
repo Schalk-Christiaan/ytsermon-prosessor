@@ -925,6 +925,120 @@ abstract class L {
   /// In af, this message translates to:
   /// **'{name} kan nie gelees word nie'**
   String clipUnreadable(String name);
+
+  /// No description provided for @noCaptions.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen onderskrifte nie, stel die begin en einde self'**
+  String get noCaptions;
+
+  /// No description provided for @transcript.
+  ///
+  /// In af, this message translates to:
+  /// **'Transkripsie'**
+  String get transcript;
+
+  /// No description provided for @prayer.
+  ///
+  /// In af, this message translates to:
+  /// **'Gebed'**
+  String get prayer;
+
+  /// No description provided for @cutOut.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitgeknip'**
+  String get cutOut;
+
+  /// No description provided for @cutsTab.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitgeknip ({n})'**
+  String cutsTab(int n);
+
+  /// No description provided for @shortsTab.
+  ///
+  /// In af, this message translates to:
+  /// **'Shorts ({n})'**
+  String shortsTab(int n);
+
+  /// No description provided for @cutN.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitgeknip {n}'**
+  String cutN(int n);
+
+  /// No description provided for @addCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Knip uit by speelkop'**
+  String get addCut;
+
+  /// No description provided for @noCuts.
+  ///
+  /// In af, this message translates to:
+  /// **'Niks uitgeknip nie. Speel na \'n stuk wat uit moet, soos \'n lied, en kies \"Knip uit by speelkop\".'**
+  String get noCuts;
+
+  /// No description provided for @startHere.
+  ///
+  /// In af, this message translates to:
+  /// **'Begin hier'**
+  String get startHere;
+
+  /// No description provided for @endHere.
+  ///
+  /// In af, this message translates to:
+  /// **'Einde hier'**
+  String get endHere;
+
+  /// No description provided for @playPause.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel of pouse (spasie)'**
+  String get playPause;
+
+  /// No description provided for @playFromStart.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel van begin'**
+  String get playFromStart;
+
+  /// No description provided for @playEnd.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel die einde'**
+  String get playEnd;
+
+  /// No description provided for @previewCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Voorskou van die snit'**
+  String get previewCut;
+
+  /// No description provided for @editorKeys.
+  ///
+  /// In af, this message translates to:
+  /// **'I/O: begin/einde by speelkop; ←/→: hakie 1 s, Shift 0,1 s'**
+  String get editorKeys;
+
+  /// No description provided for @undo.
+  ///
+  /// In af, this message translates to:
+  /// **'Ontdoen (Ctrl+Z)'**
+  String get undo;
+
+  /// No description provided for @redo.
+  ///
+  /// In af, this message translates to:
+  /// **'Herdoen (Ctrl+Shift+Z)'**
+  String get redo;
+
+  /// No description provided for @noShorts.
+  ///
+  /// In af, this message translates to:
+  /// **'Nog geen Shorts nie. Speel na \'n sterk stuk van die preek en kies \"Voeg Short by\".'**
+  String get noShorts;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

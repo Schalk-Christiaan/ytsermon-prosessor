@@ -344,5 +344,45 @@
         "type": "String"
       }
     }
-  }
+  },
+  "noCaptions": "Geen onderskrifte nie, stel die begin en einde self",
+  "transcript": "Transkripsie",
+  "prayer": "Gebed",
+  "cutOut": "Uitgeknip",
+  "cutsTab": "Uitgeknip ({n})",
+  "@cutsTab": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "shortsTab": "Shorts ({n})",
+  "@shortsTab": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cutN": "Uitgeknip {n}",
+  "@cutN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "addCut": "Knip uit by speelkop",
+  "noCuts": "Niks uitgeknip nie. Speel na 'n stuk wat uit moet, soos 'n lied, en kies \"Knip uit by speelkop\".",
+  "startHere": "Begin hier",
+  "endHere": "Einde hier",
+  "playPause": "Speel of pouse (spasie)",
+  "playFromStart": "Speel van begin",
+  "playEnd": "Speel die einde",
+  "previewCut": "Voorskou van die snit",
+  "editorKeys": "I/O: begin/einde by speelkop; ←/→: hakie 1 s, Shift 0,1 s",
+  "undo": "Ontdoen (Ctrl+Z)",
+  "redo": "Herdoen (Ctrl+Shift+Z)",
+  "noShorts": "Nog geen Shorts nie. Speel na 'n sterk stuk van die preek en kies \"Voeg Short by\"."
 }
