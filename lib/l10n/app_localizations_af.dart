@@ -466,4 +466,33 @@ class LAf extends L {
 
   @override
   String get outFolder => 'Gids vir gesnyde preke';
+
+  @override
+  String get introOutro => 'Intro en outro';
+
+  @override
+  String get introOutroHelp =>
+      'Video\'s wat voor en ná elke volle preek kom (nie op Shorts nie). Albei is opsioneel.';
+
+  @override
+  String get intro => 'Intro';
+
+  @override
+  String get outro => 'Outro';
+
+  @override
+  String get noClip => 'Geen';
+
+  @override
+  String get chooseFile => 'Kies…';
+
+  @override
+  String clipWithLength(String name, String length) {
+    return '$name ($length)';
+  }
+
+  @override
+  String clipUnreadable(String name) {
+    return '$name kan nie gelees word nie';
+  }
 }

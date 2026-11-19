@@ -3,13 +3,17 @@
 //   wanneer: Instellings (rail)
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | kliëntlêer en privaatheid; refresh-token via GoogleAuth
-//   doel: Kanaal (kliënt-ID-lêer, Koppel/Ontkoppel, privaatheid van oplaaie), uitsetgids en Opstelling, bo die Stelsel-lys
+//   doel: Kanaal (kliënt-ID-lêer, Koppel/Ontkoppel, privaatheid van oplaaie), uitsetgids, intro/outro (met lengte) en Opstelling, bo die Stelsel-lys
 //   status: oop
 import 'dart:io';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 
 import '../../app/theme.dart';
+import '../../core/captions.dart';
+import '../../core/cutter.dart';
 import '../../core/jobs.dart';
 import '../../core/settings.dart';
 import '../../core/youtube.dart';
@@ -23,6 +27,8 @@ class SettingsScreen extends StatefulWidget {
     required this.signIn,
     required this.system,
     this.onSetup,
+    this.pickVideo = _pickVideo,
+    this.probe = probeMedia,
   });
   final AppSettings settings;
   final GoogleAuth auth;
@@ -36,9 +42,22 @@ class SettingsScreen extends StatefulWidget {
   /// Opens the Opstelling list again.
   final VoidCallback? onSetup;
 
+  /// Test seams: the file picker and ffprobe (for the clip length).
+  final Future<String?> Function() pickVideo;
+  final Future<MediaInfo> Function(File f) probe;
+
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
+
+Future<String?> _pickVideo() async => (await openFile(
+  acceptedTypeGroups: const [
+    XTypeGroup(
+      label: 'Video',
+      extensions: ['mp4', 'mov', 'mkv', 'avi', 'webm'],
+    ),
+  ],
+))?.path;
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final _file = TextEditingController(text: widget.settings.clientFile);
@@ -107,120 +126,195 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l.navSettingsTitle,
-                        style: th.textTheme.headlineMedium,
+        Flexible(
+          flex: 3,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l.navSettingsTitle,
+                          style: th.textTheme.headlineMedium,
+                        ),
                       ),
-                    ),
-                    if (widget.onSetup != null)
-                      TextButton(
-                        onPressed: widget.onSetup,
-                        child: Text(l.navSetup),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Text(l.settingsChannel, style: th.textTheme.headlineSmall),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(
-                      ok ? Icons.check_circle_rounded : Icons.link_off_rounded,
-                      color: ok ? tokens.success : th.colorScheme.outline,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(status, style: th.textTheme.titleMedium),
-                    ),
-                    if (ok)
-                      TextButton(
-                        onPressed: _disconnect,
-                        child: Text(l.disconnect),
-                      )
-                    else
-                      FilledButton(
-                        onPressed: configured && !_busy ? _connect : null,
-                        child: Text(l.connect),
-                      ),
-                  ],
-                ),
-                if (_busy) ...[
-                  const SizedBox(height: 8),
-                  Text(l.connectWaiting),
-                ],
-                if (_error != null) ...[
-                  const SizedBox(height: 8),
-                  Text(_error!, style: TextStyle(color: th.colorScheme.error)),
-                ],
-                const SizedBox(height: 16),
-                TextField(
-                  key: const ValueKey('clientFile'),
-                  controller: _file,
-                  decoration: InputDecoration(
-                    labelText: l.clientFile,
-                    helperText: l.clientFileHelp,
-                    border: const OutlineInputBorder(),
+                      if (widget.onSetup != null)
+                        TextButton(
+                          onPressed: widget.onSetup,
+                          child: Text(l.navSetup),
+                        ),
+                    ],
                   ),
-                  onSubmitted: _setFile,
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Text(l.uploadPrivacy),
-                    const SizedBox(width: 16),
-                    SegmentedButton<String>(
-                      segments: [
-                        ButtonSegment(
-                          value: 'private',
-                          label: Text(l.privacyPrivate),
-                        ),
-                        ButtonSegment(
-                          value: 'unlisted',
-                          label: Text(l.privacyUnlisted),
-                        ),
-                        ButtonSegment(
-                          value: 'public',
-                          label: Text(l.privacyPublic),
-                        ),
-                      ],
-                      selected: {widget.settings.privacy},
-                      onSelectionChanged: (v) => setState(
-                        () => widget.settings
-                          ..privacy = v.single
-                          ..save(),
+                  const SizedBox(height: 24),
+                  Text(l.settingsChannel, style: th.textTheme.headlineSmall),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        ok
+                            ? Icons.check_circle_rounded
+                            : Icons.link_off_rounded,
+                        color: ok ? tokens.success : th.colorScheme.outline,
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(status, style: th.textTheme.titleMedium),
+                      ),
+                      if (ok)
+                        TextButton(
+                          onPressed: _disconnect,
+                          child: Text(l.disconnect),
+                        )
+                      else
+                        FilledButton(
+                          onPressed: configured && !_busy ? _connect : null,
+                          child: Text(l.connect),
+                        ),
+                    ],
+                  ),
+                  if (_busy) ...[
+                    const SizedBox(height: 8),
+                    Text(l.connectWaiting),
+                  ],
+                  if (_error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _error!,
+                      style: TextStyle(color: th.colorScheme.error),
                     ),
                   ],
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  key: const ValueKey('outDir'),
-                  controller: _out,
-                  decoration: InputDecoration(
-                    labelText: l.outFolder,
-                    border: const OutlineInputBorder(),
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const ValueKey('clientFile'),
+                    controller: _file,
+                    decoration: InputDecoration(
+                      labelText: l.clientFile,
+                      helperText: l.clientFileHelp,
+                      border: const OutlineInputBorder(),
+                    ),
+                    onSubmitted: _setFile,
                   ),
-                  onSubmitted: (v) => widget.settings
-                    ..outDir = v.trim()
-                    ..save(),
-                ),
-                const SizedBox(height: 8),
-              ],
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Text(l.uploadPrivacy),
+                      const SizedBox(width: 16),
+                      SegmentedButton<String>(
+                        segments: [
+                          ButtonSegment(
+                            value: 'private',
+                            label: Text(l.privacyPrivate),
+                          ),
+                          ButtonSegment(
+                            value: 'unlisted',
+                            label: Text(l.privacyUnlisted),
+                          ),
+                          ButtonSegment(
+                            value: 'public',
+                            label: Text(l.privacyPublic),
+                          ),
+                        ],
+                        selected: {widget.settings.privacy},
+                        onSelectionChanged: (v) => setState(
+                          () => widget.settings
+                            ..privacy = v.single
+                            ..save(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    key: const ValueKey('outDir'),
+                    controller: _out,
+                    decoration: InputDecoration(
+                      labelText: l.outFolder,
+                      border: const OutlineInputBorder(),
+                    ),
+                    onSubmitted: (v) => widget.settings
+                      ..outDir = v.trim()
+                      ..save(),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(l.introOutro, style: th.textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  Text(l.introOutroHelp, style: th.textTheme.bodyMedium),
+                  const SizedBox(height: 8),
+                  _clip(l, th, true),
+                  _clip(l, th, false),
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
           ),
         ),
-        Expanded(child: widget.system),
+        Expanded(flex: 2, child: widget.system),
       ],
+    );
+  }
+
+  /// One intro/outro row: name, file and length (ffprobe), "Kies…" and remove.
+  Widget _clip(L l, ThemeData th, bool intro) {
+    final s = widget.settings;
+    final path = intro ? s.intro : s.outro;
+    void set(String? v) => setState(() {
+      intro ? s.intro = v : s.outro = v;
+      s.save();
+    });
+    return SizedBox(
+      height: 56,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 72,
+            child: Text(
+              intro ? l.intro : l.outro,
+              style: th.textTheme.titleSmall,
+            ),
+          ),
+          Expanded(
+            child: path == null
+                ? Text(l.noClip, style: th.textTheme.bodyMedium)
+                : FutureBuilder<MediaInfo>(
+                    key: ValueKey(path),
+                    future: widget.probe(File(path)),
+                    builder: (context, snap) => Text(
+                      snap.hasError
+                          ? l.clipUnreadable(p.basename(path))
+                          : l.clipWithLength(
+                              p.basename(path),
+                              snap.hasData
+                                  ? formatTime(snap.data!.duration)
+                                  : '…',
+                            ),
+                      overflow: TextOverflow.ellipsis,
+                      style: th.textTheme.bodyMedium?.copyWith(
+                        color: snap.hasError ? th.colorScheme.error : null,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+          ),
+          OutlinedButton(
+            onPressed: () async {
+              final v = await widget.pickVideo();
+              if (v != null) set(v);
+            },
+            child: Text(l.chooseFile),
+          ),
+          if (path != null)
+            IconButton(
+              tooltip: l.remove,
+              onPressed: () => set(null),
+              icon: const Icon(Icons.close_rounded),
+            ),
+        ],
+      ),
     );
   }
 }

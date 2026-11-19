@@ -27,6 +27,8 @@ class AppSettings {
       template = j['template'] as String? ?? kDefaultTemplate,
       outDir = j['outDir'] as String? ?? defaultOutDir(),
       setupDone = j['setupDone'] as bool? ?? false,
+      intro = j['intro'] as String?,
+      outro = j['outro'] as String?,
       rules = [...?(j['rules'] as List?)?.cast<String>()] {
     if (!j.containsKey('rules')) rules = ['book', 'year'];
   }
@@ -60,6 +62,9 @@ class AppSettings {
   /// The Opstelling list was completed once; the app then starts on Preke.
   bool setupDone;
 
+  /// Video clips joined before and after every full sermon (not Shorts); null = none.
+  String? intro, outro;
+
   void save() => writeJson(_file, {
     'clientFile': clientFile,
     'privacy': privacy,
@@ -67,5 +72,7 @@ class AppSettings {
     'rules': rules,
     'outDir': outDir,
     'setupDone': setupDone,
+    'intro': intro,
+    'outro': outro,
   });
 }

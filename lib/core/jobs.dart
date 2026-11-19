@@ -297,12 +297,24 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   );
   final plan = _plan(store, c.id);
   final segs = parseJson3(m.captions.readAsStringSync());
-  final dest = out ?? Directory(AppSettings.load(store.root).outDir);
+  final settings = AppSettings.load(store.root);
+  final dest = out ?? Directory(settings.outDir);
+  File? clip(String? path) => path == null ? null : File(path);
   final date = m.info.uploadDate;
   c.phase(JobPhase.cut);
   c.progress(null);
   final files = [
-    await cutSermon(video, plan, date, dest, cancel: c.cancel, log: c.log),
+    await cutSermon(
+      video,
+      plan,
+      date,
+      dest,
+      intro: clip(settings.intro),
+      outro: clip(settings.outro),
+      onProgress: c.progress,
+      cancel: c.cancel,
+      log: c.log,
+    ),
   ];
   void saveOutputs() =>
       store.save(store.byId(c.id)!..outputs = [for (final f in files) f.path]);

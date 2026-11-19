@@ -273,6 +273,77 @@ void main() {
       expect(yt.uploaded, isEmpty);
     });
   });
+
+  test(
+    'cutJob joins the intro from Instellings before the sermon (real ffmpeg)',
+    () async {
+      final id = 'aaaaaaaaaaa', dir = Directory(p.join(root.path, id));
+      File(p.join(dir.path, '$id.info.json')).writeAsStringSync(
+        jsonEncode({
+          'title': 'A',
+          'description': '',
+          'upload_date': '20261116',
+          'duration': 6,
+        }),
+      );
+      File(p.join(dir.path, '$id.af-orig.json3'))
+          .writeAsStringSync('{"events":[]}');
+      Future<void> gen(String path, double secs) => Process.run('ffmpeg', [
+        '-y',
+        '-f',
+        'lavfi',
+        '-i',
+        'testsrc=size=160x120:rate=25:duration=$secs',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=duration=$secs',
+        '-pix_fmt',
+        'yuv420p',
+        '-shortest',
+        path,
+      ]);
+      await gen(p.join(dir.path, 'video.mp4'), 6);
+      final intro = p.join(root.path, 'intro.mp4');
+      await gen(intro, 2);
+      AppSettings.load(root)
+        ..intro = intro
+        ..save();
+      File(p.join(dir.path, 'plan.json')).writeAsStringSync(
+        jsonEncode({
+          'sermonStart': 1,
+          'sermonEnd': 5,
+          'title': 'Tema',
+          'description': '',
+          'shorts': [],
+          'cuts': [
+            {'start': 2, 'end': 3},
+          ],
+        }),
+      );
+      final out = Directory(p.join(root.path, 'uit'));
+      final q = JobQueue(store, plan: (_) async {}, out: out);
+      q.enqueue(id, JobKind.cut);
+      await q.idle;
+      expect(
+        q.jobs.single.status,
+        JobStatus.klaar,
+        reason: q.jobs.single.error,
+      );
+      final f = File(store.byId(id)!.outputs.single);
+      final r = await Process.run('ffprobe', [
+        '-v',
+        'error',
+        '-show_entries',
+        'format=duration',
+        '-of',
+        'csv=p=0',
+        f.path,
+      ]);
+      expect(double.parse((r.stdout as String).trim()), closeTo(2 + 3, 0.3));
+    },
+    skip: findExecutable('ffmpeg') == null ? 'ffmpeg ontbreek' : null,
+  );
 }
 
 class FakeYouTube implements YouTube {

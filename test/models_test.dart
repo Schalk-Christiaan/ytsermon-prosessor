@@ -13,10 +13,10 @@ SermonPlan plan(List<Span> cuts) => SermonPlan(
 void main() {
   test('parts: the sermon minus the cuts, sorted and clipped', () {
     final p = plan([Span(600, 700), Span(50, 150), Span(900, 1200)]);
-    expect([for (final s in p.parts()) (s.start, s.end)], [
-      (150, 600),
-      (700, 900),
-    ]);
+    expect(
+      [for (final s in p.parts()) (s.start, s.end)],
+      [(150, 600), (700, 900)],
+    );
   });
 
   test('parts without cuts is the whole sermon; cuts survive JSON', () {

@@ -84,7 +84,10 @@ class SermonPlan {
       if (t >= sermonEnd) break;
     }
     if (t < sermonEnd) out.add(Span(t, sermonEnd));
-    return [for (final s in out) if (s.end > s.start) s];
+    return [
+      for (final s in out)
+        if (s.end > s.start) s,
+    ];
   }
 
   Map<String, dynamic> toJson() => {

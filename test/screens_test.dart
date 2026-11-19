@@ -11,6 +11,7 @@ import 'package:preekverwerker/app/shell.dart';
 import 'package:preekverwerker/app/theme.dart';
 import 'package:preekverwerker/core/captions.dart';
 import 'package:preekverwerker/core/channel.dart';
+import 'package:preekverwerker/core/cutter.dart';
 import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/store.dart';
@@ -720,6 +721,46 @@ void main() {
     await t.tap(find.text('Ontkoppel'));
     await t.pumpAndSettle();
     expect(token, isNull);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('instellings: intro is chosen, shows its length, is removed', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final root = Directory.systemTemp.createTempSync('set');
+    final set = AppSettings.load(root);
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: SettingsScreen(
+            settings: set,
+            auth: GoogleAuth(
+              File(set.clientFile),
+              read: () async => null,
+              write: (_) async {},
+            ),
+            signIn: () async {},
+            system: const SizedBox(),
+            pickVideo: () async => '/klippies/intro.mp4',
+            probe: (_) async => const MediaInfo(1920, 1080, '25/1', 12, true),
+          ),
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(find.text('Geen'), findsNWidgets(2));
+    await t.ensureVisible(find.text('Kies…').last);
+    await t.tap(find.text('Kies…').first);
+    await t.pumpAndSettle();
+    expect(find.textContaining('intro.mp4 (00:12)'), findsOneWidget);
+    expect(AppSettings.load(root).intro, '/klippies/intro.mp4');
+    await t.tap(find.byTooltip('Verwyder'));
+    await t.pumpAndSettle();
+    expect(AppSettings.load(root).intro, isNull);
     await t.pumpWidget(const SizedBox());
   });
 

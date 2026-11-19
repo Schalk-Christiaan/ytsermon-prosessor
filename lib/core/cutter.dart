@@ -3,8 +3,9 @@
 //   wanneer: by 'Keur goed en sny' en 'Klank vir WhatsApp'
 //   groep: core | Kern
 //   skryf: out/
-//   doel: sny die preek (stroomkopie), Shorts (9:16 met ingebrande onderskrif) en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg
+//   doel: sny die preek (stroomkopie, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif) en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg
 //   status: oop
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -92,6 +93,111 @@ List<String> audioArgs(String input, String out, String title) => [
   out,
 ];
 
+/// What ffprobe says about a video file (the join needs size, frame rate and whether there is sound).
+class MediaInfo {
+  const MediaInfo(
+    this.width,
+    this.height,
+    this.rate,
+    this.duration,
+    this.hasAudio,
+  );
+  final int width, height;
+
+  /// ffprobe's `r_frame_rate`, e.g. `30000/1001`.
+  final String rate;
+  final double duration;
+  final bool hasAudio;
+}
+
+/// Reads [f] with ffprobe.
+Future<MediaInfo> probeMedia(File f) async {
+  final out = StringBuffer();
+  await runTool('ffprobe', [
+    '-v',
+    'error',
+    '-show_entries',
+    'stream=codec_type,width,height,r_frame_rate:format=duration',
+    '-of',
+    'json',
+    f.path,
+  ], onLine: out.writeln);
+  final j = jsonDecode(out.toString()) as Map<String, dynamic>;
+  final streams = (j['streams'] as List).cast<Map<String, dynamic>>();
+  final v = streams.firstWhere((s) => s['codec_type'] == 'video');
+  return MediaInfo(
+    v['width'] as int,
+    v['height'] as int,
+    v['r_frame_rate'] as String,
+    double.parse(j['format']['duration'] as String),
+    streams.any((s) => s['codec_type'] == 'audio'),
+  );
+}
+
+/// One piece of a joined cut: a whole clip (intro/outro) or a [start, end] part of the service video.
+typedef JoinPiece = ({String path, MediaInfo info, Span? part});
+
+/// ffmpeg arguments that join [pieces] into one file the size and frame rate of [target]: each piece
+/// is scaled and padded (no stretching), a piece without sound gets silence, then `concat`.
+List<String> joinArgs(List<JoinPiece> pieces, MediaInfo target, String out) {
+  final inputs = <String>[], filters = <String>[], labels = <String>[];
+  var n = 0;
+  for (final (k, pc) in pieces.indexed) {
+    final part = pc.part;
+    final secs = part == null ? pc.info.duration : part.end - part.start;
+    if (part != null)
+      inputs.addAll(['-ss', _sec(part.start), '-to', _sec(part.end)]);
+    inputs.addAll(['-i', pc.path]);
+    final vi = n++;
+    var ai = vi;
+    if (!pc.info.hasAudio) {
+      inputs.addAll([
+        '-f',
+        'lavfi',
+        '-t',
+        _sec(secs),
+        '-i',
+        'anullsrc=r=48000:cl=stereo',
+      ]);
+      ai = n++;
+    }
+    final w = target.width, h = target.height;
+    filters.add(
+      '[$vi:v]scale=$w:$h:force_original_aspect_ratio=decrease,'
+      'pad=$w:$h:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=${target.rate},format=yuv420p[v$k]',
+    );
+    filters.add('[$ai:a]aresample=48000,aformat=channel_layouts=stereo[a$k]');
+    labels.add('[v$k][a$k]');
+  }
+  filters.add('${labels.join()}concat=n=${pieces.length}:v=1:a=1[v][a]');
+  return [
+    '-y',
+    ...inputs,
+    '-filter_complex',
+    filters.join(';'),
+    '-map',
+    '[v]',
+    '-map',
+    '[a]',
+    '-c:v',
+    'libx264',
+    '-preset',
+    'veryfast',
+    '-crf',
+    '20',
+    '-c:a',
+    'aac',
+    '-b:a',
+    '160k',
+    '-movflags',
+    '+faststart',
+    '-nostats',
+    '-progress',
+    'pipe:1',
+    out,
+  ];
+}
+
 /// Seconds from an ffmpeg `-progress` line `out_time_us=…`; null for other lines.
 double? parseFfmpegProgress(String line) {
   final m = RegExp(r'^out_time_us=(\d+)$').firstMatch(line);
@@ -119,19 +225,47 @@ Future<void> _ffmpeg(
   },
 );
 
-/// Cuts the sermon (stream copy) into [outDir]; returns the file.
+/// Cuts the sermon into [outDir]; returns the file. One part and no clips = stream copy (seconds);
+/// cut-out pieces or an [intro]/[outro] re-encode everything into one file via [joinArgs].
 Future<File> cutSermon(
   File video,
   SermonPlan plan,
   String date,
   Directory outDir, {
+  File? intro,
+  File? outro,
+  void Function(double frac)? onProgress,
   Future<void>? cancel,
   void Function(String line)? log,
 }) async {
   outDir.createSync(recursive: true);
   final out = p.join(outDir.path, sermonFileName(date, plan.title));
+  final parts = plan.parts();
+  if (parts.length == 1 && intro == null && outro == null) {
+    await _ffmpeg(
+      sermonArgs(video.path, parts.single.start, parts.single.end, out),
+      cancel: cancel,
+      log: log,
+    );
+    return File(out);
+  }
+  final main = await probeMedia(video);
+  Future<JoinPiece> clip(File f) async =>
+      (path: f.path, info: await probeMedia(f), part: null);
+  final pieces = <JoinPiece>[
+    if (intro != null) await clip(intro),
+    for (final s in parts) (path: video.path, info: main, part: s),
+    if (outro != null) await clip(outro),
+  ];
   await _ffmpeg(
-    sermonArgs(video.path, plan.sermonStart, plan.sermonEnd, out),
+    joinArgs(pieces, main, out),
+    duration: pieces.fold<double>(
+      0,
+      (a, pc) =>
+          a +
+          (pc.part == null ? pc.info.duration : pc.part!.end - pc.part!.start),
+    ),
+    onProgress: onProgress,
     cancel: cancel,
     log: log,
   );

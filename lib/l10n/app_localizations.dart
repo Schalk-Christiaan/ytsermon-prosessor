@@ -877,6 +877,54 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Gids vir gesnyde preke'**
   String get outFolder;
+
+  /// No description provided for @introOutro.
+  ///
+  /// In af, this message translates to:
+  /// **'Intro en outro'**
+  String get introOutro;
+
+  /// No description provided for @introOutroHelp.
+  ///
+  /// In af, this message translates to:
+  /// **'Video\'s wat voor en ná elke volle preek kom (nie op Shorts nie). Albei is opsioneel.'**
+  String get introOutroHelp;
+
+  /// No description provided for @intro.
+  ///
+  /// In af, this message translates to:
+  /// **'Intro'**
+  String get intro;
+
+  /// No description provided for @outro.
+  ///
+  /// In af, this message translates to:
+  /// **'Outro'**
+  String get outro;
+
+  /// No description provided for @noClip.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen'**
+  String get noClip;
+
+  /// No description provided for @chooseFile.
+  ///
+  /// In af, this message translates to:
+  /// **'Kies…'**
+  String get chooseFile;
+
+  /// No description provided for @clipWithLength.
+  ///
+  /// In af, this message translates to:
+  /// **'{name} ({length})'**
+  String clipWithLength(String name, String length);
+
+  /// No description provided for @clipUnreadable.
+  ///
+  /// In af, this message translates to:
+  /// **'{name} kan nie gelees word nie'**
+  String clipUnreadable(String name);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
