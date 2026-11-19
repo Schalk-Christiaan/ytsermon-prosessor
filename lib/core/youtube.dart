@@ -297,6 +297,45 @@ class YouTube {
     return (jsonDecode(body) as Map)['id'] as String;
   }
 
+  /// Changes an uploaded video's title and description; keeps its category and tags (the API wipes what a PUT leaves out).
+  /// vloei: v8
+  Future<void> updateVideo(
+    String id, {
+    required String title,
+    required String description,
+  }) async {
+    final items =
+        (await _call(
+              'GET',
+              '/youtube/v3/videos',
+              query: {'part': 'snippet', 'id': id},
+            ))['items']
+            as List? ??
+        const [];
+    if (items.isEmpty)
+      throw StateError('Video $id is nie meer op YouTube nie.');
+    final old = items.first['snippet'] as Map<String, dynamic>;
+    await _call(
+      'PUT',
+      '/youtube/v3/videos',
+      query: {'part': 'snippet'},
+      json: {
+        'id': id,
+        'snippet': {
+          'title': title,
+          'description': description,
+          for (final k in const [
+            'categoryId',
+            'tags',
+            'defaultLanguage',
+            'defaultAudioLanguage',
+          ])
+            if (old[k] != null) k: old[k],
+        },
+      },
+    );
+  }
+
   /// The channel's playlists, title → ID (all pages).
   Future<Map<String, String>> playlists() async {
     final out = <String, String>{};

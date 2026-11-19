@@ -398,5 +398,14 @@
         "type": "String"
       }
     }
+  },
+  "updateOnYouTube": "Werk op YouTube by",
+  "updatedOnYouTube": "{n, plural, =1{1 video op YouTube bygewerk} other{{n} video's op YouTube bygewerk}}",
+  "@updatedOnYouTube": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   }
 }

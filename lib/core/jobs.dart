@@ -390,6 +390,50 @@ SermonPlan _plan(SermonStore store, String id) => SermonPlan.fromJson(
       as Map<String, dynamic>,
 );
 
+/// The YouTube description: the template filled from the plan and the sermon.
+String _description(Sermon s, SermonPlan plan, AppSettings settings) =>
+    describe(
+      settings.template,
+      tema: plan.title,
+      scripture: s.scripture,
+      date: s.date,
+      description: plan.description,
+    );
+
+/// Output [i]'s YouTube title: 0 = the sermon, then the Shorts; YouTube allows 100 characters.
+String _videoTitle(SermonPlan plan, int i) {
+  final t = i == 0 || i > plan.shorts.length
+      ? plan.title
+      : plan.shorts[i - 1].title;
+  return t.length > 100 ? t.substring(0, 100) : t;
+}
+
+/// "Werk op YouTube by": sends the plan's current title and description to every uploaded video; returns how many.
+/// vloei: v8
+Future<int> updateOnYouTube(
+  SermonStore store,
+  String id, {
+  required YouTube yt,
+  required AppSettings settings,
+}) async {
+  final s = store.byId(id)!;
+  final plan = _plan(store, id);
+  final description = _description(s, plan, settings);
+  final videos = s.outputs.where((o) => o.endsWith('.mp4')).toList();
+  var n = 0;
+  for (var i = 0; i < videos.length; i++) {
+    final vid = s.uploads[videos[i]];
+    if (vid == null) continue;
+    await yt.updateVideo(
+      vid,
+      title: _videoTitle(plan, i),
+      description: description,
+    );
+    n++;
+  }
+  return n;
+}
+
 /// Uploads the cut sermon and its Shorts (privacy from settings), then puts the sermon in its playlist.
 JobRun uploadJob(
   SermonStore store, {
@@ -401,26 +445,18 @@ JobRun uploadJob(
   final videos = s.outputs.where((o) => o.endsWith('.mp4')).toList();
   if (videos.isEmpty) throw StateError('Sny eers die preek.');
   final plan = _plan(store, c.id);
-  final description = describe(
-    settings.template,
-    tema: plan.title,
-    scripture: s.scripture,
-    date: s.date,
-    description: plan.description,
-  );
+  final description = _description(s, plan, settings);
   c.phase(JobPhase.upload);
   for (var i = 0; i < videos.length; i++) {
     final path = videos[i];
     if (store.byId(c.id)!.uploads.containsKey(path)) continue;
-    final title = i == 0 || i > plan.shorts.length
-        ? plan.title
-        : plan.shorts[i - 1].title;
+    final title = _videoTitle(plan, i);
     final session = File(p.join(store.root.path, c.id, 'upload-$i.json'));
     // A resumed session was already counted when it started.
     if (!session.existsSync()) quota.take();
     final id = await yt.upload(
       File(path),
-      title: title.length > 100 ? title.substring(0, 100) : title,
+      title: title,
       description: description,
       privacy: settings.privacy,
       session: session,

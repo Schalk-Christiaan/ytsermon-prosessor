@@ -54,7 +54,13 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   // 0 Preke, 1 Hersien, 2 Werk, 3 Snitlyste, 4 Instellings, 5 Opstelling (no rail item)
   late int _i = _settings.setupDone ? 0 : 5;
-  late final _review = ReviewController(store: widget.store, jobs: widget.jobs);
+  late final _review = ReviewController(store: widget.store, jobs: widget.jobs)
+    ..updateYouTube = (id) => updateOnYouTube(
+      widget.store,
+      id,
+      yt: YouTube(_auth),
+      settings: _settings,
+    );
   late final _settings = widget.settings ?? AppSettings.load(widget.store.root);
   late final _quota =
       widget.quota ??

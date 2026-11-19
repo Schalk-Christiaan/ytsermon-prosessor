@@ -48,6 +48,22 @@ class ReviewController extends ChangeNotifier {
   final Future<void> Function(File video)? openVideo;
   final Stream<Duration>? positions;
 
+  /// "Werk op YouTube by": sends the plan's title and description to the uploaded videos; set by Shell (null = hidden).
+  Future<int> Function(String id)? updateYouTube;
+  bool updating = false;
+
+  /// vloei: v8
+  Future<int> pushToYouTube() async {
+    updating = true;
+    notifyListeners();
+    try {
+      return await updateYouTube!(id!);
+    } finally {
+      updating = false;
+      notifyListeners();
+    }
+  }
+
   /// Created only once the video is on disk (no libmpv work before that).
   late final player = Player();
   late final video = VideoController(player);

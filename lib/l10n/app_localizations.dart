@@ -1081,6 +1081,18 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Diens op {date}'**
   String serviceDate(String date);
+
+  /// No description provided for @updateOnYouTube.
+  ///
+  /// In af, this message translates to:
+  /// **'Werk op YouTube by'**
+  String get updateOnYouTube;
+
+  /// No description provided for @updatedOnYouTube.
+  ///
+  /// In af, this message translates to:
+  /// **'{n, plural, =1{1 video op YouTube bygewerk} other{{n} video\'s op YouTube bygewerk}}'**
+  String updatedOnYouTube(int n);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

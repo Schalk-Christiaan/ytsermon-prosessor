@@ -585,4 +585,18 @@ class LAf extends L {
   String serviceDate(String date) {
     return 'Diens op $date';
   }
+
+  @override
+  String get updateOnYouTube => 'Werk op YouTube by';
+
+  @override
+  String updatedOnYouTube(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n video\'s op YouTube bygewerk',
+      one: '1 video op YouTube bygewerk',
+    );
+    return '$_temp0';
+  }
 }

@@ -11,8 +11,10 @@ import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../core/captions.dart';
+import '../../core/jobs.dart';
 import '../../core/models.dart';
 import '../../core/planner.dart';
+import '../../core/store.dart';
 import '../../l10n/app_localizations.dart';
 import 'review_controller.dart';
 import 'service_timeline.dart';
@@ -607,12 +609,43 @@ class _ReviewScreenState extends State<ReviewScreen> {
         Text(l.approveBlocked, style: TextStyle(color: th.colorScheme.error)),
         const SizedBox(width: 12),
       ],
-      FilledButton(
-        onPressed: _c.hasShortFault ? null : () => _cut(l),
-        child: Text(l.approveAndCut),
-      ),
+      if (_uploaded) ...[
+        OutlinedButton(
+          onPressed: _c.hasShortFault ? null : () => _cut(l),
+          child: Text(l.approveAndCut),
+        ),
+        const SizedBox(width: 12),
+        FilledButton.icon(
+          onPressed: _c.updating ? null : () => _push(l),
+          icon: _c.updating
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.cloud_upload_rounded),
+          label: Text(l.updateOnYouTube),
+        ),
+      ] else
+        FilledButton(
+          onPressed: _c.hasShortFault ? null : () => _cut(l),
+          child: Text(l.approveAndCut),
+        ),
     ],
   );
+
+  bool get _uploaded =>
+      _c.updateYouTube != null && _c.sermon?.state == SermonState.opgelaai;
+
+  /// V8: a mistake after upload; the edited title and description go to YouTube without a new upload.
+  Future<void> _push(L l) async {
+    final m = ScaffoldMessenger.of(context);
+    try {
+      final n = await _c.pushToYouTube();
+      m.showSnackBar(SnackBar(content: Text(l.updatedOnYouTube(n))));
+    } on Object catch (e) {
+      m.showSnackBar(SnackBar(content: Text(friendlyError(e))));
+    }
+  }
 }
 
 class _Loading extends StatelessWidget {

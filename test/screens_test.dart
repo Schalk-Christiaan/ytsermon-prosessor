@@ -110,6 +110,31 @@ void main() {
     return c;
   }
 
+  testWidgets('hersien: an uploaded sermon offers "Werk op YouTube by"', (
+    t,
+  ) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final c = ready();
+    c.store.save(c.sermon!..state = SermonState.opgelaai);
+    final sent = <String>[];
+    c.updateYouTube = (id) async {
+      sent.add(id);
+      return 3;
+    };
+    await t.pumpWidget(
+      _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
+    );
+    await t.pump(const Duration(seconds: 1));
+    await t.tap(find.text('Werk op YouTube by'));
+    await t.pump();
+    await t.pump();
+    expect(sent, ['x']);
+    expect(find.text('3 video\'s op YouTube bygewerk'), findsOneWidget);
+    await t.pump(const Duration(seconds: 5));
+  });
+
   testWidgets('editor: I/O at the playhead, Ctrl+Z, transcript seeks', (
     t,
   ) async {
