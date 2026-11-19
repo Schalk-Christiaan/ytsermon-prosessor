@@ -3,7 +3,7 @@
 //   wanneer: oral waar 'n plan gebruik word
 //   groep: core | Kern
 //   skryf: —
-//   doel: Segment, TimeBlock, Short, SermonPlan met JSON
+//   doel: Segment, TimeBlock, Prayer, Short, SermonPlan met JSON
 //   status: oop
 enum SegmentKind { speech, music }
 
@@ -27,6 +27,17 @@ class TimeBlock {
   final double start;
   final double end;
   final SegmentKind kind;
+}
+
+/// A candidate prayer in the service: from its first cue to the end of its "Amen" line.
+class Prayer {
+  const Prayer(this.start, this.end, this.first, this.last);
+  final double start;
+  final double end;
+
+  /// Opening and closing words, shown to the LLM so it can tell the prayers apart.
+  final String first;
+  final String last;
 }
 
 /// A vertical clip [start, end) in seconds with its title.

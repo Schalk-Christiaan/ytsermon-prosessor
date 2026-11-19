@@ -3,7 +3,7 @@
 //   wanneer: ná fetchMeta
 //   groep: core | Kern
 //   skryf: —
-//   doel: json3-onderskrifte → segmente, kompakte teks vir die KI, SRT en dienstydlyn (spraak/musiek)
+//   doel: json3-onderskrifte → segmente, kompakte teks vir die KI, kandidaat-gebede (preekgrense), SRT en dienstydlyn (spraak/musiek)
 //   status: oop
 import 'dart:convert';
 
@@ -136,6 +136,63 @@ List<TimeBlock> timeline(List<Segment> segs, {double gap = 10}) {
     } else {
       out.add(TimeBlock(s.start, s.end, s.kind));
     }
+  }
+  return out;
+}
+
+final _amen = RegExp(r'\bamen\b[.!,]*', caseSensitive: false);
+
+/// Words that open a prayer: an invitation ("Kom ons bid", "Laat ons saam dank") or an address to God.
+final _prayerCue = RegExp(
+  r'^(?:>>\s*)?(?:(?:kom|laat)\s+ons\b.{0,20}\b(?:bid|dank)|(?:onse?|o|hemelse|liewe|heilige)\s+vader\b|o\s+here\b|almagtige\b|genadige\b)',
+  caseSensitive: false,
+);
+
+/// Longest stretch counted as one prayer; a longer "cue … Amen" run is sermon text.
+const kMaxPrayer = 15 * 60.0;
+
+/// Candidate prayers: the captions are split into chunks that each end at an "Amen" (text after the
+/// Amen on the same line starts the next chunk); a chunk with a prayer cue is a prayer from its first
+/// cue to the end of the Amen line.
+List<Prayer> prayers(List<Segment> segs) {
+  final out = <Prayer>[];
+  final words = <String>[];
+  double? start;
+  void cue(double t, String text) {
+    if (start == null && _prayerCue.hasMatch(text)) start = t;
+    if (start != null) words.add(text);
+  }
+
+  for (final s in segs) {
+    if (s.kind == SegmentKind.music) continue;
+    final m = _amen.firstMatch(s.text);
+    if (m == null) {
+      cue(s.start, s.text);
+      continue;
+    }
+    final before = s.text.substring(0, m.end).trim();
+    if (start == null) {
+      cue(s.start, before); // "O Here … Amen" on one line
+    } else {
+      words.add(before);
+    }
+    final a = start;
+    if (a != null && s.end - a <= kMaxPrayer) {
+      final text = words.join(' ').split(RegExp(r'\s+'));
+      String take(Iterable<String> w) => w.join(' ');
+      out.add(
+        Prayer(
+          a,
+          s.end,
+          take(text.take(12)),
+          take(text.skip(text.length > 12 ? text.length - 12 : 0)),
+        ),
+      );
+    }
+    start = null;
+    words.clear();
+    final rest = s.text.substring(m.end).trim();
+    if (rest.isNotEmpty) cue(s.start, rest);
   }
   return out;
 }
