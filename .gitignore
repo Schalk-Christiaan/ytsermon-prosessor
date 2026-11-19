@@ -8,3 +8,11 @@ downloads/
 out/
 client_secret*.json
 token*.json
+work/
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.idea/
+*.iml
+installer/Output/
