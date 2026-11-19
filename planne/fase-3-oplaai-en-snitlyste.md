@@ -1,4 +1,4 @@
-status: oop
+status: hersien
 
 # Fase 3: Oplaai en snitlyste
 
@@ -48,5 +48,12 @@ Bestaande video's op die kanaal bywerk (`videos.update`, fase 6 V8), outomatiese
 - (aanname) Jabloon-verstek: `{beskrywing}\n\nSkriflesing: {skriflesing}\nDiens van {datum}, Gereformeerde Kerk Oranjerivier.`
 
 ## Log
+- 2026-11-19 stap 1-2: `AppSettings` (verstekke, atomies via nuwe `writeJson` wat store/jobs ook gebruik), `playlists.dart`; settings_test + playlists_test rooi → groen.
+- 2026-11-19 stap 3-4: `GoogleAuth` (loopback + PKCE S256 + state, verfris) en `YouTube` (hervatbare oplaai in stukke, hervat met `bytes */N`, snitlyste blaai/skep/byvoeg); youtube_test teen 'n vals bediener rooi → groen (geen regte Google-oproep).
+- 2026-11-19 stap 5: `UploadQuota` (Pacific-dag, `used` elke keer uit die lêer gelees sodat middernag nie verouder nie), `uploadJob`; jobs_test (dubbel = een oplaai, kwota op = gewone-taal fout, klaar → `opgelaai`) rooi → groen.
+- 2026-11-19 stap 6: Instellings → Kanaal, Snitlyste-skerm (reëls sleep/aan/af, voorskou per snitlys, jabloon + voorskou vir die nuutste preek), Werk "Laai op" + "Oplaaie vandag: n van 100" + "Wys op YouTube"; rail-item Snitlyste aktief; main bedraad met `flutter_secure_storage`. Widget-toetse rooi → groen; kiekies `out/shots/{instellings,snitlyste}-{light,dark}-{1100,1920}.png`. Toetskiekies laai nou ook MaterialIcons uit die SDK, so ikone is nie meer blokkies nie.
+- 2026-11-19 stap 7: `flutter test` 98 groen (1 oorgeslaan: E2E), `dart analyze` skoon, `kaart.py --check` skoon, `flutter build linux --debug` bou.
 
 ## Verslag
+Gebou op `bou/fase-3-oplaai-en-snitlyste`. 'n Gesnyde preek kry op die Werk-skerm "Laai op": die preek en sy Shorts gaan privaat op (stukke van 8 MB, hervatbaar ná 'n onderbreking of herbegin), met die titel uit die plan en die beskrywing uit die jabloon. Die preek kom in die snitlys van sy Bybelboek (of "Preke JJJJ"); 'n bestaande snitlys met dieselfde naam word hergebruik. Die dagteller staan onder die Werk-opskrif. Self-hersiening: een oplaai op 'n slag deur die werkry; `_plan` is uitgehaal omdat drie take dit nou lees; Shell bou toetsverstekke (token in geheue) as main niks deurgee nie.
+Ongetoets: regte oplaai na YouTube en die regte Google-aanmelding (sien Vrae, stappe 1-6 vir Schalk); `flutter_secure_storage` op Windows (bou eers op GitHub Actions).
