@@ -11,8 +11,8 @@ import 'package:flutter/services.dart';
 import '../../core/channel.dart';
 import '../../core/jobs.dart';
 import '../../core/store.dart';
-import '../../core/tools.dart';
 import '../../l10n/app_localizations.dart';
+import '../settings/system_status.dart';
 
 String stateLabel(L l, SermonState s) => switch (s) {
   SermonState.nuut => l.stateNuut,
@@ -112,17 +112,6 @@ class _SermonsScreenState extends State<SermonsScreen> {
       widget.jobs.enqueue(s.id, JobKind.plan);
     }
     setState(_selected.clear);
-  }
-
-  Future<void> _update(L l) async {
-    final m = ScaffoldMessenger.of(context);
-    try {
-      m.showSnackBar(
-        SnackBar(content: Text(l.updateYtDlpDone(await updateYtDlp()))),
-      );
-    } on Object catch (e) {
-      m.showSnackBar(SnackBar(content: Text(l.errorGeneric(friendlyError(e)))));
-    }
   }
 
   bool _queued(Sermon s) => widget.jobs.jobs.any(
@@ -262,7 +251,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
                 if (_error != null) ...[
                   const SizedBox(width: 12),
                   OutlinedButton(
-                    onPressed: () => _update(l),
+                    onPressed: () => updateYtDlpSnack(context),
                     child: Text(l.updateYtDlp),
                   ),
                 ],

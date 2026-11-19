@@ -129,11 +129,11 @@ abstract class L {
   /// **'Snitlyste'**
   String get navSnitlyste;
 
-  /// No description provided for @comingPhase2.
+  /// No description provided for @comingPhase3.
   ///
   /// In af, this message translates to:
-  /// **'Kom in fase 2'**
-  String get comingPhase2;
+  /// **'Kom in fase 3'**
+  String get comingPhase3;
 
   /// No description provided for @settingsSystem.
   ///
@@ -392,6 +392,12 @@ abstract class L {
   /// In af, this message translates to:
   /// **'{pct}%'**
   String percent(int pct);
+
+  /// No description provided for @taskLine.
+  ///
+  /// In af, this message translates to:
+  /// **'{kind}: {title}'**
+  String taskLine(String kind, String title);
 
   /// No description provided for @retry.
   ///

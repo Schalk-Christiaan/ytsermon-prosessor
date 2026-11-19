@@ -116,7 +116,7 @@ void main() {
           b,
           RepaintBoundary(
             key: key,
-            child: Shell(store: tc.$2, jobs: tc.$3),
+            child: Shell(store: tc.$2, jobs: tc.$3, list: () async => []),
           ),
         ),
       );
@@ -491,4 +491,27 @@ void main() {
       });
     }
   }
+
+  testWidgets('shell: rail reaches Hersien (empty hint) and Werk', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final tc = testController(seed: false);
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Shell(store: tc.$2, jobs: tc.$3, list: () async => []),
+      ),
+    );
+    await t.pump();
+    await t.tap(find.text('Hersien'));
+    await t.pump();
+    expect(find.text("Kies 'n preek in Preke."), findsOneWidget);
+    await t.tap(find.text('Werk'));
+    await t.pump();
+    expect(find.text('Niks in die ry nie.'), findsOneWidget);
+    // SystemStatus probes the tools at start; let those processes finish.
+    await t.runAsync(() => Future<void>.delayed(const Duration(seconds: 3)));
+    await t.pumpWidget(const SizedBox());
+  });
 }

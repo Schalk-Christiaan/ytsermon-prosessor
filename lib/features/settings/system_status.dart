@@ -3,13 +3,27 @@
 //   wanneer: Instellings → Stelsel
 //   groep: features | Skerms
 //   skryf: —
-//   doel: wys yt-dlp/ffmpeg/ffprobe/Ollama met ikoon + woord (Gereed / Ontbreek)
+//   doel: wys yt-dlp/ffmpeg/ffprobe/Ollama met ikoon + woord (Gereed / Ontbreek); "Werk yt-dlp by"
 //   status: oop
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
+import '../../core/jobs.dart';
 import '../../core/tools.dart';
 import '../../l10n/app_localizations.dart';
+
+/// Runs `yt-dlp -U` and reports the result (or the failure) as a SnackBar.
+Future<void> updateYtDlpSnack(BuildContext context) async {
+  final m = ScaffoldMessenger.of(context);
+  final l = L.of(context);
+  try {
+    m.showSnackBar(
+      SnackBar(content: Text(l.updateYtDlpDone(await updateYtDlp()))),
+    );
+  } on Object catch (e) {
+    m.showSnackBar(SnackBar(content: Text(l.errorGeneric(friendlyError(e)))));
+  }
+}
 
 class SystemStatus extends StatefulWidget {
   const SystemStatus({super.key});
@@ -72,6 +86,10 @@ class _SystemStatusState extends State<SystemStatus> {
                 ],
               ),
             ),
+          ),
+          OutlinedButton(
+            onPressed: () => updateYtDlpSnack(context),
+            child: Text(l.updateYtDlp),
           ),
         ],
       ),

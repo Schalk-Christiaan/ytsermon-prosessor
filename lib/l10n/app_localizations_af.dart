@@ -28,7 +28,7 @@ class LAf extends L {
   String get navSnitlyste => 'Snitlyste';
 
   @override
-  String get comingPhase2 => 'Kom in fase 2';
+  String get comingPhase3 => 'Kom in fase 3';
 
   @override
   String get settingsSystem => 'Stelsel';
@@ -181,6 +181,11 @@ class LAf extends L {
   @override
   String percent(int pct) {
     return '$pct%';
+  }
+
+  @override
+  String taskLine(String kind, String title) {
+    return '$kind: $title';
   }
 
   @override
