@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: —
 //   doel: snitlysnaam per preek uit reëls (Bybelboek, jaar) en die YouTube-beskrywing uit die jabloon
-//   status: oop
+//   status: bou
 import 'store.dart';
 
 /// The Bible book of a reading: everything before the first chapter number (`1 Korinthiërs 13:1` → `1 Korinthiërs`).

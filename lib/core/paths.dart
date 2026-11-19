@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: —
 //   doel: werkmap, gebundelde lettertipe en verstek-uitsetgids
-//   status: oop
+//   status: bou
 import 'dart:io';
 
 import 'package:path/path.dart' as p;

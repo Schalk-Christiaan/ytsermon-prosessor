@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: werkmap/opname-…/ (video.mp4, info.json, leë onderskrifte, plan.json, sermon.json)
 //   doel: 'n eie video-opname (nie op YouTube nie) word 'n preek met 'n plaaslike ID en 'n handmatige plan, sodat Hersien en sny dit soos enige ander preek hanteer
-//   status: oop
+//   status: bou
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -20,9 +20,9 @@ const kRecordingPrefix = 'opname-';
 /// Whether [id] is a local recording rather than a YouTube video.
 bool isRecording(String id) => id.startsWith(kRecordingPrefix);
 
+// stap: v3 2 Kopieer en beplan | video.mp4, info.json, leë onderskrifte en 'n plan oor die hele lêer
 /// Copies [src] into `<root>/opname-JJJJMMDD-HHMMSS/` with empty captions and a whole-file plan; returns the `beplan` sermon.
 /// Copied, not referenced, so a removed USB stick does not break the work.
-/// vloei: v3
 Future<Sermon> importRecording(
   File src,
   String title,

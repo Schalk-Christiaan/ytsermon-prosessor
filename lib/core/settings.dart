@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: <werkmap>/settings.json | atomies
 //   doel: Schalk se keuses: kliënt-ID-lêer, oplaai-privaatheid, beskrywingsjabloon, snitlysreëls, uitsetgids, of Opstelling klaar is
-//   status: oop
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 

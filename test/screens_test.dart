@@ -110,6 +110,28 @@ void main() {
     return c;
   }
 
+  testWidgets('hersien: "Keur goed en sny" offers the way to Werk', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    var work = 0;
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: ReviewScreen(controller: ready(), onWork: () => work++),
+        ),
+      ),
+    );
+    await t.pump(const Duration(seconds: 1));
+    await t.tap(find.text('Keur goed en sny'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 500));
+    await t.tap(find.widgetWithText(SnackBarAction, 'Werk'));
+    expect(work, 1);
+    await t.pump(const Duration(seconds: 5));
+  });
+
   testWidgets('hersien: an uploaded sermon offers "Werk op YouTube by"', (
     t,
   ) async {

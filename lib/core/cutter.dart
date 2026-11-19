@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: out/
 //   doel: sny die preek (stroomkopie, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif) en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg
-//   status: oop
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 

@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: <werkmap>/jobs.json | die ry; sermon.json van die preek wat verwerk word
 //   doel: een taak op 'n slag (plan, sny, klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
-//   status: oop
+//   status: bou
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -24,13 +24,16 @@ import 'store.dart';
 import 'tools.dart';
 import 'youtube.dart';
 
+/// What a job does: plan the bounds, cut, export audio or upload.
 enum JobKind { plan, cut, audio, upload }
 
+/// Where a job is: waiting, running, done, failed or cancelled.
 enum JobStatus { wag, besig, klaar, fout, gekanselleer }
 
 /// What a running job is busy with (the Werk-skerm maps it to text).
 enum JobPhase { meta, plan, download, cut, audio, upload }
 
+/// One queued piece of work for a sermon, persisted in jobs.json with its log.
 class Job {
   Job(
     this.sermon,
@@ -87,6 +90,7 @@ class JobCtx {
 
 typedef JobRun = Future<void> Function(JobCtx ctx);
 
+// stap: v9 1 Gewone-taal fout | internet, Ollama of vol skyf word elk sy eie sin met die regstelling
 /// Plain-language reason for a failed job.
 String friendlyError(Object e) {
   const disk =
@@ -122,6 +126,7 @@ String friendlyError(Object e) {
 
 /// One-at-a-time work queue in a plain async loop (no timers); persisted so a restart resumes it.
 class JobQueue extends ChangeNotifier {
+  // stap: v5 1 Hervat ná 'n onderbreking | jobs.json word gelees; 'n taak wat besig was, wag weer en loop van voor af
   JobQueue(
     this.store, {
     JobRun? plan,
@@ -260,6 +265,7 @@ class JobQueue extends ChangeNotifier {
     if (c != null && !c.isCompleted) c.complete();
   }
 
+  // stap: v9 3 Probeer weer | die mislukte taak staan weer in die ry, die werk tot dusver bly
   /// Puts a failed or cancelled job back in the queue.
   void retry(Job job) {
     job.status = JobStatus.wag;
@@ -279,6 +285,8 @@ class JobQueue extends ChangeNotifier {
   }
 }
 
+// stap: v1 2 Beplan | onderskrifte + video af, Ollama kies die gebede; die preek loop van gebed tot gebed
+// tak: Ollama af → "Ollama het nie geantwoord nie" met Probeer weer in Werkry
 /// Fetches meta and captions, asks Ollama for a plan; fills the sermon's date.
 JobRun planJob(SermonStore store) => (c) async {
   c.phase(JobPhase.meta);
@@ -303,6 +311,8 @@ JobRun planJob(SermonStore store) => (c) async {
   ]);
 };
 
+// stap: v1 4 Sny | stroomkopie, of herkodeer met intro/outro en uitgeknipte stukke; uitset in die uitsetgids
+// stap: v3 4 Sny sonder YouTube | dieselfde snit; die opname het geen Shorts-onderskrifte nie
 /// Downloads the video and cuts the sermon and its Shorts from the saved plan.
 JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   c.phase(JobPhase.meta);
@@ -359,6 +369,8 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   }
 };
 
+// stap: v7 2 Klank uitvoer | mp3 `JJJJ-MM-DD Tema.mp3` langs die gesnyde preek
+// tak: preek nog nie gesny nie → "Sny eers die preek"
 /// Exports the cut sermon as `JJJJ-MM-DD Tema.mp3` next to it and adds the file to the sermon's outputs.
 JobRun audioJob(SermonStore store) => (c) async {
   final s = store.byId(c.id)!;
@@ -408,8 +420,8 @@ String _videoTitle(SermonPlan plan, int i) {
   return t.length > 100 ? t.substring(0, 100) : t;
 }
 
+// stap: v8 3 Stuur na elke opgelaaide video | titel en beskrywing uit die plan, per mp4-uitset
 /// "Werk op YouTube by": sends the plan's current title and description to every uploaded video; returns how many.
-/// vloei: v8
 Future<int> updateOnYouTube(
   SermonStore store,
   String id, {
@@ -434,6 +446,8 @@ Future<int> updateOnYouTube(
   return n;
 }
 
+// stap: v1 5 Laai op | volle preek en Shorts na YouTube, in die regte snitlys
+// tak: kwota op → "probeer môre weer"; geen internet → Probeer weer
 /// Uploads the cut sermon and its Shorts (privacy from settings), then puts the sermon in its playlist.
 JobRun uploadJob(
   SermonStore store, {

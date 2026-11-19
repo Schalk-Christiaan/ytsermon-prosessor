@@ -4,7 +4,35 @@
 //   groep: app | App-raam
 //   skryf: —
 //   doel: NavigationRail: Preke (tuis), Hersien, Werk, Snitlyste, Instellings (Kanaal + Stelsel); begin op Opstelling tot dit klaar is
-//   status: oop
+//   status: bou
+
+// vloei: v1 | Verwerk nuutste diens
+// inleiding: Maandag: die diens van gister word een knoppie later 'n gesnyde preek met Shorts op YouTube.
+// hoekom: die gewone week; Oom Johan moet dit sonder hulp kan doen, met net een gevulde knoppie op elke skerm.
+// vloei: v2 | 'n Ou preek verwerk
+// inleiding: 'n Diens van weke gelede wat nog nie opgelaai is nie, gevind met die filter "Nie opgelaai nie".
+// hoekom: die agterstand van die kanaal word so een vir een ingehaal.
+// vloei: v3 | Voer opname in
+// inleiding: 'n Video wat nie op YouTube is nie (USB, kamera) word gekopieer, met die hand begrens en gesny.
+// hoekom: soms faal die regstreekse uitsending; dan is die eie opname die enigste bron.
+// vloei: v4 | Ollama het die grense verkeerd
+// inleiding: Die hakie staan nie by die gebed nie; die mens skuif dit met die transkripsie en die sleutelbord reg.
+// hoekom: die KI is 'n voorstel; die predikant wil nie 'n preek wat halfpad begin nie.
+// vloei: v5 | Hervat ná 'n onderbreking
+// inleiding: Die app of die krag gaan af in die middel van 'n aflaai of snit; by die volgende begin loop die werk voort.
+// hoekom: 'n uur se aflaai mag nie verlore gaan nie, en niemand moet onthou wat besig was nie.
+// vloei: v6 | Eerste keer op die kerk-PC
+// inleiding: Ná Setup.exe bring die Opstelling-lys alles tot groen sonder 'n terminaal.
+// hoekom: die kerk-PC het geen ontwikkelaar langsaan nie.
+// vloei: v7 | Vinnige WhatsApp-klank
+// inleiding: Die gesnyde preek word 'n mp3 wat die WhatsApp-admin in die groep sleep.
+// hoekom: baie lidmate luister net op hul foon; die admin wil nie die app leer nie.
+// vloei: v8 | Fout ná oplaai
+// inleiding: Die titel of Skriflesing is verkeerd op YouTube; Hersien stuur die regstelling sonder om weer op te laai.
+// hoekom: weer oplaai kos kwota en breek die skakel wat reeds gedeel is.
+// vloei: v9 | Geen internet of vol skyf
+// inleiding: 'n Taak misluk; Werkry sê in gewone taal wat fout is en hoe om dit reg te stel.
+// hoekom: "SocketException" sê niks vir Oom Johan nie; die regstelling moet in die boodskap staan.
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -26,6 +54,7 @@ import '../features/setup/setup_screen.dart';
 import '../features/work/work_screen.dart';
 import '../l10n/app_localizations.dart';
 
+/// The app frame: navigation rail and the five screens; starts on Opstelling until setup is done.
 class Shell extends StatefulWidget {
   const Shell({
     super.key,
@@ -53,6 +82,7 @@ class Shell extends StatefulWidget {
 
 class _ShellState extends State<Shell> {
   // 0 Preke, 1 Hersien, 2 Werk, 3 Snitlyste, 4 Instellings, 5 Opstelling (no rail item)
+  // stap: v6 1 Begin op Opstelling | tot setupDone waar is, wys die app net die Opstelling-lys
   late int _i = _settings.setupDone ? 0 : 5;
   late final _review = ReviewController(store: widget.store, jobs: widget.jobs)
     ..updateYouTube = (id) => updateOnYouTube(
@@ -115,7 +145,10 @@ class _ShellState extends State<Shell> {
                     setState(() => _i = 1);
                   },
                 ),
-                ReviewScreen(controller: _review),
+                ReviewScreen(
+                  controller: _review,
+                  onWork: () => setState(() => _i = 2),
+                ),
                 WorkScreen(
                   store: widget.store,
                   jobs: widget.jobs,

@@ -4,7 +4,7 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: dienstydlyn: spraak/musiek, gebedsmerkers, sleepbare preek-hakies (sleutels 1 s / Shift 0,1 s), uitgeknipte stukke gestreep, sleepbare Shorts (ongeldige met foutkleur), speelposisie
-//   status: oop
+//   status: bou
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/foundation.dart';
@@ -19,6 +19,7 @@ import '../../l10n/app_localizations.dart';
 const _kHandleW = 20.0;
 const _kBarH = 56.0;
 
+/// The service timeline: draggable sermon brackets, cut pieces, prayer marks and Shorts.
 class ServiceTimeline extends StatefulWidget {
   const ServiceTimeline({
     super.key,

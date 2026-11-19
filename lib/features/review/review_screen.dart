@@ -4,7 +4,7 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: die preekredigeerder: preek uit Preke → plan → hakies, I/O, uitknip, transkripsie, Shorts, ontdoen (kortpaaie) → keur goed en sny
-//   status: oop
+//   status: bou
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,11 +20,15 @@ import 'review_controller.dart';
 import 'service_timeline.dart';
 import 'transcript.dart';
 
+/// Hersien, the sermon editor: video, transcript, timeline, cuts, Shorts and actions.
 class ReviewScreen extends StatefulWidget {
-  const ReviewScreen({super.key, required this.controller});
+  const ReviewScreen({super.key, required this.controller, this.onWork});
 
   /// Owned by the shell, which opens a sermon in it from Preke.
   final ReviewController controller;
+
+  /// Goes to Werk, where the cut runs and "Laai op" follows (V1: Oom Johan must not hunt for it).
+  final VoidCallback? onWork;
 
   @override
   State<ReviewScreen> createState() => _ReviewScreenState();
@@ -57,12 +61,20 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final m = ScaffoldMessenger.of(context);
     try {
       _c.approveAndCut();
-      m.showSnackBar(SnackBar(content: Text(l.cutQueued)));
+      m.showSnackBar(
+        SnackBar(
+          content: Text(l.cutQueued),
+          action: widget.onWork == null
+              ? null
+              : SnackBarAction(label: l.navWerk, onPressed: widget.onWork!),
+        ),
+      );
     } on Object catch (e) {
       m.showSnackBar(SnackBar(content: Text(l.errorGeneric(e.toString()))));
     }
   }
 
+  // stap: v4 5 Beplan weer | laat Ollama weer kies as die hele voorstel verkeerd is (bevestiging)
   Future<void> _replan(L l) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -179,6 +191,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
     return KeyEventResult.handled;
   }
 
+  // stap: v1 3 Hersien | kyk die hakies by die gebede, die titel, Skriflesing en beskrywing
+  // stap: v4 1 Sien die fout | die hakie staan nie by 'n gebed nie; gebedsmerkers wys waar die gebede is
   Widget _ready(L l, ThemeData th) {
     final plan = _c.plan!;
     return Focus(
@@ -410,6 +424,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     ),
   );
 
+  // stap: v8 1 Maak reg | open die opgelaaide preek in Hersien en wysig titel of beskrywing
   Widget _meta(L l, ThemeData th, SermonPlan plan) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
@@ -636,6 +651,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   bool get _uploaded =>
       _c.updateYouTube != null && _c.sermon?.state == SermonState.opgelaai;
 
+  // stap: v8 2 Werk op YouTube by | knoppie verskyn net vir 'n opgelaaide preek; strook sê hoeveel video's
+  // tak: geen internet of video weg → strook met friendlyError
   /// V8: a mistake after upload; the edited title and description go to YouTube without a new upload.
   Future<void> _push(L l) async {
     final m = ScaffoldMessenger.of(context);

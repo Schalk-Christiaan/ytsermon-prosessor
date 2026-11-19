@@ -4,7 +4,7 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: die hele kanaal as lys met toestand (titel bo, Skriflesing onder); filter (ook "Nie opgelaai nie"), soek; "Verwerk nuutste diens" → plan → Hersien; "Verwerk volgende" → werkry; "Voer opname in" (knoppie of insleep) → Hersien
-//   status: oop
+//   status: bou
 import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
@@ -20,6 +20,7 @@ import '../../l10n/app_localizations.dart';
 import '../settings/settings_screen.dart';
 import '../settings/system_status.dart';
 
+/// The word for a sermon state, so state is never shown by colour alone.
 String stateLabel(L l, SermonState s) => switch (s) {
   SermonState.nuut => l.stateNuut,
   SermonState.beplan => l.stateBeplan,
@@ -30,6 +31,7 @@ String stateLabel(L l, SermonState s) => switch (s) {
   SermonState.oorgeslaan => l.stateOorgeslaan,
 };
 
+/// The icon for a sermon state.
 IconData stateIcon(SermonState s) => switch (s) {
   SermonState.nuut => Icons.fiber_new_rounded,
   SermonState.beplan => Icons.fact_check_rounded,
@@ -40,6 +42,7 @@ IconData stateIcon(SermonState s) => switch (s) {
   SermonState.oorgeslaan => Icons.skip_next_rounded,
 };
 
+/// Preke: the channel's sermons with state, filters, process and import.
 class SermonsScreen extends StatefulWidget {
   const SermonsScreen({
     super.key,
@@ -130,6 +133,8 @@ class _SermonsScreenState extends State<SermonsScreen> {
     setState(_selected.clear);
   }
 
+  // stap: v1 1 Verwerk nuutste diens | Preke: een knoppie verfris die lys, beplan die boonste diens en maak Hersien oop
+  // tak: nog besig met beplan → Hersien wys die laaistap; geen internet → strook met die rede
   /// The usual Monday: refresh the list, plan the newest service if it is new, open it in Hersien.
   Future<void> _processLatest() async {
     await _refresh();
@@ -142,8 +147,9 @@ class _SermonsScreenState extends State<SermonsScreen> {
     widget.onOpen(s.id);
   }
 
+  // stap: v3 1 Voer opname in | lêerkieser of insleep → dialoog met titel (lêernaam) en datum
+  // tak: kanselleer → niks verander nie; kopie misluk (skyf vol) → strook met friendlyError
   /// "Voer opname in": file (picked or dropped) → title and date → copy into the work folder → Hersien.
-  /// vloei: v3
   Future<void> _import([String? path]) async {
     final l = L.of(context);
     path ??= await widget.pickVideo();
@@ -334,6 +340,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
     ],
   );
 
+  // stap: v2 1 Filter nie opgelaai nie | die chip wys net preke wat nog nie op YouTube is nie, nuutste bo
   Widget _filters(L l) => Wrap(
     spacing: 8,
     runSpacing: 8,
@@ -431,6 +438,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
     );
   }
 
+  // stap: v2 2 Kies die ou preek | klik die ry → Hersien; nog nie beplan nie → Hersien beplan dit eers (laaistap)
   Widget _row(L l, ThemeData th, Sermon s) {
     final queued = widget.jobs.hasPending(s.id);
     return InkWell(

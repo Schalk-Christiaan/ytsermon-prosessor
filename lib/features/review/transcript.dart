@@ -4,7 +4,7 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: transkripsiestrook: onderskrifreëls met tyd, klik soek daarheen, gebede gemerk, huidige reël uitgelig; leeg = stel self
-//   status: oop
+//   status: bou
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +12,7 @@ import '../../core/captions.dart';
 import '../../core/models.dart';
 import '../../l10n/app_localizations.dart';
 
+/// The caption transcript strip; a click seeks the video to that line.
 class Transcript extends StatelessWidget {
   const Transcript({
     super.key,
@@ -26,6 +27,8 @@ class Transcript extends StatelessWidget {
   final ValueListenable<double> position;
   final ValueChanged<double> onSeek;
 
+  // stap: v4 2 Soek in die transkripsie | klik die gebed se reël; die video spring daarheen
+  // stap: v3 3 Stel self | geen onderskrifte nie: die strook sê so; stel begin en einde met I/O by die speelkop
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);

@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: refresh-token (deur die roeper: Windows Credential Manager / libsecret); <werkmap>/quota.json; <werkmap>/<id>/upload-*.json | hervat-sessie
 //   doel: desktop-OAuth (loopback + PKCE), hervatbare oplaai, snitlyste en die 100-per-dag-teller; net dart:io, endpunte uit die kliëntlêer sodat toetse 'n vals bediener gebruik
-//   status: oop
+//   status: bou
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -297,8 +297,9 @@ class YouTube {
     return (jsonDecode(body) as Map)['id'] as String;
   }
 
+  // stap: v8 4 YouTube PUT | haal die snippet, verander titel en beskrywing, stuur dit terug
+  // tak: video weg → "Video … is nie meer op YouTube nie."
   /// Changes an uploaded video's title and description; keeps its category and tags (the API wipes what a PUT leaves out).
-  /// vloei: v8
   Future<void> updateVideo(
     String id, {
     required String title,
@@ -385,6 +386,7 @@ class YouTube {
   );
 }
 
+/// YouTube's daily upload quota is used up; try again tomorrow.
 class QuotaExceeded implements Exception {
   @override
   String toString() => 'Vandag se 100 oplaaie is op; probeer môre weer.';

@@ -4,7 +4,7 @@
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | kliëntlêer en privaatheid; refresh-token via GoogleAuth
 //   doel: Kanaal (kliënt-ID-lêer, Koppel/Ontkoppel, privaatheid van oplaaie), uitsetgids, intro/outro (met lengte) en Opstelling, bo die Stelsel-lys
-//   status: oop
+//   status: bou
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
@@ -19,6 +19,7 @@ import '../../core/settings.dart';
 import '../../core/youtube.dart';
 import '../../l10n/app_localizations.dart';
 
+/// Instellings: channel, folders, intro/outro, description template and system status.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     super.key,

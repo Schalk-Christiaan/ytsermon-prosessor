@@ -4,7 +4,7 @@
 //   groep: features | Skerms
 //   skryf: <app-support>/work/<id>/plan.json | die plan; elke wysiging stoor dadelik
 //   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
-//   status: oop
+//   status: bou
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -21,10 +21,13 @@ import '../../core/models.dart';
 import '../../core/planner.dart';
 import '../../core/store.dart';
 
+/// What Hersien shows: nothing chosen, loading, an error, no plan yet or the editor.
 enum ReviewState { empty, loading, error, unplanned, ready }
 
+/// Which step of loading a sermon is busy: metadata, planning or cutting.
 enum LoadStage { meta, plan, cut }
 
+/// State of the sermon editor: the plan, playback, undo/redo and every edit.
 class ReviewController extends ChangeNotifier {
   ReviewController({
     required this.store,
@@ -52,7 +55,7 @@ class ReviewController extends ChangeNotifier {
   Future<int> Function(String id)? updateYouTube;
   bool updating = false;
 
-  /// vloei: v8
+  /// "Werk op YouTube by": pushes title and description to the uploaded videos; returns how many.
   Future<int> pushToYouTube() async {
     updating = true;
     notifyListeners();
@@ -297,9 +300,11 @@ class ReviewController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // stap: v4 4 Ontdoen | Ctrl+Z draai die laaste skuif terug, Ctrl+Shift+Z herdoen
   void undo() => _swap(_undo, _redo);
   void redo() => _swap(_redo, _undo);
 
+  // stap: v4 3 Skuif die hakie | sleep, ←/→ 1 s, Shift 0,1 s, of I/O by die speelkop
   /// Moves one bracket by [d] seconds (keys: 1 s, Shift 0.1 s).
   void nudge(bool start, double d) {
     final pl = plan!;
