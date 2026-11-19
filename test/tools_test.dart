@@ -15,6 +15,20 @@ void main() {
     expect(findExecutable('faketool', path: dir.path), p.join(dir.path, name));
     dir.deleteSync(recursive: true);
   });
+  test('findExecutable: the exe folder (installer) wins over PATH', () {
+    final exeDir = Directory.systemTemp.createTempSync('exe');
+    final pathDir = Directory.systemTemp.createTempSync('path');
+    final name = Platform.isWindows ? 'faketool.exe' : 'faketool';
+    for (final d in [exeDir, pathDir]) {
+      File(p.join(d.path, name)).writeAsStringSync('x');
+    }
+    expect(
+      findExecutable('faketool', path: pathDir.path, exeDir: exeDir.path),
+      p.join(exeDir.path, name),
+    );
+    exeDir.deleteSync(recursive: true);
+    pathDir.deleteSync(recursive: true);
+  });
   runToolTests();
 
   group('pullModel against a fake Ollama', () {
