@@ -114,8 +114,8 @@ end;
 // Shows the download progress in the install page's status line.
 function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
 begin
-  WizardForm.StatusLabel.Caption := FmtMessage(CustomMessage('OllamaDownloading'),
-    [IntToStr(Progress div 1048576), IntToStr(ProgressMax div 1048576)]);
+  // One line on purpose: Inno reads any line starting with '[' as a section tag, even in [Code].
+  WizardForm.StatusLabel.Caption := FmtMessage(CustomMessage('OllamaDownloading'), [IntToStr(Progress div 1048576), IntToStr(ProgressMax div 1048576)]);
   Result := True;
 end;
 
