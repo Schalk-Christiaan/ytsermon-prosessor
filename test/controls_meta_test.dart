@@ -156,6 +156,7 @@ void main() {
         final (st, q) = seededSermons();
         await pump(t, prekeScreen(st, q));
         checkScreen(t, 'preke');
+        await checkKeyboard(t, 'preke');
       });
 
       testWidgets('preke: fout en invoer-dialoog', (t) async {
@@ -199,6 +200,7 @@ void main() {
           settle: false,
         );
         checkScreen(t, 'hersien');
+        await checkKeyboard(t, 'hersien');
         final keys = controlKeys(t, find.byType(Scaffold).first);
         expect(
           keys,
@@ -258,6 +260,7 @@ void main() {
             settle: false,
           );
           checkScreen(t, 'werk');
+          await checkKeyboard(t, 'werk');
         }
       });
 
@@ -297,6 +300,7 @@ void main() {
         final (w, _, _) = libraryScreen();
         await pump(t, w, settle: false);
         checkScreen(t, 'biblioteek');
+        await checkKeyboard(t, 'biblioteek');
         await t.tap(find.byKey(const ValueKey('ctl.biblioteek.view')));
         await t.tap(find.text('Sang'));
         await t.pump();
