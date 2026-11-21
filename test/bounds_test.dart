@@ -25,8 +25,8 @@ void main() {
         fixtureSound(f.id),
       );
       expect(b.sure, isTrue, reason: '${b.reason}');
-      expect(b.start, closeTo(f.start, 1.5));
-      expect(b.end, closeTo(f.end, 1.5));
+      expect(b.start, closeTo(f.start, 0.5));
+      expect(b.end, closeTo(f.end, 0.5));
     });
   }
 
@@ -48,6 +48,16 @@ void main() {
       expect(b.end, closeTo(3297.1, 0.5));
     },
   );
+
+  // 6s_FFatG0so: the prayer after the sermon was split over blocks 50-52 (1-based): its lead-in and
+  // first half were `preek`, only the last block `gebed`.
+  test('6s_FFatG0so: the whole closing prayer is gebed', () async {
+    final bl = (await fixtureAnalysis('6s_FFatG0so')).blocks;
+    expect(bl[48].label, BlockLabel.preek, reason: 'the sermon\'s last block');
+    for (final i in [49, 50, 51]) {
+      expect(bl[i].label, BlockLabel.gebed, reason: '#$i');
+    }
+  });
 
   test('a service cut short has no full sermon: not sure, no false cut', () {
     final b = findBounds([
