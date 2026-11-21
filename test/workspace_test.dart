@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preekverwerker/core/channel.dart';
 import 'package:preekverwerker/features/review/review_screen.dart';
+import 'package:preekverwerker/features/review/service_timeline.dart';
 
 import 'screen_kit.dart';
 
@@ -71,6 +72,21 @@ void main() {
     await t.tap(k('back5'));
     await t.pump();
     expect(find.textContaining('00:05 / '), findsOneWidget);
+  });
+
+  testWidgets('zoom from the start lands on the sermon bracket', (t) async {
+    await open(t, 1400, 800);
+    await t.enterText(k('zoom-field'), '4');
+    await t.testTextInput.receiveAction(TextInputAction.done);
+    await t.pump();
+    await t.pump();
+    final sc = t.widget<SingleChildScrollView>(
+      find.descendant(
+        of: find.byType(ServiceTimeline),
+        matching: find.byType(SingleChildScrollView),
+      ),
+    );
+    expect(sc.controller!.offset, greaterThan(0));
   });
 
   testWidgets('Herstel returns the plan to the proposal', (t) async {

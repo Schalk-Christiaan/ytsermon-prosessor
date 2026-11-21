@@ -225,11 +225,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
           children: [
             Expanded(child: _preview(th)),
             const SizedBox(height: 8),
-            ToolBar(c: _c),
-            TransportBar(
-              c: _c,
-              zoom: _zoom,
-              onZoom: (v) => setState(() => _zoom = v),
+            // Compact rows under 1280: the preview gets the height they free.
+            Theme(
+              data: wide
+                  ? th
+                  : th.copyWith(visualDensity: VisualDensity.compact),
+              child: Column(
+                children: [
+                  ToolBar(c: _c, showHint: wide),
+                  TransportBar(
+                    c: _c,
+                    zoom: _zoom,
+                    onZoom: (v) => setState(() => _zoom = v),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 8),
             ServiceTimeline(

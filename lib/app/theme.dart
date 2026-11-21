@@ -119,6 +119,13 @@ ThemeData buildTheme(Brightness b) {
       ),
       trackHeight: 4,
     ),
+    // Secondary actions in river too: only the filled primary button is orange.
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(foregroundColor: cs.secondary),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(foregroundColor: cs.secondary),
+    ),
     segmentedButtonTheme: SegmentedButtonThemeData(
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.resolveWith(

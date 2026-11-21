@@ -99,8 +99,11 @@ class TransportBar extends StatelessWidget {
 
 /// The tools that act at the playhead: sermon ends, a cut, a Short, and the preview of the cut.
 class ToolBar extends StatelessWidget {
-  const ToolBar({super.key, required this.c});
+  const ToolBar({super.key, required this.c, this.showHint = true});
   final ReviewController c;
+
+  /// The key-shortcut hint; dropped in the narrow layout (tooltips carry the same words).
+  final bool showHint;
 
   @override
   Widget build(BuildContext context) {
@@ -140,16 +143,17 @@ class ToolBar extends StatelessWidget {
           ),
           label: Text(l.previewCut),
         ),
-        const SizedBox(width: 12),
-        Flexible(
-          child: Text(
-            l.editorKeys,
-            textAlign: TextAlign.end,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: th.textTheme.labelMedium,
+        if (showHint) const SizedBox(width: 12),
+        if (showHint)
+          Flexible(
+            child: Text(
+              l.editorKeys,
+              textAlign: TextAlign.end,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: th.textTheme.labelMedium,
+            ),
           ),
-        ),
       ],
     );
   }

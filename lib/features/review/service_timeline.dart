@@ -144,8 +144,12 @@ class _ServiceTimelineState extends State<ServiceTimeline>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_scroll.hasClients) return;
         final w = _viewport * widget.zoom;
+        // At the very start (nothing played yet) the sermon bracket is what the user zooms to.
+        final at = widget.position.value > 0
+            ? widget.position.value
+            : widget.sermonStart;
         _scroll.jumpTo(
-          (widget.position.value / widget.duration * w - _viewport / 2).clamp(
+          (at / widget.duration * w - _viewport / 2).clamp(
             0,
             _scroll.position.maxScrollExtent,
           ),
