@@ -210,6 +210,7 @@ class ReviewController extends ChangeNotifier {
       planRevision++;
       _undo.clear();
       _redo.clear();
+      _pinProposal(read: true);
       if (_download == null && !jobs.hasPending(id!)) _startDownload(meta!);
     } else if (_active(JobKind.plan)) {
       state = ReviewState.loading;
@@ -296,6 +297,7 @@ class ReviewController extends ChangeNotifier {
     planRevision++;
     _undo.clear();
     _redo.clear();
+    _pinProposal();
     _save();
     final s = sermon;
     if (s != null) store.save(s..state = SermonState.beplan);
@@ -365,15 +367,30 @@ class ReviewController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// True once there is an edit to take back to the proposal.
-  bool get canReset => _undo.isNotEmpty;
+  /// The plan as the AI proposed it (JSON), kept apart from the undo stack (capped at 100) and
+  /// saved beside the plan so it survives reopening.
+  String? _proposal;
+
+  /// Pins the current plan as the proposal; with [read] a saved proposal wins (the plan may be edited).
+  void _pinProposal({bool read = false}) {
+    final f = File(p.join(meta!.dir.path, kProposalFile));
+    if (read && f.existsSync()) {
+      _proposal = f.readAsStringSync();
+      return;
+    }
+    _proposal = jsonEncode(plan!.toJson());
+    f.writeAsStringSync(_proposal!);
+  }
+
+  /// True while the plan differs from the proposal.
+  bool get canReset =>
+      _proposal != null && jsonEncode(plan!.toJson()) != _proposal;
 
   /// "Herstel": back to the plan as it was when it opened (the AI proposal), as one undoable step.
   void resetToProposal() {
-    if (_undo.isEmpty) return;
-    final first = _undo.first;
+    if (!canReset) return;
     _edit();
-    plan = SermonPlan.fromJson(jsonDecode(first) as Map<String, dynamic>);
+    plan = SermonPlan.fromJson(jsonDecode(_proposal!) as Map<String, dynamic>);
     edits++;
     _save();
     notifyListeners();
@@ -597,6 +614,7 @@ class ReviewController extends ChangeNotifier {
     planRevision++;
     _undo.clear();
     _redo.clear();
+    _proposal = jsonEncode(plan!.toJson());
     notifyListeners();
   }
 
