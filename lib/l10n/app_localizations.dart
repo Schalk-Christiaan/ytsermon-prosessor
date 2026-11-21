@@ -1286,6 +1286,126 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Lied {n}'**
   String songUnnamed(int n);
+
+  /// No description provided for @trackSound.
+  ///
+  /// In af, this message translates to:
+  /// **'Klank'**
+  String get trackSound;
+
+  /// No description provided for @trackService.
+  ///
+  /// In af, this message translates to:
+  /// **'Diens'**
+  String get trackService;
+
+  /// No description provided for @trackShorts.
+  ///
+  /// In af, this message translates to:
+  /// **'Shorts'**
+  String get trackShorts;
+
+  /// No description provided for @seekBack5.
+  ///
+  /// In af, this message translates to:
+  /// **'5 s terug'**
+  String get seekBack5;
+
+  /// No description provided for @seekForward5.
+  ///
+  /// In af, this message translates to:
+  /// **'5 s vorentoe'**
+  String get seekForward5;
+
+  /// No description provided for @zoom.
+  ///
+  /// In af, this message translates to:
+  /// **'Zoem'**
+  String get zoom;
+
+  /// No description provided for @zoomField.
+  ///
+  /// In af, this message translates to:
+  /// **'Zoem (×)'**
+  String get zoomField;
+
+  /// No description provided for @markIn.
+  ///
+  /// In af, this message translates to:
+  /// **'Preek begin by speelkop (I)'**
+  String get markIn;
+
+  /// No description provided for @markOut.
+  ///
+  /// In af, this message translates to:
+  /// **'Preek einde by speelkop (O)'**
+  String get markOut;
+
+  /// No description provided for @tabSermon.
+  ///
+  /// In af, this message translates to:
+  /// **'Preek'**
+  String get tabSermon;
+
+  /// No description provided for @tabOutput.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitvoer'**
+  String get tabOutput;
+
+  /// No description provided for @sermonBegin.
+  ///
+  /// In af, this message translates to:
+  /// **'Begin'**
+  String get sermonBegin;
+
+  /// No description provided for @sermonEndLabel.
+  ///
+  /// In af, this message translates to:
+  /// **'Einde'**
+  String get sermonEndLabel;
+
+  /// No description provided for @volume.
+  ///
+  /// In af, this message translates to:
+  /// **'Klankvolume (voorskou)'**
+  String get volume;
+
+  /// No description provided for @properties.
+  ///
+  /// In af, this message translates to:
+  /// **'Eienskappe'**
+  String get properties;
+
+  /// No description provided for @resetProposal.
+  ///
+  /// In af, this message translates to:
+  /// **'Herstel na voorstel'**
+  String get resetProposal;
+
+  /// No description provided for @shortBegin.
+  ///
+  /// In af, this message translates to:
+  /// **'Begin'**
+  String get shortBegin;
+
+  /// No description provided for @shortSeconds.
+  ///
+  /// In af, this message translates to:
+  /// **'Lengte (s)'**
+  String get shortSeconds;
+
+  /// No description provided for @timeFieldError.
+  ///
+  /// In af, this message translates to:
+  /// **'Ongeldig; tik soos 23:04 of 60'**
+  String get timeFieldError;
+
+  /// No description provided for @previewVideoMissing.
+  ///
+  /// In af, this message translates to:
+  /// **'Video nog nie gereed nie'**
+  String get previewVideoMissing;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

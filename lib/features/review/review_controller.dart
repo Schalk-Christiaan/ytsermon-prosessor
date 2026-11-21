@@ -106,6 +106,18 @@ class ReviewController extends ChangeNotifier {
   FetchedMeta? meta;
   List<Segment> segments = [];
   List<TimeBlock> sound = [];
+
+  /// Loudness per second (dB) for the waveform; empty when the service was analysed before levels were kept.
+  List<double> levels = [];
+
+  /// Preview volume 0-100 (the player only; the cut is not changed).
+  final volume = ValueNotifier<double>(100);
+
+  void setVolume(double v) {
+    volume.value = v.clamp(0, 100);
+    if (videoReady) player.setVolume(volume.value);
+  }
+
   SermonPlan? plan;
   double duration = 0;
 
@@ -186,6 +198,7 @@ class ReviewController extends ChangeNotifier {
       duration = j.durationSeconds;
       segments = parseJson3(m.captions.readAsStringSync());
       sound = loadSound(dir);
+      levels = loadLevels(dir);
       _loadService(meta!);
     }
     final pf = File(p.join(dir.path, kPlanFile));
@@ -347,6 +360,20 @@ class ReviewController extends ChangeNotifier {
       jsonDecode(from.removeLast()) as Map<String, dynamic>,
     );
     _group = null;
+    edits++;
+    _save();
+    notifyListeners();
+  }
+
+  /// True once there is an edit to take back to the proposal.
+  bool get canReset => _undo.isNotEmpty;
+
+  /// "Herstel": back to the plan as it was when it opened (the AI proposal), as one undoable step.
+  void resetToProposal() {
+    if (_undo.isEmpty) return;
+    final first = _undo.first;
+    _edit();
+    plan = SermonPlan.fromJson(jsonDecode(first) as Map<String, dynamic>);
     edits++;
     _save();
     notifyListeners();
@@ -562,6 +589,7 @@ class ReviewController extends ChangeNotifier {
     meta = m;
     segments = segs;
     sound = const [];
+    levels = [];
     _loadService(m);
     plan = p;
     duration = dur;

@@ -81,6 +81,19 @@ String formatTime(double s) {
   return '${(t ~/ 60).toString().padLeft(2, '0')}:${(t % 60).toString().padLeft(2, '0')}';
 }
 
+/// Reads `mm:ss`, `h:mm:ss`, `mm:ss.t` or plain seconds typed in a time field; null when it is none of these.
+double? parseClock(String text) {
+  final parts = text.trim().replaceAll(',', '.').split(':');
+  if (parts.isEmpty || parts.length > 3) return null;
+  var total = 0.0;
+  for (final part in parts) {
+    final v = double.tryParse(part);
+    if (v == null || v < 0) return null;
+    total = total * 60 + v;
+  }
+  return total;
+}
+
 /// The words of the [blocks] inside [from, to] (the cut) as `[mm:ss] text` lines of [window] seconds for the LLM.
 String compact(
   List<Block> blocks,

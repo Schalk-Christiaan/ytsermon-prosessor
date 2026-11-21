@@ -27,6 +27,7 @@ bool _isControl(Widget w) =>
     w is SegmentedButton ||
     w is Checkbox ||
     w is FilterChip ||
+    w is ChoiceChip ||
     w is TextField ||
     w is TextFormField ||
     w is DropdownButton ||
@@ -144,16 +145,31 @@ void main() {
           containsAll([
             'ctl.hersien.push',
             'ctl.hersien.go-to-boundary',
-            'ctl.hersien.short-length',
+            'ctl.hersien.title',
+            'ctl.hersien.sermon-start',
+            'ctl.hersien.sermon-start-field',
+            'ctl.hersien.zoom',
+            'ctl.hersien.reset',
           ]),
         );
-        await t.tap(find.textContaining('Uitgeknip'));
-        await t.pump();
-        checkScreen(t, 'hersien');
-        expect(
-          controlKeys(t, find.byType(Scaffold).first),
-          contains('ctl.hersien.cut-start'),
-        );
+        for (final (tab, key) in [
+          ('shorts', 'ctl.hersien.short-length'),
+          ('cuts', 'ctl.hersien.cut-start'),
+          ('output', 'ctl.hersien.out-full'),
+          ('transcript', 'ctl.hersien.transcript-line'),
+        ]) {
+          await t.tap(find.byKey(ValueKey('ctl.hersien.tab-$tab')));
+          await t.pump();
+          checkScreen(t, 'hersien');
+          expect(
+            controlKeys(
+              t,
+              find.byType(Scaffold).first,
+            ).any((k) => k!.startsWith(key)),
+            isTrue,
+            reason: key,
+          );
+        }
       });
 
       testWidgets('hersien: leeg, onbeplan, fout', (t) async {

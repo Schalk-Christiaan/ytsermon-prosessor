@@ -3,8 +3,9 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: —
-//   doel: dienstydlyn: spraak/musiek, gebedsmerkers, sleepbare preek-hakies (sleutels 1 s / Shift 0,1 s), uitgeknipte stukke gestreep, sleepbare Shorts (ongeldige met foutkleur), speelposisie
+//   doel: bane met etiket (Klank = golfvorm uit sound.level.json, Diens = spraak/musiek, gebede, sleepbare preek-hakies (sleutels 1 s / Shift 0,1 s), uitgeknipte stukke gestreep; Shorts = sleepbaar, ongeldige met foutkleur) en een oranje speelkop deur almal; zoem rol horisontaal
 //   status: bou
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/foundation.dart';
@@ -17,9 +18,12 @@ import '../../core/models.dart';
 import '../../l10n/app_localizations.dart';
 
 const _kHandleW = 20.0;
-const _kBarH = 56.0;
+const _kGutter = 72.0;
+const _kSoundH = 44.0, _kServiceY = 48.0, _kServiceH = 48.0;
+const _kShortsY = 100.0, _kShortsH = 28.0, _kTracksH = 128.0;
 
-/// The service timeline: draggable sermon brackets, cut pieces, prayer marks and Shorts.
+/// The tracks timeline: Klank (waveform), Diens (speech/music, sermon brackets, cuts, prayers) and Shorts,
+/// one orange playhead through all; [zoom] widens the tracks inside a horizontal scroll.
 class ServiceTimeline extends StatefulWidget {
   const ServiceTimeline({
     super.key,
@@ -28,6 +32,8 @@ class ServiceTimeline extends StatefulWidget {
     required this.sermonStart,
     required this.sermonEnd,
     required this.shorts,
+    this.levels = const [],
+    this.zoom = 1,
     this.cuts = const [],
     this.prayers = const [],
     this.songs = const [],
@@ -46,6 +52,12 @@ class ServiceTimeline extends StatefulWidget {
   final double sermonStart;
   final double sermonEnd;
   final List<Short> shorts;
+
+  /// Loudness per second (dB) for the waveform; empty draws the speech/music blocks as plain bars.
+  final List<double> levels;
+
+  /// 1 = the whole service fits; more widens the tracks and scrolls.
+  final double zoom;
 
   /// Cut-out pieces (hatched) and candidate prayers (a line above the track).
   final List<Span> cuts, prayers;
@@ -82,6 +94,8 @@ class _ServiceTimelineState extends State<ServiceTimeline>
     parent: _glide,
     curve: Curves.easeOutCubic,
   );
+  final _scroll = ScrollController();
+  double _viewport = 0;
   bool _started = false;
 
   @override
@@ -97,6 +111,19 @@ class _ServiceTimelineState extends State<ServiceTimeline>
   void didUpdateWidget(ServiceTimeline old) {
     super.didUpdateWidget(old);
     if (old.animateKey != widget.animateKey) _run();
+    if (old.zoom != widget.zoom) {
+      // Keep the playhead in the middle of the view when the zoom changes.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_scroll.hasClients) return;
+        final w = _viewport * widget.zoom;
+        _scroll.jumpTo(
+          (widget.position.value / widget.duration * w - _viewport / 2).clamp(
+            0,
+            _scroll.position.maxScrollExtent,
+          ),
+        );
+      });
+    }
   }
 
   void _run() {
@@ -110,10 +137,9 @@ class _ServiceTimelineState extends State<ServiceTimeline>
   @override
   void dispose() {
     _glide.dispose();
+    _scroll.dispose();
     super.dispose();
   }
-
-  double _x(double t, double w) => t / widget.duration * w;
 
   void _drag(bool isStart, double dx, double w) {
     final dt = dx / w * widget.duration;
@@ -131,121 +157,196 @@ class _ServiceTimelineState extends State<ServiceTimeline>
   Widget build(BuildContext context) {
     final l = L.of(context);
     final th = Theme.of(context);
-    return LayoutBuilder(
-      builder: (context, c) {
-        final w = c.maxWidth;
-        return AnimatedBuilder(
-          animation: _t,
-          builder: (context, _) {
-            final s = lerpDouble(0, widget.sermonStart, _t.value)!;
-            final e = lerpDouble(widget.duration, widget.sermonEnd, _t.value)!;
-            Widget handle(bool isStart) {
-              final time = formatTime(isStart ? s : e);
-              final label = isStart
-                  ? l.sermonHandleStart(time)
-                  : l.sermonHandleEnd(time);
-              return Positioned(
-                left: _x(isStart ? s : e, w) - _kHandleW / 2,
-                top: 0,
-                width: _kHandleW,
-                height: _kBarH,
-                child: _Handle(
-                  key: ValueKey(
-                    'ctl.hersien.handle-${isStart ? 'start' : 'end'}',
+    final cs = th.colorScheme;
+    final label = th.textTheme.labelMedium!;
+    Widget gutter(String text, double y, double h) => Positioned(
+      top: y,
+      height: h,
+      left: 0,
+      width: _kGutter - 8,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(text, style: label, maxLines: 1),
+      ),
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: _kGutter,
+          height: _kTracksH,
+          child: Stack(
+            children: [
+              gutter(l.trackSound, 0, _kSoundH),
+              gutter(l.trackService, _kServiceY, _kServiceH),
+              gutter(l.trackShorts, _kShortsY, _kShortsH),
+            ],
+          ),
+        ),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, c) {
+              _viewport = c.maxWidth;
+              final w = c.maxWidth * widget.zoom;
+              double x(double t) => t / widget.duration * w;
+              return Scrollbar(
+                controller: _scroll,
+                thumbVisibility: widget.zoom > 1,
+                child: SingleChildScrollView(
+                  controller: _scroll,
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: w,
+                    child: AnimatedBuilder(
+                      animation: _t,
+                      builder: (context, _) {
+                        final s = lerpDouble(0, widget.sermonStart, _t.value)!;
+                        final e = lerpDouble(
+                          widget.duration,
+                          widget.sermonEnd,
+                          _t.value,
+                        )!;
+                        Widget handle(bool isStart) {
+                          final time = formatTime(isStart ? s : e);
+                          return Positioned(
+                            left: x(isStart ? s : e) - _kHandleW / 2,
+                            top: _kServiceY,
+                            width: _kHandleW,
+                            height: _kServiceH,
+                            child: _Handle(
+                              key: ValueKey(
+                                'ctl.hersien.handle-${isStart ? 'start' : 'end'}',
+                              ),
+                              label: isStart
+                                  ? l.sermonHandleStart(time)
+                                  : l.sermonHandleEnd(time),
+                              onDrag: (dx) => _drag(isStart, dx, w),
+                              onEnd: widget.onSermonCommit,
+                              onNudge: (secs) => widget.onNudge(isStart, secs),
+                            ),
+                          );
+                        }
+
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              height: _kTracksH,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Positioned.fill(
+                                    child: GestureDetector(
+                                      key: const ValueKey(
+                                        'ctl.hersien.timeline',
+                                      ),
+                                      behavior: HitTestBehavior.opaque,
+                                      onTapUp: (d) => widget.onSeek(
+                                        d.localPosition.dx /
+                                            w *
+                                            widget.duration,
+                                      ),
+                                      child: RepaintBoundary(
+                                        child: CustomPaint(
+                                          painter: _TracksPainter(
+                                            duration: widget.duration,
+                                            blocks: widget.blocks,
+                                            levels: widget.levels,
+                                            shorts: widget.shorts,
+                                            cuts: widget.cuts,
+                                            prayers: widget.prayers,
+                                            songs: widget.songs,
+                                            faulty: widget.faulty,
+                                            cutLabel: l.cutOut,
+                                            musicLabel: l.music,
+                                            start: s,
+                                            end: e,
+                                            speech: cs.secondary,
+                                            music: cs.tertiary,
+                                            sermon: cs.primary,
+                                            wood: th
+                                                .extension<AppTokens>()!
+                                                .wood,
+                                            error: cs.error,
+                                            ink: cs.onSurface,
+                                            ground: cs.surface,
+                                            labelStyle: th.textTheme.labelSmall!
+                                                .copyWith(color: cs.onSurface),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  for (final sh in widget.shorts)
+                                    Positioned(
+                                      left: x(sh.start),
+                                      width: (x(sh.end) - x(sh.start)).clamp(
+                                        8,
+                                        w,
+                                      ),
+                                      top: _kShortsY,
+                                      height: _kShortsH,
+                                      child: MouseRegion(
+                                        cursor: SystemMouseCursors.grab,
+                                        child: GestureDetector(
+                                          key: const ValueKey(
+                                            'ctl.hersien.short-block',
+                                          ),
+                                          behavior: HitTestBehavior.opaque,
+                                          onHorizontalDragUpdate: (d) =>
+                                              widget.onShortMove(
+                                                sh,
+                                                d.delta.dx /
+                                                    w *
+                                                    widget.duration,
+                                              ),
+                                          onHorizontalDragEnd: (_) =>
+                                              widget.onSermonCommit(),
+                                        ),
+                                      ),
+                                    ),
+                                  handle(true),
+                                  handle(false),
+                                  // The playhead repaints on its own; the tracks do not.
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: RepaintBoundary(
+                                        child: CustomPaint(
+                                          painter: _PlayheadPainter(
+                                            position: widget.position,
+                                            duration: widget.duration,
+                                            color: cs.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              height: 20,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  _label(formatTime(s), x(s), w, th),
+                                  _label(formatTime(e), x(e), w, th),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                  label: label,
-                  onDrag: (dx) => _drag(isStart, dx, w),
-                  onEnd: widget.onSermonCommit,
-                  onNudge: (secs) => widget.onNudge(isStart, secs),
                 ),
               );
-            }
-
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  height: _kBarH,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned.fill(
-                        child: GestureDetector(
-                          key: const ValueKey('ctl.hersien.timeline'),
-                          behavior: HitTestBehavior.opaque,
-                          onTapUp: (d) => widget.onSeek(
-                            d.localPosition.dx / w * widget.duration,
-                          ),
-                          child: CustomPaint(
-                            painter: _TimelinePainter(
-                              duration: widget.duration,
-                              blocks: widget.blocks,
-                              shorts: widget.shorts,
-                              cuts: widget.cuts,
-                              prayers: widget.prayers,
-                              cutLabel: l.cutOut,
-                              faulty: widget.faulty,
-                              error: th.colorScheme.error,
-                              start: s,
-                              end: e,
-                              position: widget.position,
-                              speech: th.colorScheme.secondary,
-                              music: th.colorScheme.tertiary,
-                              sermon: th.colorScheme.primary,
-                              wood: th.extension<AppTokens>()!.wood,
-                              ink: th.colorScheme.onSurface,
-                              surface: th.colorScheme.surface,
-                              musicLabel: l.music,
-                              songs: widget.songs,
-                              labelStyle: th.textTheme.labelSmall!.copyWith(
-                                color: th.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      for (final sh in widget.shorts)
-                        Positioned(
-                          left: _x(sh.start, w),
-                          width: (_x(sh.end, w) - _x(sh.start, w)).clamp(8, w),
-                          bottom: 6,
-                          height: 24,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.grab,
-                            child: GestureDetector(
-                              key: const ValueKey('ctl.hersien.short-block'),
-                              behavior: HitTestBehavior.opaque,
-                              onHorizontalDragUpdate: (d) => widget.onShortMove(
-                                sh,
-                                d.delta.dx / w * widget.duration,
-                              ),
-                              onHorizontalDragEnd: (_) =>
-                                  widget.onSermonCommit(),
-                            ),
-                          ),
-                        ),
-                      handle(true),
-                      handle(false),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: 20,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      _label(formatTime(s), _x(s, w), w, th),
-                      _label(formatTime(e), _x(e, w), w, th),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -344,70 +445,138 @@ class _HandleState extends State<_Handle> {
   }
 }
 
-class _TimelinePainter extends CustomPainter {
-  _TimelinePainter({
+/// The orange playhead through all tracks; the only thing that repaints while playing.
+class _PlayheadPainter extends CustomPainter {
+  _PlayheadPainter({
+    required this.position,
+    required this.duration,
+    required this.color,
+  }) : super(repaint: position);
+  final ValueListenable<double> position;
+  final double duration;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final px = position.value.clamp(0, duration) / duration * size.width;
+    canvas.drawRect(
+      Rect.fromLTWH(px - 1, 0, 2, size.height),
+      Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_PlayheadPainter o) =>
+      o.duration != duration || o.color != color;
+}
+
+/// The three tracks. Static: it repaints when the data or the width change, never per playback tick.
+class _TracksPainter extends CustomPainter {
+  _TracksPainter({
     required this.duration,
     required this.blocks,
+    required this.levels,
     required this.shorts,
     required this.cuts,
     required this.prayers,
-    required this.cutLabel,
+    required this.songs,
     required this.faulty,
-    required this.error,
+    required this.cutLabel,
+    required this.musicLabel,
     required this.start,
     required this.end,
-    required this.position,
     required this.speech,
     required this.music,
     required this.sermon,
     required this.wood,
+    required this.error,
     required this.ink,
-    required this.surface,
-    required this.musicLabel,
-    required this.songs,
+    required this.ground,
     required this.labelStyle,
-  }) : super(repaint: position);
+  });
 
   final double duration, start, end;
   final List<TimeBlock> blocks;
+  final List<double> levels;
   final List<Short> shorts;
   final List<Span> cuts, prayers;
-  final String cutLabel;
-  final Set<Short> faulty;
-  final Color error;
-  final ValueListenable<double> position;
-  final Color speech, music, sermon, wood, ink, surface;
-  final String musicLabel;
   final List<Song> songs;
+  final Set<Short> faulty;
+  final String cutLabel, musicLabel;
+  final Color speech, music, sermon, wood, error, ink, ground;
   final TextStyle labelStyle;
 
   @override
   void paint(Canvas canvas, Size size) {
     double x(double t) => t / duration * size.width;
-    final track = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 8, size.width, size.height - 16),
+    RRect row(double y, double h) => RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, y, size.width, h),
       const Radius.circular(4),
     );
+    final wash = Paint()..color = ink.withValues(alpha: 0.06);
+    final sound = row(0, _kSoundH), service = row(_kServiceY, _kServiceH);
+    canvas.drawRRect(sound, wash);
+    canvas.drawRRect(service, wash);
+    canvas.drawRRect(row(_kShortsY, _kShortsH), wash);
+
+    Color kind(SegmentKind k) => k == SegmentKind.music ? music : speech;
+    // Klank: one bar per ~2 px from the loudness, in the colour of what plays then.
     canvas.save();
-    canvas.clipRRect(track);
-    canvas.drawRect(
-      track.outerRect,
-      Paint()..color = ink.withValues(alpha: 0.06),
-    );
+    canvas.clipRRect(sound);
+    if (levels.isEmpty) {
+      for (final b in blocks) {
+        if (b.kind != SegmentKind.music && b.kind != SegmentKind.speech)
+          continue;
+        canvas.drawRect(
+          Rect.fromLTRB(
+            x(b.start),
+            14,
+            x(b.end).clamp(x(b.start) + 1, size.width),
+            _kSoundH - 14,
+          ),
+          Paint()..color = kind(b.kind).withValues(alpha: 0.6),
+        );
+      }
+    } else {
+      final n = (size.width / 2).floor();
+      final secsPerBar = duration / n;
+      for (var i = 0; i < n; i++) {
+        final a = (i * secsPerBar).floor(),
+            b = math.max(a + 1, ((i + 1) * secsPerBar).ceil());
+        var peak = -120.0;
+        for (var k = a; k < b && k < levels.length; k++) {
+          peak = math.max(peak, levels[k]);
+        }
+        final amp = ((peak + 60) / 60).clamp(0.04, 1.0) * (_kSoundH / 2 - 2);
+        final t = (i + 0.5) * secsPerBar;
+        final blk = blocks.where((q) => t >= q.start && t < q.end).firstOrNull;
+        canvas.drawRect(
+          Rect.fromLTWH(i * 2.0, _kSoundH / 2 - amp, 1.4, amp * 2),
+          Paint()
+            ..color = (blk == null ? ink : kind(blk.kind)).withValues(
+              alpha: 0.75,
+            ),
+        );
+      }
+    }
+    canvas.restore();
+
+    // Diens: speech and music with song names, the sermon bracket, prayers, cuts.
+    canvas.save();
+    canvas.clipRRect(service);
     for (final b in blocks) {
       if (b.kind != SegmentKind.music && b.kind != SegmentKind.speech) continue;
       final r = Rect.fromLTRB(
         x(b.start),
-        8,
+        _kServiceY,
         x(b.end).clamp(x(b.start) + 1, size.width),
-        size.height - 8,
+        _kServiceY + _kServiceH,
       );
       canvas.drawRect(
         r,
         Paint()
-          ..color = (b.kind == SegmentKind.music ? music : speech).withValues(
-            alpha: b.kind == SegmentKind.music ? 0.32 : 0.45,
-          ),
+          ..color = kind(b.kind)
+              .withValues(alpha: b.kind == SegmentKind.music ? 0.32 : 0.28),
       );
       if (b.kind == SegmentKind.music && r.width > 44) {
         final song = songs
@@ -423,7 +592,12 @@ class _TimelinePainter extends CustomPainter {
       }
     }
     canvas.restore();
-    final sr = Rect.fromLTRB(x(start), 4, x(end), size.height - 4);
+    final sr = Rect.fromLTRB(
+      x(start),
+      _kServiceY - 2,
+      x(end),
+      _kServiceY + _kServiceH + 2,
+    );
     canvas.drawRect(sr, Paint()..color = sermon.withValues(alpha: 0.14));
     final bar = Paint()..color = sermon;
     canvas.drawRect(Rect.fromLTRB(sr.left, sr.top, sr.right, sr.top + 3), bar);
@@ -435,18 +609,23 @@ class _TimelinePainter extends CustomPainter {
       canvas.drawRect(
         Rect.fromLTRB(
           x(p.start),
-          0,
+          _kServiceY,
           x(p.end).clamp(x(p.start) + 2, size.width),
-          3,
+          _kServiceY + 3,
         ),
         Paint()..color = ink,
       );
     }
     for (final c in cuts) {
-      final r = Rect.fromLTRB(x(c.start), 8, x(c.end), size.height - 8);
+      final r = Rect.fromLTRB(
+        x(c.start),
+        _kServiceY,
+        x(c.end),
+        _kServiceY + _kServiceH,
+      );
       canvas.save();
       canvas.clipRect(r);
-      canvas.drawRect(r, Paint()..color = surface.withValues(alpha: 0.7));
+      canvas.drawRect(r, Paint()..color = ground.withValues(alpha: 0.7));
       final stripe = Paint()
         ..color = ink.withValues(alpha: 0.5)
         ..strokeWidth = 1.5;
@@ -461,7 +640,7 @@ class _TimelinePainter extends CustomPainter {
         final tp = TextPainter(
           text: TextSpan(
             text: cutLabel,
-            style: labelStyle.copyWith(backgroundColor: surface),
+            style: labelStyle.copyWith(backgroundColor: ground),
           ),
           textDirection: TextDirection.ltr,
         )..layout(maxWidth: r.width - 8);
@@ -469,14 +648,16 @@ class _TimelinePainter extends CustomPainter {
       }
       canvas.restore();
     }
+
+    // Shorts
     for (final s in shorts) {
       final bad = faulty.contains(s);
       final r = RRect.fromRectAndRadius(
         Rect.fromLTRB(
           x(s.start),
-          size.height - (bad ? 26 : 22),
+          _kShortsY + 3,
           x(s.end).clamp(x(s.start) + 3, size.width),
-          size.height - 10,
+          _kShortsY + _kShortsH - 3,
         ),
         const Radius.circular(2),
       );
@@ -491,15 +672,10 @@ class _TimelinePainter extends CustomPainter {
         );
       }
     }
-    final px = x(position.value.clamp(0, duration));
-    canvas.drawRect(
-      Rect.fromLTWH(px - 1, 0, 2, size.height),
-      Paint()..color = ink,
-    );
   }
 
   @override
-  // Shorts are mutated in place (length slider), so a diff is impossible; the
-  // painter is only rebuilt when the parent rebuilds, i.e. on a change.
-  bool shouldRepaint(_TimelinePainter o) => true;
+  // Shorts are mutated in place (length slider), so a diff is impossible. The tracks repaint
+  // when the parent rebuilds (a change, a resize, a zoom), never on a playback tick.
+  bool shouldRepaint(_TracksPainter o) => true;
 }

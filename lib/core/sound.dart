@@ -2,7 +2,7 @@
 //   soort: module
 //   wanneer: in planJob, ná die aflaai (die video is nodig)
 //   groep: core | Kern
-//   skryf: <werkmap>/<id>/sound.json | die klas van elke sekonde (stilte/musiek/spraak/geraas)
+//   skryf: <werkmap>/<id>/sound.json | die klas van elke sekonde (stilte/musiek/spraak/geraas); sound.level.json | die dB per sekonde (golfvorm in Hersien)
 //   doel: een ffmpeg-proses gee 16 kHz-PCM; Dart bereken per sekonde lae-energie-rame, platheid en dB en klassifiseer in stilte/musiek/spraak/geraas (spektrogram, nie YouTube se [musiek]-merkers nie)
 //   status: bou
 import 'dart:async';
@@ -228,6 +228,23 @@ List<TimeBlock> classify(SoundFeatures f) {
 /// File in the work folder that holds the classified [TimeBlock]s of the service.
 const kSoundFile = 'sound.json';
 
+/// Loudness per second (whole dB), kept next to [kSoundFile] so Hersien can draw the waveform without re-analysing.
+const kLevelFile = 'sound.level.json';
+
+void saveLevels(Directory dir, List<double> db) =>
+    File(p.join(dir.path, kLevelFile))
+        .writeAsStringSync(jsonEncode([for (final v in db) v.round()]));
+
+/// The saved loudness of [dir] in dB per second; empty for a service analysed before levels were kept.
+List<double> loadLevels(Directory dir) {
+  final f = File(p.join(dir.path, kLevelFile));
+  if (!f.existsSync()) return [];
+  return [
+    for (final v in jsonDecode(f.readAsStringSync()) as List)
+      (v as num).toDouble(),
+  ];
+}
+
 /// Writes the classified blocks to [kSoundFile] in [dir].
 void saveSound(Directory dir, List<TimeBlock> blocks) =>
     File(p.join(dir.path, kSoundFile)).writeAsStringSync(
@@ -260,7 +277,9 @@ Future<List<TimeBlock>> soundBlocks(
 }) async {
   final saved = loadSound(dir);
   if (saved.isNotEmpty) return saved;
-  final b = classify(await analyseSound(video.path, cancel: cancel));
+  final f = await analyseSound(video.path, cancel: cancel);
+  final b = classify(f);
   saveSound(dir, b);
+  saveLevels(dir, f.db);
   return b;
 }

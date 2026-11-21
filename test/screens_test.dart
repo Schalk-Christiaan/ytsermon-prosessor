@@ -189,7 +189,7 @@ void main() {
     t,
   ) async {
     await _fonts();
-    t.view.physicalSize = const Size(1100, 720);
+    t.view.physicalSize = const Size(1400, 800);
     t.view.devicePixelRatio = 1;
     final c = ready();
     final dir = Directory.systemTemp.createTempSync('plan');
@@ -222,13 +222,15 @@ void main() {
     await t.enterText(find.byKey(const ValueKey('ctl.hersien.title')), 'i');
     await t.sendKeyEvent(LogicalKeyboardKey.keyI);
     expect(c.plan!.sermonStart, 1400);
+    await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-transcript')));
+    await t.pump();
     final line = find.byKey(
       ValueKey('ctl.hersien.transcript-line.${c.segments[2].start}'),
     );
     await t.ensureVisible(line);
     await t.tap(line);
     expect(c.position.value, c.segments[2].start);
-    await t.tap(find.text('Uitgeknip (1)'));
+    await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-cuts')));
     await t.pump();
     expect(find.text('Uitgeknip 1'), findsOneWidget);
     expect(find.text('34:10 – 35:40'), findsOneWidget);
@@ -237,7 +239,7 @@ void main() {
 
   testWidgets('hersien opname sonder onderskrifte', (t) async {
     await _fonts();
-    t.view.physicalSize = const Size(1100, 720);
+    t.view.physicalSize = const Size(1400, 800);
     t.view.devicePixelRatio = 1;
     final c = testController().$1
       ..debugReady(
@@ -263,6 +265,8 @@ void main() {
       ),
     );
     await t.pump(const Duration(seconds: 1));
+    await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-transcript')));
+    await t.pump();
     expect(
       find.text('Geen onderskrifte nie, stel die begin en einde self'),
       findsOneWidget,
@@ -385,7 +389,7 @@ void main() {
     t,
   ) async {
     await _fonts();
-    t.view.physicalSize = const Size(1100, 720);
+    t.view.physicalSize = const Size(1400, 800);
     t.view.devicePixelRatio = 1;
     final dir = Directory.systemTemp.createTempSync('plan');
     final c = testController().$1;
@@ -408,6 +412,8 @@ void main() {
     FilledButton approve() => t.widget<FilledButton>(
       find.widgetWithText(FilledButton, 'Keur goed en sny'),
     );
+    await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-shorts')));
+    await t.pump();
     expect(find.text('92 s; maks 90 s'), findsOneWidget);
     final key = GlobalKey();
     await t.pumpWidget(
@@ -420,6 +426,8 @@ void main() {
       ),
     );
     await t.pump(const Duration(seconds: 1));
+    await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-shorts')));
+    await t.pump();
     final bytes = await t.runAsync(() async {
       final img =
           await (key.currentContext!.findRenderObject()!
@@ -431,7 +439,10 @@ void main() {
         .writeAsBytesSync(bytes!.buffer.asUint8List());
     expect(find.byIcon(Icons.error_outline_rounded), findsOneWidget);
     expect(approve().onPressed, isNull);
-    await t.drag(find.byType(Slider).first, const Offset(-60, 0));
+    await t.drag(
+      find.byKey(const ValueKey('ctl.hersien.short-length')),
+      const Offset(-60, 0),
+    );
     await t.pump();
     expect(c.plan!.shorts.single.end - 1500, lessThanOrEqualTo(90));
     expect(find.byIcon(Icons.error_outline_rounded), findsNothing);
@@ -1235,6 +1246,8 @@ void main() {
     );
     await t.pump(const Duration(seconds: 1));
     expect(AppSettings.load(c.store.root).exports, {'full', 'word', 'songs'});
+    await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-output')));
+    await t.pump();
     await t.tap(find.widgetWithText(FilterChip, 'Net die woord'));
     await t.pump();
     expect(AppSettings.load(c.store.root).exports, {'full', 'songs'});
