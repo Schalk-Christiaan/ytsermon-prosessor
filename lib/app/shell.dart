@@ -4,7 +4,8 @@
 //   groep: app | App-raam
 //   skryf: —
 //   doel: Rail en inhoud as twee panele (radius 16) op die grond; rail: Preke (tuis), Hersien, Werk, Snitlyste, Biblioteek, Instellings (Kanaal + Stelsel); begin op Opstelling tot dit klaar is
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 
 // vloei: v1 | Verwerk nuutste diens
 // inleiding: Maandag: die diens van gister word een knoppie later 'n gesnyde preek met Shorts op YouTube.

@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag-, klaar- en fout-lyste; klaar-items: Speel, Wys in gids, Klank vir WhatsApp, Kopieer WhatsApp-teks, Laai op, Wys op YouTube; oplaai-teller
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:io';
 
 import 'package:flutter/material.dart';

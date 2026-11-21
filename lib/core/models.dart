@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: —
 //   doel: Word, Segment (met woordtye), TimeBlock, Block/BlockLabel (spraakblok met etiket), Song, Bounds, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 /// What a stretch of the service sounds like (`silence` and `noise` come from the sound classification).
 enum SegmentKind { speech, music, silence, noise }
 

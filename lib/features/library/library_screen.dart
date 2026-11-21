@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: die dienste in die uitvoergids as Preke (per jaar, nuutste eerste) en Sang (alle liedere); soek op tema, skriflesing en liedname; Speel, Wys in gids, Kopieer WhatsApp-teks; laai by oopmaak en met Herlaai
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 

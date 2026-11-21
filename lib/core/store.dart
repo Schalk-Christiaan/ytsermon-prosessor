@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: <werkmap>/<id>/sermon.json | atomies (.tmp, dan hernoem)
 //   doel: elke diens as Sermon met toestand wat herbegin oorleef; voeg die kanaallys by
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:convert';
 import 'dart:io';
 

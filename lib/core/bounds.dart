@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: —
 //   doel: kies die snit-grense met reëls uit die etikette van die spraakblokke (die KI kies nooit tye): preek = langste loop preek-blokke, begin by die gebed voor, einde by die Amen van die gebed ná die preek; snapBounds pas albei by die naaste stilte aan (ffmpeg silencedetect)
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:io';
 import 'dart:math' as math;
 

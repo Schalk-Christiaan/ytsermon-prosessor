@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: transkripsiestrook: onderskrifreëls met tyd, klik soek daarheen, gebede gemerk, huidige reël uitgelig; leeg = stel self
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 

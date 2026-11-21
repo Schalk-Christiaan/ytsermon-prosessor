@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: die hele kanaal as lys met toestand (titel bo, Skriflesing onder); filter (ook "Nie opgelaai nie"), soek; "Verwerk nuutste diens" → plan → Hersien; "Verwerk volgende" → werkry; "Voer opname in" (knoppie of insleep) → Hersien
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';

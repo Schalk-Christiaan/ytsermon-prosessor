@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: —
 //   doel: lees elke <uitvoer>/<jaar>/<diens>/diens.json in een lys diens (nuutste eerste) met hul liedere; die blaaier soek daarin
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:convert';
 import 'dart:io';
 

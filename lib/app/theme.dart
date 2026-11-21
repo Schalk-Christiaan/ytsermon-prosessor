@@ -4,7 +4,8 @@
 //   groep: app | App-raam
 //   skryf: —
 //   doel: ontwerpstelsel (kleure, tipe, panele, seleksie) uit DESIGN.md, lig + donker
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'package:flutter/material.dart';
 
 /// Radius of every panel (DESIGN.md: flat panels on the ground, 12 dp apart).

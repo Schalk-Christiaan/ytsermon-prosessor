@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: bane met etiket (Klank = golfvorm uit sound.level.json, Diens = spraak/musiek, gebede, sleepbare preek-hakies (sleutels 1 s / Shift 0,1 s), uitgeknipte stukke gestreep; Shorts = sleepbaar, ongeldige met foutkleur) en een oranje speelkop deur almal; zoem rol horisontaal
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 

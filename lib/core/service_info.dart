@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: <werkmap>/<id>/service.json | Oggend/Aand en diens-soort wat Schalk in Hersien kies
 //   doel: diensdatum in plaaslike tyd (nie upload_date nie), Oggend/Aand en die velde uit die YouTube-beskrywing (tema, skriflesing, fokus, belydenis, psalms); Schalk se keuses oor Oggend/Aand en diens-soort
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:convert';
 import 'dart:io';
 

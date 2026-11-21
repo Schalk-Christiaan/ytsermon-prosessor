@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | reëls en jabloon
 //   doel: snitlysreëls aan/af en in volgorde, voorskou hoeveel preke in elke snitlys val, beskrywingsjabloon, WhatsApp-sjabloon met voorskou
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'package:flutter/material.dart';
 
 import '../../core/cutter.dart';

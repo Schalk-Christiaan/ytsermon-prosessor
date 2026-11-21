@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: <werkmap>/jobs.json | die ry; sermon.json van die preek wat verwerk word
 //   doel: een taak op 'n slag (plan: klank → blokke → etikette → grense → stilte-snap; sny: die gekose uitvoere in die diensgids met WhatsApp.txt en diens.json; klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';

@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: —
 //   doel: vind yt-dlp/ffmpeg/ffprobe/ollama (langs die exe, Ollama se gids, PATH), loop eksterne prosesse (runTool), toets Ollama + qwen3:8b, laai die model af, begin Ollama
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';

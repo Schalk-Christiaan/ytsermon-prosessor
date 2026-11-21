@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: <app-support>/work/<id>/plan.json | die plan; elke wysiging stoor dadelik
 //   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit die etikette (analysis.json), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';

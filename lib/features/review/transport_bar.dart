@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: vervoerbalk (speel/pouse, tyd, na die hakies, 5 s terug/vorentoe, zoem met syferveld) en gereedskapbalk (I/O, knip uit, Short by, voorskou van die snit)
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'package:flutter/material.dart';
 
 import '../../core/captions.dart';

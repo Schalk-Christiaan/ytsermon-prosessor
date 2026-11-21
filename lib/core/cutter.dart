@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: out/<jaar>/<diens>/ | Volle preek.mp4, Net die woord.mp4, Sang/*.mp3, Shorts
 //   doel: gids per diens (serviceDir), sny Volle preek en Net die woord (herkodeer net die stuk, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif), elke lied as mp3 en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg; skryf die WhatsApp-teks
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:convert';
 import 'dart:io';
 

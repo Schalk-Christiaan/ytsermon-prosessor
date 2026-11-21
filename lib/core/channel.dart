@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: werkmap/<id>/ (info.json, onderskrifte, video.mp4)
 //   doel: lys die kanaal (flat), video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:convert';
 import 'dart:io';
 

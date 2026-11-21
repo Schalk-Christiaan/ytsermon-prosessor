@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | setupDone; maak die uitsetgids
 //   doel: Opstelling-lys: Ollama loop → model afgelaai → kanaal gekoppel → uitsetgids, elk een knoppie; "Begin werk" as alles klaar is
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:io';
 
 import 'package:flutter/material.dart';

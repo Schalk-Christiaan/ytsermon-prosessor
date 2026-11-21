@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | kliëntlêer en privaatheid; refresh-token via GoogleAuth
 //   doel: Kanaal (kliënt-ID-lêer, Koppel/Ontkoppel, privaatheid van oplaaie), uitsetgids, intro/outro (met lengte) en Opstelling, bo die Stelsel-lys
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';

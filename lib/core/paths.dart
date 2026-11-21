@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: —
 //   doel: werkmap, gebundelde lettertipe en verstek-uitsetgids
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:io';
 
 import 'package:path/path.dart' as p;

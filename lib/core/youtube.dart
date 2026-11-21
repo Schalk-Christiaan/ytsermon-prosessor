@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: refresh-token (deur die roeper: Windows Credential Manager / libsecret); <werkmap>/quota.json; <werkmap>/<id>/upload-*.json | hervat-sessie
 //   doel: desktop-OAuth (loopback + PKCE), hervatbare oplaai, snitlyste en die 100-per-dag-teller; net dart:io, endpunte uit die kliëntlêer sodat toetse 'n vals bediener gebruik
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';

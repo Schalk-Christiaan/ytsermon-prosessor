@@ -4,7 +4,8 @@
 //   groep: core | Kern
 //   skryf: werkmap/opname-…/ (video.mp4, info.json, leë onderskrifte, plan.json, sermon.json)
 //   doel: 'n eie video-opname (nie op YouTube nie) word 'n preek met 'n plaaslike ID en 'n handmatige plan, sodat Hersien en sny dit soos enige ander preek hanteer
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'dart:io';
 
 import 'package:path/path.dart' as p;

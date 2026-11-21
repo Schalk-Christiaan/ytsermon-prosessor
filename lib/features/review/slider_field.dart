@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: 'n slider met 'n syferveld langsaan: sleep werk die veld by, tik (23:04) werk die slider by; 'n ongeldige invoer wys 'n fout by die veld en verander niks
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';

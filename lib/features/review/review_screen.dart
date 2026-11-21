@@ -4,7 +4,8 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: die preekredigeerder: preek uit Preke → plan → hakies, I/O, uitknip, transkripsie, Shorts, ontdoen (kortpaaie) → kies uitvoere, Oggend/Aand en soort diens (liedname op die tydlyn) → keur goed en sny
-//   status: bou
+//   status: klaar
+//   bewys: 7236634
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
