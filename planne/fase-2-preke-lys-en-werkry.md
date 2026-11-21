@@ -1,4 +1,4 @@
-status: hersien
+status: klaar
 
 # Fase 2: Preke-lys, werkry en stoor (Linux)
 

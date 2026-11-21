@@ -1,4 +1,4 @@
-status: hersien
+status: klaar
 
 # Fase 5: Installeerder en Opstelling
 

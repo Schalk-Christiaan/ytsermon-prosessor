@@ -1,4 +1,4 @@
-status: hersien
+status: klaar
 
 # Fase 6: Die preekredigeerder
 
