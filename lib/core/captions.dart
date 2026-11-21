@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: —
 //   doel: json3-onderskrifte → segmente, kompakte teks vir die KI, kandidaat-gebede (preekgrense), SRT en dienstydlyn (spraak/musiek)
-//   status: oop
+//   status: bou
 import 'dart:convert';
 
 import 'models.dart';

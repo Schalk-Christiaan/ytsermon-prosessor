@@ -28,9 +28,6 @@ class LAf extends L {
   String get navSnitlyste => 'Snitlyste';
 
   @override
-  String get comingPhase3 => 'Kom in fase 3';
-
-  @override
   String get settingsSystem => 'Stelsel';
 
   @override
@@ -176,6 +173,15 @@ class LAf extends L {
   String get taskCut => 'Sny';
 
   @override
+  String get taskAudio => 'Klank';
+
+  @override
+  String get stageAudio => 'Maak klank…';
+
+  @override
+  String get whatsappAudio => 'Klank vir WhatsApp';
+
+  @override
   String get taskCancelled => 'Gekanselleer';
 
   @override
@@ -302,5 +308,295 @@ class LAf extends L {
   @override
   String shortPreview(int n) {
     return 'Short $n';
+  }
+
+  @override
+  String get taskUpload => 'Oplaai';
+
+  @override
+  String get stageUpload => 'Laai op…';
+
+  @override
+  String get upload => 'Laai op';
+
+  @override
+  String get openOnYouTube => 'Wys op YouTube';
+
+  @override
+  String quotaToday(int n, int max) {
+    return 'Oplaaie vandag: $n van $max';
+  }
+
+  @override
+  String get navSettingsTitle => 'Instellings';
+
+  @override
+  String get settingsChannel => 'Kanaal';
+
+  @override
+  String get clientFile => 'Kliënt-ID-lêer (Google, Desktop app)';
+
+  @override
+  String get clientFileHelp =>
+      'Laai dit by Google Cloud af; sien die stappe in die handleiding.';
+
+  @override
+  String get clientMissing => 'Geen kliënt-ID-lêer nie';
+
+  @override
+  String get notConnected => 'Nie gekoppel nie';
+
+  @override
+  String get connected => 'Gekoppel';
+
+  @override
+  String get connect => 'Koppel kanaal';
+
+  @override
+  String get disconnect => 'Ontkoppel';
+
+  @override
+  String get connectWaiting => 'Kies die kerk se rekening in die blaaier…';
+
+  @override
+  String get uploadPrivacy => 'Nuwe oplaaie is';
+
+  @override
+  String get privacyPrivate => 'Privaat';
+
+  @override
+  String get privacyUnlisted => 'Ongelys';
+
+  @override
+  String get privacyPublic => 'Publiek';
+
+  @override
+  String get playlistRules => 'Reëls';
+
+  @override
+  String get playlistRulesHelp =>
+      'Die eerste reël wat by \'n preek pas, kies sy snitlys. Sleep om die volgorde te verander.';
+
+  @override
+  String get ruleBook => 'Bybelboek uit die Skriflesing';
+
+  @override
+  String get ruleYear => 'Jaar (\"Preke 2026\")';
+
+  @override
+  String get playlistPreview => 'Voorskou';
+
+  @override
+  String sermonCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n preke',
+      one: '1 preek',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noPlaylist => 'Sonder snitlys';
+
+  @override
+  String get template => 'Beskrywingsjabloon';
+
+  @override
+  String get templatePreview => 'So lyk dit vir die nuutste preek';
+
+  @override
+  String templateHelp(
+    String tema,
+    String skriflesing,
+    String datum,
+    String beskrywing,
+  ) {
+    return '$tema, $skriflesing, $datum en $beskrywing word ingevul.';
+  }
+
+  @override
+  String get navSetup => 'Opstelling';
+
+  @override
+  String get setupIntro =>
+      'Vier dinge, een keer. Daarna begin die app by Preke.';
+
+  @override
+  String get setupOllama => 'Ollama (die KI op hierdie rekenaar) loop';
+
+  @override
+  String get setupModel => 'Die KI-model is afgelaai (5 GB)';
+
+  @override
+  String get setupChannel => 'Die kerk se YouTube-kanaal is gekoppel';
+
+  @override
+  String setupFolder(String path) {
+    return 'Gids vir gesnyde preke: $path';
+  }
+
+  @override
+  String get stepDone => 'Klaar';
+
+  @override
+  String get stepTodo => 'Nog nie';
+
+  @override
+  String get startOllama => 'Begin Ollama';
+
+  @override
+  String get downloadModel => 'Laai model af';
+
+  @override
+  String get clientFirst => 'Kies eers die kliënt-ID-lêer in Instellings';
+
+  @override
+  String get goSettings => 'Gaan na Instellings';
+
+  @override
+  String get makeFolder => 'Maak gids';
+
+  @override
+  String get startWork => 'Begin werk';
+
+  @override
+  String get checkAgain => 'Kontroleer weer';
+
+  @override
+  String get outFolder => 'Gids vir gesnyde preke';
+
+  @override
+  String get introOutro => 'Intro en outro';
+
+  @override
+  String get introOutroHelp =>
+      'Video\'s wat voor en ná elke volle preek kom (nie op Shorts nie). Albei is opsioneel.';
+
+  @override
+  String get intro => 'Intro';
+
+  @override
+  String get outro => 'Outro';
+
+  @override
+  String get noClip => 'Geen';
+
+  @override
+  String get chooseFile => 'Kies…';
+
+  @override
+  String clipWithLength(String name, String length) {
+    return '$name ($length)';
+  }
+
+  @override
+  String clipUnreadable(String name) {
+    return '$name kan nie gelees word nie';
+  }
+
+  @override
+  String get noCaptions =>
+      'Geen onderskrifte nie, stel die begin en einde self';
+
+  @override
+  String get transcript => 'Transkripsie';
+
+  @override
+  String get prayer => 'Gebed';
+
+  @override
+  String get cutOut => 'Uitgeknip';
+
+  @override
+  String cutsTab(int n) {
+    return 'Uitgeknip ($n)';
+  }
+
+  @override
+  String shortsTab(int n) {
+    return 'Shorts ($n)';
+  }
+
+  @override
+  String cutN(int n) {
+    return 'Uitgeknip $n';
+  }
+
+  @override
+  String get addCut => 'Knip uit by speelkop';
+
+  @override
+  String get noCuts =>
+      'Niks uitgeknip nie. Speel na \'n stuk wat uit moet, soos \'n lied, en kies \"Knip uit by speelkop\".';
+
+  @override
+  String get startHere => 'Begin hier';
+
+  @override
+  String get endHere => 'Einde hier';
+
+  @override
+  String get playPause => 'Speel of pouse (spasie)';
+
+  @override
+  String get playFromStart => 'Speel van begin';
+
+  @override
+  String get playEnd => 'Speel die einde';
+
+  @override
+  String get previewCut => 'Voorskou van die snit';
+
+  @override
+  String get editorKeys =>
+      'I/O: begin/einde by speelkop; ←/→: hakie 1 s, Shift 0,1 s';
+
+  @override
+  String get undo => 'Ontdoen (Ctrl+Z)';
+
+  @override
+  String get redo => 'Herdoen (Ctrl+Shift+Z)';
+
+  @override
+  String get noShorts =>
+      'Nog geen Shorts nie. Speel na \'n sterk stuk van die preek en kies \"Voeg Short by\".';
+
+  @override
+  String get processLatest => 'Verwerk nuutste diens';
+
+  @override
+  String get filterNotUploaded => 'Nie opgelaai nie';
+
+  @override
+  String get importRecording => 'Voer opname in';
+
+  @override
+  String get importConfirm => 'Voer in';
+
+  @override
+  String get importing => 'Kopieer opname…';
+
+  @override
+  String get dropToImport => 'Los die video om dit as opname in te voer';
+
+  @override
+  String serviceDate(String date) {
+    return 'Diens op $date';
+  }
+
+  @override
+  String get updateOnYouTube => 'Werk op YouTube by';
+
+  @override
+  String updatedOnYouTube(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n video\'s op YouTube bygewerk',
+      one: '1 video op YouTube bygewerk',
+    );
+    return '$_temp0';
   }
 }

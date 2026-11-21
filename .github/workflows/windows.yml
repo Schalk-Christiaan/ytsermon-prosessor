@@ -1,0 +1,69 @@
+# @stelsel windows-workflow
+#   soort: bevel
+#   wanneer: push na main, tag v*, of met die hand (Actions → Windows → Run workflow)
+#   groep: installer | Installeerder
+#   skryf: artefak Setup (Setup.exe)
+#   doel: bou die Windows-app op windows-latest, sit vasgepende yt-dlp/ffmpeg/ffprobe/OllamaSetup by en maak Setup.exe met Inno Setup
+#   status: oop
+name: Windows
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: 3.47.9
+  YTDLP_VERSION: 2026.10.26
+  FFMPEG_VERSION: 9.0.2
+  OLLAMA_VERSION: v0.40.16
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Bou die app
+        run: |
+          flutter pub get
+          flutter build windows --release
+
+      - name: Laai yt-dlp, ffmpeg en Ollama af
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force deps | Out-Null
+          Invoke-WebRequest "https://github.com/yt-dlp/yt-dlp/releases/download/$env:YTDLP_VERSION/yt-dlp.exe" -OutFile deps/yt-dlp.exe
+          Invoke-WebRequest "https://github.com/GyanD/codexffmpeg/releases/download/$env:FFMPEG_VERSION/ffmpeg-$env:FFMPEG_VERSION-essentials_build.zip" -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg
+          Copy-Item ffmpeg/*/bin/ffmpeg.exe, ffmpeg/*/bin/ffprobe.exe deps/
+          Invoke-WebRequest "https://github.com/ollama/ollama/releases/download/$env:OLLAMA_VERSION/OllamaSetup.exe" -OutFile deps/OllamaSetup.exe
+          # Flutter's Windows runner needs the VC++ runtime next to the exe on a clean PC.
+          Copy-Item C:/Windows/System32/msvcp140.dll, C:/Windows/System32/vcruntime140.dll, C:/Windows/System32/vcruntime140_1.dll build/windows/x64/runner/Release/
+          deps/yt-dlp.exe --version
+          deps/ffmpeg.exe -version | Select-Object -First 1
+
+      - name: Maak Setup.exe
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+          $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([^+\s]+)').Matches[0].Groups[1].Value
+          & $iscc "/DAppVersion=$version" installer/setup.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Setup
+          path: installer/Output/Setup.exe
+          retention-days: 30

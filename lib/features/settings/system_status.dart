@@ -4,7 +4,7 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: wys yt-dlp/ffmpeg/ffprobe/Ollama met ikoon + woord (Gereed / Ontbreek); "Werk yt-dlp by"
-//   status: oop
+//   status: bou
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
@@ -25,6 +25,7 @@ Future<void> updateYtDlpSnack(BuildContext context) async {
   }
 }
 
+/// Shows yt-dlp, ffmpeg, ffprobe and Ollama as green or red, with the fix for each.
 class SystemStatus extends StatefulWidget {
   const SystemStatus({super.key});
 
@@ -51,7 +52,7 @@ class _SystemStatusState extends State<SystemStatus> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l.settingsSystem, style: th.textTheme.headlineMedium),
+          Text(l.settingsSystem, style: th.textTheme.headlineSmall),
           const SizedBox(height: 16),
           Expanded(
             child: FutureBuilder<List<ToolStatus>>(

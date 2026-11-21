@@ -129,12 +129,6 @@ abstract class L {
   /// **'Snitlyste'**
   String get navSnitlyste;
 
-  /// No description provided for @comingPhase3.
-  ///
-  /// In af, this message translates to:
-  /// **'Kom in fase 3'**
-  String get comingPhase3;
-
   /// No description provided for @settingsSystem.
   ///
   /// In af, this message translates to:
@@ -381,6 +375,24 @@ abstract class L {
   /// **'Sny'**
   String get taskCut;
 
+  /// No description provided for @taskAudio.
+  ///
+  /// In af, this message translates to:
+  /// **'Klank'**
+  String get taskAudio;
+
+  /// No description provided for @stageAudio.
+  ///
+  /// In af, this message translates to:
+  /// **'Maak klank…'**
+  String get stageAudio;
+
+  /// No description provided for @whatsappAudio.
+  ///
+  /// In af, this message translates to:
+  /// **'Klank vir WhatsApp'**
+  String get whatsappAudio;
+
   /// No description provided for @taskCancelled.
   ///
   /// In af, this message translates to:
@@ -590,6 +602,497 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Short {n}'**
   String shortPreview(int n);
+
+  /// No description provided for @taskUpload.
+  ///
+  /// In af, this message translates to:
+  /// **'Oplaai'**
+  String get taskUpload;
+
+  /// No description provided for @stageUpload.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai op…'**
+  String get stageUpload;
+
+  /// No description provided for @upload.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai op'**
+  String get upload;
+
+  /// No description provided for @openOnYouTube.
+  ///
+  /// In af, this message translates to:
+  /// **'Wys op YouTube'**
+  String get openOnYouTube;
+
+  /// No description provided for @quotaToday.
+  ///
+  /// In af, this message translates to:
+  /// **'Oplaaie vandag: {n} van {max}'**
+  String quotaToday(int n, int max);
+
+  /// No description provided for @navSettingsTitle.
+  ///
+  /// In af, this message translates to:
+  /// **'Instellings'**
+  String get navSettingsTitle;
+
+  /// No description provided for @settingsChannel.
+  ///
+  /// In af, this message translates to:
+  /// **'Kanaal'**
+  String get settingsChannel;
+
+  /// No description provided for @clientFile.
+  ///
+  /// In af, this message translates to:
+  /// **'Kliënt-ID-lêer (Google, Desktop app)'**
+  String get clientFile;
+
+  /// No description provided for @clientFileHelp.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai dit by Google Cloud af; sien die stappe in die handleiding.'**
+  String get clientFileHelp;
+
+  /// No description provided for @clientMissing.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen kliënt-ID-lêer nie'**
+  String get clientMissing;
+
+  /// No description provided for @notConnected.
+  ///
+  /// In af, this message translates to:
+  /// **'Nie gekoppel nie'**
+  String get notConnected;
+
+  /// No description provided for @connected.
+  ///
+  /// In af, this message translates to:
+  /// **'Gekoppel'**
+  String get connected;
+
+  /// No description provided for @connect.
+  ///
+  /// In af, this message translates to:
+  /// **'Koppel kanaal'**
+  String get connect;
+
+  /// No description provided for @disconnect.
+  ///
+  /// In af, this message translates to:
+  /// **'Ontkoppel'**
+  String get disconnect;
+
+  /// No description provided for @connectWaiting.
+  ///
+  /// In af, this message translates to:
+  /// **'Kies die kerk se rekening in die blaaier…'**
+  String get connectWaiting;
+
+  /// No description provided for @uploadPrivacy.
+  ///
+  /// In af, this message translates to:
+  /// **'Nuwe oplaaie is'**
+  String get uploadPrivacy;
+
+  /// No description provided for @privacyPrivate.
+  ///
+  /// In af, this message translates to:
+  /// **'Privaat'**
+  String get privacyPrivate;
+
+  /// No description provided for @privacyUnlisted.
+  ///
+  /// In af, this message translates to:
+  /// **'Ongelys'**
+  String get privacyUnlisted;
+
+  /// No description provided for @privacyPublic.
+  ///
+  /// In af, this message translates to:
+  /// **'Publiek'**
+  String get privacyPublic;
+
+  /// No description provided for @playlistRules.
+  ///
+  /// In af, this message translates to:
+  /// **'Reëls'**
+  String get playlistRules;
+
+  /// No description provided for @playlistRulesHelp.
+  ///
+  /// In af, this message translates to:
+  /// **'Die eerste reël wat by \'n preek pas, kies sy snitlys. Sleep om die volgorde te verander.'**
+  String get playlistRulesHelp;
+
+  /// No description provided for @ruleBook.
+  ///
+  /// In af, this message translates to:
+  /// **'Bybelboek uit die Skriflesing'**
+  String get ruleBook;
+
+  /// No description provided for @ruleYear.
+  ///
+  /// In af, this message translates to:
+  /// **'Jaar (\"Preke 2026\")'**
+  String get ruleYear;
+
+  /// No description provided for @playlistPreview.
+  ///
+  /// In af, this message translates to:
+  /// **'Voorskou'**
+  String get playlistPreview;
+
+  /// No description provided for @sermonCount.
+  ///
+  /// In af, this message translates to:
+  /// **'{n, plural, =1{1 preek} other{{n} preke}}'**
+  String sermonCount(int n);
+
+  /// No description provided for @noPlaylist.
+  ///
+  /// In af, this message translates to:
+  /// **'Sonder snitlys'**
+  String get noPlaylist;
+
+  /// No description provided for @template.
+  ///
+  /// In af, this message translates to:
+  /// **'Beskrywingsjabloon'**
+  String get template;
+
+  /// No description provided for @templatePreview.
+  ///
+  /// In af, this message translates to:
+  /// **'So lyk dit vir die nuutste preek'**
+  String get templatePreview;
+
+  /// Arguments are the literal tokens {tema} etc.
+  ///
+  /// In af, this message translates to:
+  /// **'{tema}, {skriflesing}, {datum} en {beskrywing} word ingevul.'**
+  String templateHelp(
+    String tema,
+    String skriflesing,
+    String datum,
+    String beskrywing,
+  );
+
+  /// No description provided for @navSetup.
+  ///
+  /// In af, this message translates to:
+  /// **'Opstelling'**
+  String get navSetup;
+
+  /// No description provided for @setupIntro.
+  ///
+  /// In af, this message translates to:
+  /// **'Vier dinge, een keer. Daarna begin die app by Preke.'**
+  String get setupIntro;
+
+  /// No description provided for @setupOllama.
+  ///
+  /// In af, this message translates to:
+  /// **'Ollama (die KI op hierdie rekenaar) loop'**
+  String get setupOllama;
+
+  /// No description provided for @setupModel.
+  ///
+  /// In af, this message translates to:
+  /// **'Die KI-model is afgelaai (5 GB)'**
+  String get setupModel;
+
+  /// No description provided for @setupChannel.
+  ///
+  /// In af, this message translates to:
+  /// **'Die kerk se YouTube-kanaal is gekoppel'**
+  String get setupChannel;
+
+  /// No description provided for @setupFolder.
+  ///
+  /// In af, this message translates to:
+  /// **'Gids vir gesnyde preke: {path}'**
+  String setupFolder(String path);
+
+  /// No description provided for @stepDone.
+  ///
+  /// In af, this message translates to:
+  /// **'Klaar'**
+  String get stepDone;
+
+  /// No description provided for @stepTodo.
+  ///
+  /// In af, this message translates to:
+  /// **'Nog nie'**
+  String get stepTodo;
+
+  /// No description provided for @startOllama.
+  ///
+  /// In af, this message translates to:
+  /// **'Begin Ollama'**
+  String get startOllama;
+
+  /// No description provided for @downloadModel.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai model af'**
+  String get downloadModel;
+
+  /// No description provided for @clientFirst.
+  ///
+  /// In af, this message translates to:
+  /// **'Kies eers die kliënt-ID-lêer in Instellings'**
+  String get clientFirst;
+
+  /// No description provided for @goSettings.
+  ///
+  /// In af, this message translates to:
+  /// **'Gaan na Instellings'**
+  String get goSettings;
+
+  /// No description provided for @makeFolder.
+  ///
+  /// In af, this message translates to:
+  /// **'Maak gids'**
+  String get makeFolder;
+
+  /// No description provided for @startWork.
+  ///
+  /// In af, this message translates to:
+  /// **'Begin werk'**
+  String get startWork;
+
+  /// No description provided for @checkAgain.
+  ///
+  /// In af, this message translates to:
+  /// **'Kontroleer weer'**
+  String get checkAgain;
+
+  /// No description provided for @outFolder.
+  ///
+  /// In af, this message translates to:
+  /// **'Gids vir gesnyde preke'**
+  String get outFolder;
+
+  /// No description provided for @introOutro.
+  ///
+  /// In af, this message translates to:
+  /// **'Intro en outro'**
+  String get introOutro;
+
+  /// No description provided for @introOutroHelp.
+  ///
+  /// In af, this message translates to:
+  /// **'Video\'s wat voor en ná elke volle preek kom (nie op Shorts nie). Albei is opsioneel.'**
+  String get introOutroHelp;
+
+  /// No description provided for @intro.
+  ///
+  /// In af, this message translates to:
+  /// **'Intro'**
+  String get intro;
+
+  /// No description provided for @outro.
+  ///
+  /// In af, this message translates to:
+  /// **'Outro'**
+  String get outro;
+
+  /// No description provided for @noClip.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen'**
+  String get noClip;
+
+  /// No description provided for @chooseFile.
+  ///
+  /// In af, this message translates to:
+  /// **'Kies…'**
+  String get chooseFile;
+
+  /// No description provided for @clipWithLength.
+  ///
+  /// In af, this message translates to:
+  /// **'{name} ({length})'**
+  String clipWithLength(String name, String length);
+
+  /// No description provided for @clipUnreadable.
+  ///
+  /// In af, this message translates to:
+  /// **'{name} kan nie gelees word nie'**
+  String clipUnreadable(String name);
+
+  /// No description provided for @noCaptions.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen onderskrifte nie, stel die begin en einde self'**
+  String get noCaptions;
+
+  /// No description provided for @transcript.
+  ///
+  /// In af, this message translates to:
+  /// **'Transkripsie'**
+  String get transcript;
+
+  /// No description provided for @prayer.
+  ///
+  /// In af, this message translates to:
+  /// **'Gebed'**
+  String get prayer;
+
+  /// No description provided for @cutOut.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitgeknip'**
+  String get cutOut;
+
+  /// No description provided for @cutsTab.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitgeknip ({n})'**
+  String cutsTab(int n);
+
+  /// No description provided for @shortsTab.
+  ///
+  /// In af, this message translates to:
+  /// **'Shorts ({n})'**
+  String shortsTab(int n);
+
+  /// No description provided for @cutN.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitgeknip {n}'**
+  String cutN(int n);
+
+  /// No description provided for @addCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Knip uit by speelkop'**
+  String get addCut;
+
+  /// No description provided for @noCuts.
+  ///
+  /// In af, this message translates to:
+  /// **'Niks uitgeknip nie. Speel na \'n stuk wat uit moet, soos \'n lied, en kies \"Knip uit by speelkop\".'**
+  String get noCuts;
+
+  /// No description provided for @startHere.
+  ///
+  /// In af, this message translates to:
+  /// **'Begin hier'**
+  String get startHere;
+
+  /// No description provided for @endHere.
+  ///
+  /// In af, this message translates to:
+  /// **'Einde hier'**
+  String get endHere;
+
+  /// No description provided for @playPause.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel of pouse (spasie)'**
+  String get playPause;
+
+  /// No description provided for @playFromStart.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel van begin'**
+  String get playFromStart;
+
+  /// No description provided for @playEnd.
+  ///
+  /// In af, this message translates to:
+  /// **'Speel die einde'**
+  String get playEnd;
+
+  /// No description provided for @previewCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Voorskou van die snit'**
+  String get previewCut;
+
+  /// No description provided for @editorKeys.
+  ///
+  /// In af, this message translates to:
+  /// **'I/O: begin/einde by speelkop; ←/→: hakie 1 s, Shift 0,1 s'**
+  String get editorKeys;
+
+  /// No description provided for @undo.
+  ///
+  /// In af, this message translates to:
+  /// **'Ontdoen (Ctrl+Z)'**
+  String get undo;
+
+  /// No description provided for @redo.
+  ///
+  /// In af, this message translates to:
+  /// **'Herdoen (Ctrl+Shift+Z)'**
+  String get redo;
+
+  /// No description provided for @noShorts.
+  ///
+  /// In af, this message translates to:
+  /// **'Nog geen Shorts nie. Speel na \'n sterk stuk van die preek en kies \"Voeg Short by\".'**
+  String get noShorts;
+
+  /// No description provided for @processLatest.
+  ///
+  /// In af, this message translates to:
+  /// **'Verwerk nuutste diens'**
+  String get processLatest;
+
+  /// No description provided for @filterNotUploaded.
+  ///
+  /// In af, this message translates to:
+  /// **'Nie opgelaai nie'**
+  String get filterNotUploaded;
+
+  /// No description provided for @importRecording.
+  ///
+  /// In af, this message translates to:
+  /// **'Voer opname in'**
+  String get importRecording;
+
+  /// No description provided for @importConfirm.
+  ///
+  /// In af, this message translates to:
+  /// **'Voer in'**
+  String get importConfirm;
+
+  /// No description provided for @importing.
+  ///
+  /// In af, this message translates to:
+  /// **'Kopieer opname…'**
+  String get importing;
+
+  /// No description provided for @dropToImport.
+  ///
+  /// In af, this message translates to:
+  /// **'Los die video om dit as opname in te voer'**
+  String get dropToImport;
+
+  /// No description provided for @serviceDate.
+  ///
+  /// In af, this message translates to:
+  /// **'Diens op {date}'**
+  String serviceDate(String date);
+
+  /// No description provided for @updateOnYouTube.
+  ///
+  /// In af, this message translates to:
+  /// **'Werk op YouTube by'**
+  String get updateOnYouTube;
+
+  /// No description provided for @updatedOnYouTube.
+  ///
+  /// In af, this message translates to:
+  /// **'{n, plural, =1{1 video op YouTube bygewerk} other{{n} video\'s op YouTube bygewerk}}'**
+  String updatedOnYouTube(int n);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

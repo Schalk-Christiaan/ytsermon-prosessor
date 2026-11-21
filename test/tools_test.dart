@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -15,6 +16,58 @@ void main() {
     dir.deleteSync(recursive: true);
   });
   runToolTests();
+
+  group('pullModel against a fake Ollama', () {
+    late HttpServer server;
+    late List<Map<String, Object>> lines;
+    setUp(() async {
+      HttpOverrides.global = null;
+      server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      server.listen((q) async {
+        final body = jsonDecode(await utf8.decodeStream(q));
+        expect(q.uri.path, '/api/pull');
+        expect(body['model'], kModel);
+        for (final l in lines) {
+          q.response.writeln(jsonEncode(l));
+        }
+        await q.response.close();
+      });
+    });
+    tearDown(() => server.close(force: true));
+    Uri base() => Uri.parse('http://127.0.0.1:${server.port}');
+
+    test('streams progress until success', () async {
+      lines = [
+        {'status': 'pulling manifest'},
+        {'status': 'pulling a', 'total': 200, 'completed': 50},
+        {'status': 'pulling a', 'total': 200, 'completed': 200},
+        {'status': 'success'},
+      ];
+      final seen = <double>[];
+      await pullModel(onProgress: seen.add, base: base());
+      expect(seen, [0.25, 1.0]);
+    });
+
+    test('an error line becomes an exception', () async {
+      lines = [
+        {'error': 'pull model manifest: file does not exist'},
+      ];
+      await expectLater(
+        pullModel(onProgress: (_) {}, base: base()),
+        throwsA(isA<HttpException>()),
+      );
+    });
+
+    test('no success line means it stopped early', () async {
+      lines = [
+        {'status': 'pulling a', 'total': 200, 'completed': 50},
+      ];
+      await expectLater(
+        pullModel(onProgress: (_) {}, base: base()),
+        throwsA(isA<HttpException>()),
+      );
+    });
+  });
 }
 
 void runToolTests() {

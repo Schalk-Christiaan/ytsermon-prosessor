@@ -3,8 +3,8 @@
 //   wanneer: by laai en sny
 //   groep: core | Kern
 //   skryf: —
-//   doel: werkmap, gebundelde lettertipe en uitsetgids
-//   status: oop
+//   doel: werkmap, gebundelde lettertipe en verstek-uitsetgids
+//   status: bou
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -26,5 +26,9 @@ File bundledFont() => File(
   ),
 );
 
-/// Output folder for cut sermons and Shorts.
-Directory outDir() => Directory('out').absolute;
+/// Default output folder: `<home>/Videos/Preke` (the Videos library on Windows).
+String defaultOutDir() => p.join(
+  Platform.environment['USERPROFILE'] ?? Platform.environment['HOME'] ?? '.',
+  'Videos',
+  'Preke',
+);

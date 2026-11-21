@@ -3,25 +3,32 @@
 //   wanneer: Hersien (rail)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: preek uit Preke → plan → hersien op die dienstydlyn (ongeldige Shorts rooi gemerk, kan korter gesleep word) → keur goed en sny
-//   status: oop
+//   doel: die preekredigeerder: preek uit Preke → plan → hakies, I/O, uitknip, transkripsie, Shorts, ontdoen (kortpaaie) → keur goed en sny
+//   status: bou
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../core/captions.dart';
+import '../../core/jobs.dart';
 import '../../core/models.dart';
 import '../../core/planner.dart';
+import '../../core/store.dart';
 import '../../l10n/app_localizations.dart';
 import 'review_controller.dart';
 import 'service_timeline.dart';
+import 'transcript.dart';
 
+/// Hersien, the sermon editor: video, transcript, timeline, cuts, Shorts and actions.
 class ReviewScreen extends StatefulWidget {
-  const ReviewScreen({super.key, required this.controller});
+  const ReviewScreen({super.key, required this.controller, this.onWork});
 
   /// Owned by the shell, which opens a sermon in it from Preke.
   final ReviewController controller;
+
+  /// Goes to Werk, where the cut runs and "Laai op" follows (V1: Oom Johan must not hunt for it).
+  final VoidCallback? onWork;
 
   @override
   State<ReviewScreen> createState() => _ReviewScreenState();
@@ -31,7 +38,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   late final _c = widget.controller;
   final _title = TextEditingController();
   final _desc = TextEditingController();
-  int _synced = -1;
+  (int, int)? _synced;
+  int _tab = 1;
 
   @override
   void dispose() {
@@ -41,8 +49,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   void _syncFields() {
-    if (_c.state == ReviewState.ready && _synced != _c.planRevision) {
-      _synced = _c.planRevision;
+    if (_c.state == ReviewState.ready &&
+        _synced != (_c.planRevision, _c.edits)) {
+      _synced = (_c.planRevision, _c.edits);
       _title.text = _c.plan!.title;
       _desc.text = _c.plan!.description;
     }
@@ -52,12 +61,20 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final m = ScaffoldMessenger.of(context);
     try {
       _c.approveAndCut();
-      m.showSnackBar(SnackBar(content: Text(l.cutQueued)));
+      m.showSnackBar(
+        SnackBar(
+          content: Text(l.cutQueued),
+          action: widget.onWork == null
+              ? null
+              : SnackBarAction(label: l.navWerk, onPressed: widget.onWork!),
+        ),
+      );
     } on Object catch (e) {
       m.showSnackBar(SnackBar(content: Text(l.errorGeneric(e.toString()))));
     }
   }
 
+  // stap: v4 5 Beplan weer | laat Ollama weer kies as die hele voorstel verkeerd is (bevestiging)
   Future<void> _replan(L l) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -149,58 +166,220 @@ class _ReviewScreenState extends State<ReviewScreen> {
     }
   }
 
+  /// Editor shortcuts; ignored while a text field has focus (typing "i" is text).
+  KeyEventResult _key(FocusNode _, KeyEvent e) {
+    if (e is KeyUpEvent) return KeyEventResult.ignored;
+    final focus = FocusManager.instance.primaryFocus?.context;
+    if (focus?.findAncestorWidgetOfExactType<EditableText>() != null) {
+      return KeyEventResult.ignored;
+    }
+    final k = HardwareKeyboard.instance;
+    final key = e.logicalKey;
+    if (k.isControlPressed && key == LogicalKeyboardKey.keyZ) {
+      k.isShiftPressed ? _c.redo() : _c.undo();
+    } else if (k.isControlPressed && key == LogicalKeyboardKey.keyY) {
+      _c.redo();
+    } else if (key == LogicalKeyboardKey.keyI) {
+      _c.markIn();
+    } else if (key == LogicalKeyboardKey.keyO) {
+      _c.markOut();
+    } else if (key == LogicalKeyboardKey.space) {
+      _c.playPause();
+    } else {
+      return KeyEventResult.ignored;
+    }
+    return KeyEventResult.handled;
+  }
+
+  // stap: v1 3 Hersien | kyk die hakies by die gebede, die titel, Skriflesing en beskrywing
+  // stap: v4 1 Sien die fout | die hakie staan nie by 'n gebed nie; gebedsmerkers wys waar die gebede is
   Widget _ready(L l, ThemeData th) {
     final plan = _c.plan!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _key,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _preview(th)),
+                const SizedBox(width: 24),
+                SizedBox(width: 400, child: _meta(l, th, plan)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          ServiceTimeline(
+            duration: _c.duration,
+            blocks: _c.blocks,
+            sermonStart: plan.sermonStart,
+            sermonEnd: plan.sermonEnd,
+            shorts: plan.shorts,
+            cuts: plan.cuts,
+            prayers: _c.prayerMarks,
+            faulty: {
+              for (final s in plan.shorts)
+                if (shortFault(s, plan) != null) s,
+            },
+            position: _c.position,
+            animateKey: _c.planRevision,
+            onSeek: _c.seek,
+            onSermonChanged: (s, e) => _c.setSermon(s, e, save: false),
+            onSermonCommit: _c.commit,
+            onNudge: (start, d) {
+              _c.nudge(start, d);
+              _c.seek(start ? plan.sermonStart : plan.sermonEnd);
+            },
+            onShortMove: (s, d) => _c.moveShort(s, d, save: false),
+          ),
+          _playBar(l, th),
+          const SizedBox(height: 8),
+          Row(
             children: [
-              Expanded(child: _preview(th)),
-              const SizedBox(width: 24),
-              SizedBox(width: 360, child: _meta(l, th, plan)),
+              SegmentedButton<int>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: 1,
+                    label: Text(l.shortsTab(plan.shorts.length)),
+                  ),
+                  ButtonSegment(
+                    value: 0,
+                    label: Text(l.cutsTab(plan.cuts.length)),
+                  ),
+                ],
+                selected: {_tab},
+                onSelectionChanged: (v) => setState(() => _tab = v.single),
+              ),
+              const SizedBox(width: 16),
+              _tab == 0
+                  ? TextButton.icon(
+                      onPressed: _c.addCut,
+                      icon: const Icon(Icons.content_cut_rounded),
+                      label: Text(l.addCut),
+                    )
+                  : TextButton.icon(
+                      onPressed: () => _c.addShort(l.newShortTitle),
+                      icon: const Icon(Icons.add_rounded),
+                      label: Text(l.addShort),
+                    ),
+              const Spacer(),
+              Flexible(
+                child: Text(
+                  l.editorKeys,
+                  textAlign: TextAlign.end,
+                  style: th.textTheme.labelMedium,
+                ),
+              ),
             ],
           ),
-        ),
-        const SizedBox(height: 16),
-        Text(l.serviceTimeline, style: th.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        ServiceTimeline(
-          duration: _c.duration,
-          blocks: _c.blocks,
-          sermonStart: plan.sermonStart,
-          sermonEnd: plan.sermonEnd,
-          shorts: plan.shorts,
-          faulty: {
-            for (final s in plan.shorts)
-              if (shortFault(s, plan) != null) s,
-          },
-          position: _c.position,
-          animateKey: _c.planRevision,
-          onSeek: _c.seek,
-          onSermonChanged: (s, e) => _c.setSermon(s, e, save: false),
-          onSermonCommit: _c.commit,
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Text(l.shorts, style: th.textTheme.titleMedium),
-            const SizedBox(width: 16),
-            TextButton.icon(
-              onPressed: () => _c.addShort(l.newShortTitle),
-              icon: const Icon(Icons.add_rounded),
-              label: Text(l.addShort),
-            ),
-          ],
-        ),
-        SizedBox(height: 96, child: _shorts(l, th, plan)),
-        const SizedBox(height: 12),
-        _actions(l, th),
-      ],
+          SizedBox(
+            height: 96,
+            child: _tab == 0 ? _cuts(l, th, plan) : _shorts(l, th, plan),
+          ),
+          const SizedBox(height: 12),
+          _actions(l, th),
+        ],
+      ),
     );
   }
+
+  Widget _playBar(L l, ThemeData th) => Row(
+    children: [
+      IconButton(
+        tooltip: l.playPause,
+        onPressed: _c.playPause,
+        icon: const Icon(Icons.play_arrow_rounded),
+      ),
+      ValueListenableBuilder<double>(
+        valueListenable: _c.position,
+        builder: (context, v, _) => Text(
+          formatTime(v),
+          style: th.textTheme.labelLarge?.copyWith(
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ),
+      const SizedBox(width: 16),
+      TextButton(
+        onPressed: () => _c.playFrom(true),
+        child: Text(l.playFromStart),
+      ),
+      TextButton(onPressed: () => _c.playFrom(false), child: Text(l.playEnd)),
+      TextButton.icon(
+        onPressed: _c.previewCut,
+        icon: Icon(
+          _c.previewing ? Icons.check_rounded : Icons.slideshow_rounded,
+        ),
+        label: Text(l.previewCut),
+      ),
+      const Spacer(),
+      IconButton(
+        tooltip: l.undo,
+        onPressed: _c.canUndo ? _c.undo : null,
+        icon: const Icon(Icons.undo_rounded),
+      ),
+      IconButton(
+        tooltip: l.redo,
+        onPressed: _c.canRedo ? _c.redo : null,
+        icon: const Icon(Icons.redo_rounded),
+      ),
+    ],
+  );
+
+  Widget _cuts(L l, ThemeData th, SermonPlan plan) => plan.cuts.isEmpty
+      ? Align(
+          alignment: Alignment.topLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(l.noCuts, style: th.textTheme.bodyMedium),
+          ),
+        )
+      : ListView.builder(
+          itemCount: plan.cuts.length,
+          itemExtent: 48,
+          itemBuilder: (context, i) {
+            final c = plan.cuts[i];
+            return Row(
+              children: [
+                SizedBox(
+                  width: 120,
+                  child: Text(l.cutN(i + 1), style: th.textTheme.titleSmall),
+                ),
+                SizedBox(
+                  width: 140,
+                  child: Text(
+                    l.shortRange(formatTime(c.start), formatTime(c.end)),
+                    style: th.textTheme.bodyMedium?.copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _c.setCutStart(c),
+                  child: Text(l.startHere),
+                ),
+                TextButton(
+                  onPressed: () => _c.setCutEnd(c),
+                  child: Text(l.endHere),
+                ),
+                TextButton(
+                  onPressed: () => _c.seek(c.start - 3),
+                  child: Text(l.play),
+                ),
+                const Spacer(),
+                IconButton(
+                  tooltip: l.remove,
+                  onPressed: () => _c.removeCut(c),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                ),
+              ],
+            );
+          },
+        );
 
   Widget _preview(ThemeData th) => Center(
     child: AspectRatio(
@@ -245,20 +424,26 @@ class _ReviewScreenState extends State<ReviewScreen> {
     ),
   );
 
+  // stap: v8 1 Maak reg | open die opgelaaide preek in Hersien en wysig titel of beskrywing
   Widget _meta(L l, ThemeData th, SermonPlan plan) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       TextField(
+        key: const ValueKey('title'),
         controller: _title,
+        minLines: 1,
+        maxLines: 2,
         maxLength: 100,
         maxLengthEnforcement: MaxLengthEnforcement.enforced,
         buildCounter:
             (c, {required currentLength, required isFocused, maxLength}) =>
-                Text(
-                  l.counter(currentLength, maxLength ?? 100),
-                  style: th.textTheme.labelMedium,
-                ),
-        style: th.textTheme.headlineSmall,
+                isFocused
+                ? Text(
+                    l.counter(currentLength, maxLength ?? 100),
+                    style: th.textTheme.labelMedium,
+                  )
+                : null,
+        style: th.textTheme.titleLarge,
         decoration: InputDecoration(
           labelText: l.title,
           border: const OutlineInputBorder(),
@@ -266,7 +451,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
         onChanged: _c.setTitle,
       ),
       const SizedBox(height: 12),
-      Expanded(
+      SizedBox(
+        height: 88,
         child: TextField(
           controller: _desc,
           maxLength: 5000,
@@ -275,16 +461,35 @@ class _ReviewScreenState extends State<ReviewScreen> {
           textAlignVertical: TextAlignVertical.top,
           buildCounter:
               (c, {required currentLength, required isFocused, maxLength}) =>
-                  Text(
-                    l.counter(currentLength, maxLength ?? 5000),
-                    style: th.textTheme.labelMedium,
-                  ),
+                  isFocused
+                  ? Text(
+                      l.counter(currentLength, maxLength ?? 5000),
+                      style: th.textTheme.labelMedium,
+                    )
+                  : null,
           decoration: InputDecoration(
             labelText: l.description,
             alignLabelWithHint: true,
             border: const OutlineInputBorder(),
           ),
           onChanged: _c.setDescription,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(l.transcript, style: th.textTheme.titleSmall),
+      const SizedBox(height: 4),
+      Expanded(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border.all(color: th.colorScheme.outlineVariant),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Transcript(
+            segments: _c.segments,
+            prayers: _c.prayerMarks,
+            position: _c.position,
+            onSeek: _c.seek,
+          ),
         ),
       ),
       const SizedBox(height: 4),
@@ -304,93 +509,160 @@ class _ReviewScreenState extends State<ReviewScreen> {
     ],
   );
 
-  Widget _shorts(L l, ThemeData th, SermonPlan plan) => ListView.builder(
-    itemCount: plan.shorts.length,
-    itemExtent: 48,
-    itemBuilder: (context, i) {
-      final s = plan.shorts[i];
-      final fault = shortFault(s, plan);
-      final secs = (s.end - s.start).round();
-      final reason = switch (fault) {
-        ShortFault.tooLong => l.shortTooLong(secs),
-        ShortFault.tooShort => l.shortTooShort(secs),
-        ShortFault.outside => l.shortOutside,
-        null => null,
-      };
-      final err = th.colorScheme.error;
-      return Row(
-        children: [
-          Container(
-            width: 27,
-            height: 44,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: fault == null ? th.colorScheme.tertiary : err,
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            alignment: Alignment.center,
-            child: Text((i + 1).toString(), style: th.textTheme.labelMedium),
+  Widget _shorts(L l, ThemeData th, SermonPlan plan) => plan.shorts.isEmpty
+      ? Align(
+          alignment: Alignment.topLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(l.noShorts, style: th.textTheme.bodyMedium),
           ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 140,
-            child: Text(
-              l.shortRange(formatTime(s.start), formatTime(s.end)),
-              style: th.textTheme.bodyMedium?.copyWith(
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-          ),
-          Expanded(child: Text(s.title, overflow: TextOverflow.ellipsis)),
-          if (reason != null) ...[
-            Icon(Icons.error_outline_rounded, size: 18, color: err),
-            const SizedBox(width: 4),
-            Text(reason, style: TextStyle(color: err)),
-          ],
-          SizedBox(
-            width: 160,
-            child: Slider(
-              semanticFormatterCallback: (_) => l.shortLength(i + 1),
-              min: 20,
-              max: secs > 120 ? secs.toDouble() : 120,
-              value: secs.clamp(20, 100000).toDouble(),
-              onChanged: (v) => _c.setShortEnd(s, s.start + v, save: false),
-              onChangeEnd: (_) => _c.commit(),
-            ),
-          ),
-          TextButton(
-            onPressed: () => _c.seek(s.start),
-            child: Text(l.shortPreview(i + 1)),
-          ),
-          IconButton(
-            tooltip: l.remove,
-            onPressed: () => _c.removeShort(s),
-            icon: const Icon(Icons.delete_outline_rounded),
-          ),
-        ],
-      );
-    },
-  );
+        )
+      : ListView.builder(
+          itemCount: plan.shorts.length,
+          itemExtent: 48,
+          itemBuilder: (context, i) {
+            final s = plan.shorts[i];
+            final fault = shortFault(s, plan);
+            final secs = (s.end - s.start).round();
+            final reason = switch (fault) {
+              ShortFault.tooLong => l.shortTooLong(secs),
+              ShortFault.tooShort => l.shortTooShort(secs),
+              ShortFault.outside => l.shortOutside,
+              null => null,
+            };
+            final err = th.colorScheme.error;
+            return Row(
+              children: [
+                Container(
+                  width: 27,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: fault == null ? th.colorScheme.tertiary : err,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    (i + 1).toString(),
+                    style: th.textTheme.labelMedium,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 140,
+                  child: Text(
+                    l.shortRange(formatTime(s.start), formatTime(s.end)),
+                    style: th.textTheme.bodyMedium?.copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: TextFormField(
+                    key: ValueKey(('short', i, _c.planRevision, _c.edits)),
+                    initialValue: s.title,
+                    style: th.textTheme.bodyMedium,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: l.shortLength(i + 1),
+                      border: InputBorder.none,
+                    ),
+                    onChanged: (v) => _c.setShortTitle(s, v),
+                  ),
+                ),
+                if (reason != null) ...[
+                  Icon(Icons.error_outline_rounded, size: 18, color: err),
+                  const SizedBox(width: 4),
+                  Text(reason, style: TextStyle(color: err)),
+                ],
+                SizedBox(
+                  width: 160,
+                  child: Slider(
+                    semanticFormatterCallback: (_) => l.shortLength(i + 1),
+                    min: 20,
+                    max: secs > 120 ? secs.toDouble() : 120,
+                    value: secs.clamp(20, 100000).toDouble(),
+                    onChanged: (v) =>
+                        _c.setShortEnd(s, s.start + v, save: false),
+                    onChangeEnd: (_) => _c.commit(),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _c.setShortStart(s),
+                  child: Text(l.startHere),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _c.seek(s.start);
+                    _c.playPause();
+                  },
+                  child: Text(l.play),
+                ),
+                IconButton(
+                  tooltip: l.remove,
+                  onPressed: () => _c.removeShort(s),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                ),
+              ],
+            );
+          },
+        );
 
   Widget _actions(L l, ThemeData th) => Row(
     mainAxisAlignment: MainAxisAlignment.end,
     children: [
       TextButton(onPressed: _c.skip, child: Text(l.skip)),
       const SizedBox(width: 12),
-      OutlinedButton(onPressed: () => _replan(l), child: Text(l.replan)),
-      const SizedBox(width: 12),
+      // A recording without captions has nothing for the LLM to plan from.
+      if (_c.segments.isNotEmpty) ...[
+        OutlinedButton(onPressed: () => _replan(l), child: Text(l.replan)),
+        const SizedBox(width: 12),
+      ],
       if (_c.hasShortFault) ...[
         Text(l.approveBlocked, style: TextStyle(color: th.colorScheme.error)),
         const SizedBox(width: 12),
       ],
-      FilledButton(
-        onPressed: _c.hasShortFault ? null : () => _cut(l),
-        child: Text(l.approveAndCut),
-      ),
+      if (_uploaded) ...[
+        OutlinedButton(
+          onPressed: _c.hasShortFault ? null : () => _cut(l),
+          child: Text(l.approveAndCut),
+        ),
+        const SizedBox(width: 12),
+        FilledButton.icon(
+          onPressed: _c.updating ? null : () => _push(l),
+          icon: _c.updating
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.cloud_upload_rounded),
+          label: Text(l.updateOnYouTube),
+        ),
+      ] else
+        FilledButton(
+          onPressed: _c.hasShortFault ? null : () => _cut(l),
+          child: Text(l.approveAndCut),
+        ),
     ],
   );
+
+  bool get _uploaded =>
+      _c.updateYouTube != null && _c.sermon?.state == SermonState.opgelaai;
+
+  // stap: v8 2 Werk op YouTube by | knoppie verskyn net vir 'n opgelaaide preek; strook sê hoeveel video's
+  // tak: geen internet of video weg → strook met friendlyError
+  /// V8: a mistake after upload; the edited title and description go to YouTube without a new upload.
+  Future<void> _push(L l) async {
+    final m = ScaffoldMessenger.of(context);
+    try {
+      final n = await _c.pushToYouTube();
+      m.showSnackBar(SnackBar(content: Text(l.updatedOnYouTube(n))));
+    } on Object catch (e) {
+      m.showSnackBar(SnackBar(content: Text(friendlyError(e))));
+    }
+  }
 }
 
 class _Loading extends StatelessWidget {

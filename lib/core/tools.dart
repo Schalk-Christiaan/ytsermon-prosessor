@@ -3,8 +3,8 @@
 //   wanneer: by oopmaak van Instellings en voor elke aflaai/KI-oproep
 //   groep: core | Kern
 //   skryf: —
-//   doel: vind yt-dlp/ffmpeg/ffprobe (PATH of langs die exe), loop eksterne prosesse (runTool) en toets Ollama + qwen3:8b
-//   status: oop
+//   doel: vind yt-dlp/ffmpeg/ffprobe/ollama (langs die exe, Ollama se gids, PATH), loop eksterne prosesse (runTool), toets Ollama + qwen3:8b, laai die model af, begin Ollama
+//   status: bou
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -23,8 +23,11 @@ Uri ollamaBase() {
 /// Finds [name] next to the app executable first, then on PATH; null if absent.
 String? findExecutable(String name, {String? path, String? exeDir}) {
   final file = Platform.isWindows ? '$name.exe' : name;
+  final local = Platform.environment['LOCALAPPDATA'];
   final dirs = [
     exeDir ?? p.dirname(Platform.resolvedExecutable),
+    // Ollama's per-user install; its PATH entry is missing until the next login.
+    if (path == null && local != null) p.join(local, 'Programs', 'Ollama'),
     ...(path ?? Platform.environment['PATH'] ?? '')
         .split(Platform.isWindows ? ';' : ':')
         .where((d) => d.isNotEmpty),
@@ -150,6 +153,7 @@ Future<dynamic> _getJson(String endpoint) async {
   }
 }
 
+/// Checks that Ollama answers and has the model pulled.
 Future<ToolStatus> probeOllama({String model = kModel}) async {
   try {
     final v = (await _getJson('/api/version'))['version'] as String;
@@ -163,6 +167,42 @@ Future<ToolStatus> probeOllama({String model = kModel}) async {
   } on Exception {
     return const ToolStatus('ollama', false, 'notRunning');
   }
+}
+
+/// Downloads [model] through Ollama's `/api/pull`; [onProgress] gets 0..1 per layer.
+Future<void> pullModel({
+  required void Function(double) onProgress,
+  String model = kModel,
+  Uri? base,
+}) async {
+  final c = HttpClient();
+  try {
+    final req = await c.postUrl((base ?? ollamaBase()).resolve('/api/pull'));
+    req.headers.contentType = ContentType.json;
+    req.write(jsonEncode({'model': model, 'stream': true}));
+    final res = await req.close();
+    await for (final line
+        in res.transform(utf8.decoder).transform(const LineSplitter())) {
+      if (line.trim().isEmpty) continue;
+      final j = jsonDecode(line) as Map<String, dynamic>;
+      if (j['error'] != null) {
+        throw HttpException('Model aflaai het misluk: ${j['error']}');
+      }
+      if (j['status'] == 'success') return;
+      final total = j['total'] as num?, done = j['completed'] as num?;
+      if (total != null && total > 0 && done != null) onProgress(done / total);
+    }
+    throw const HttpException('Model aflaai het voortydig gestop.');
+  } finally {
+    c.close(force: true);
+  }
+}
+
+/// Starts `ollama serve` detached (it keeps running after the app closes).
+Future<void> startOllama() async {
+  final exe = findExecutable('ollama');
+  if (exe == null) throw StateError('ollama ontbreek');
+  await Process.start(exe, ['serve'], mode: ProcessStartMode.detached);
 }
 
 /// Probes yt-dlp, ffmpeg, ffprobe and Ollama (with [kModel]); order is the display order.

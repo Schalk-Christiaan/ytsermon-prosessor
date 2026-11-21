@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: <werkmap>/<id>/sermon.json | atomies (.tmp, dan hernoem)
 //   doel: elke diens as Sermon met toestand wat herbegin oorleef; voeg die kanaallys by
-//   status: oop
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 
@@ -21,6 +21,15 @@ String? scriptureFrom(String description) => RegExp(
   caseSensitive: false,
 ).firstMatch(description)?.group(1)?.trim();
 
+/// Writes [json] to [f] atomically (`.tmp`, then rename), creating the folder.
+void writeJson(File f, Object? json) {
+  f.parent.createSync(recursive: true);
+  File('${f.path}.tmp')
+    ..writeAsStringSync(jsonEncode(json))
+    ..renameSync(f.path);
+}
+
+/// Where a sermon is in its life: new, planned, approved, cut, uploaded, failed or skipped.
 enum SermonState { nuut, beplan, goedgekeur, gesny, opgelaai, fout, oorgeslaan }
 
 /// One service on the channel with its processing state.
@@ -34,6 +43,8 @@ class Sermon {
     this.state = SermonState.nuut,
     this.error,
     this.outputs = const [],
+    this.uploads = const {},
+    this.playlist,
     this.order = _unlisted,
   });
   static const _unlisted = 1 << 30;
@@ -51,6 +62,12 @@ class Sermon {
   String? error;
   List<String> outputs;
 
+  /// Uploaded output file → YouTube video ID (a retried upload job skips these).
+  Map<String, String> uploads;
+
+  /// The playlist the uploaded sermon was added to.
+  String? playlist;
+
   /// Position in the channel list (0 = newest).
   int order;
 
@@ -63,6 +80,8 @@ class Sermon {
     'state': state.name,
     'error': error,
     'outputs': outputs,
+    'uploads': uploads,
+    'playlist': playlist,
     'order': order,
   };
 
@@ -75,6 +94,8 @@ class Sermon {
     state: SermonState.values.byName(j['state'] as String),
     error: j['error'] as String?,
     outputs: [...?(j['outputs'] as List?)?.cast<String>()],
+    uploads: {...?(j['uploads'] as Map?)?.cast<String, String>()},
+    playlist: j['playlist'] as String?,
     order: j['order'] as int? ?? _unlisted,
   );
 }
@@ -131,10 +152,7 @@ class SermonStore extends ChangeNotifier {
 
   void _write(Sermon s) {
     _byId[s.id] = s;
-    final f = _file(s.id)..parent.createSync(recursive: true);
-    final tmp = File('${f.path}.tmp')
-      ..writeAsStringSync(jsonEncode(s.toJson()));
-    tmp.renameSync(f.path);
+    writeJson(_file(s.id), s.toJson());
   }
 
   /// Adds the listed channel entries: new IDs become `nuut` (returned), known ones keep their state.

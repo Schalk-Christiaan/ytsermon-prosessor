@@ -1,10 +1,11 @@
 // @stelsel cutter
 //   soort: module
-//   wanneer: by 'Keur goed en sny'
+//   wanneer: by 'Keur goed en sny' en 'Klank vir WhatsApp'
 //   groep: core | Kern
 //   skryf: out/
-//   doel: sny die preek (stroomkopie) en Shorts (9:16 met ingebrande onderskrif) met ffmpeg
-//   status: oop
+//   doel: sny die preek (stroomkopie, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif) en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg
+//   status: bou
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -17,9 +18,9 @@ String _sec(double s) => s.toStringAsFixed(3);
 
 String _clean(String s) => s.replaceAll(RegExp(r'[<>:"/\\|?*]'), '').trim();
 
-/// `JJJJ-MM-DD Titel.mp4` with characters illegal on Windows removed.
-String sermonFileName(String date, String title) =>
-    '$date ${_clean(title)}.mp4';
+/// `JJJJ-MM-DD Titel.<ext>` with characters illegal on Windows removed.
+String sermonFileName(String date, String title, {String ext = 'mp4'}) =>
+    '$date ${_clean(title)}.$ext';
 
 /// ffmpeg arguments for a keyframe-accurate-enough stream copy of [start, end].
 List<String> sermonArgs(String video, double start, double end, String out) => [
@@ -70,6 +71,133 @@ List<String> shortArgs(
   out,
 ];
 
+/// ffmpeg arguments for the WhatsApp audio: mono mp3 at 64 kbps (~20 MB per 40 min) with an ID3 title.
+List<String> audioArgs(String input, String out, String title) => [
+  '-y',
+  '-i',
+  input,
+  '-vn',
+  '-ac',
+  '1',
+  '-c:a',
+  'libmp3lame',
+  '-b:a',
+  '64k',
+  '-id3v2_version',
+  '3',
+  '-metadata',
+  'title=$title',
+  '-nostats',
+  '-progress',
+  'pipe:1',
+  out,
+];
+
+/// What ffprobe says about a video file (the join needs size, frame rate and whether there is sound).
+class MediaInfo {
+  const MediaInfo(
+    this.width,
+    this.height,
+    this.rate,
+    this.duration,
+    this.hasAudio,
+  );
+  final int width, height;
+
+  /// ffprobe's `r_frame_rate`, e.g. `30000/1001`.
+  final String rate;
+  final double duration;
+  final bool hasAudio;
+}
+
+/// Reads [f] with ffprobe.
+Future<MediaInfo> probeMedia(File f) async {
+  final out = StringBuffer();
+  await runTool('ffprobe', [
+    '-v',
+    'error',
+    '-show_entries',
+    'stream=codec_type,width,height,r_frame_rate:format=duration',
+    '-of',
+    'json',
+    f.path,
+  ], onLine: out.writeln);
+  final j = jsonDecode(out.toString()) as Map<String, dynamic>;
+  final streams = (j['streams'] as List).cast<Map<String, dynamic>>();
+  final v = streams.firstWhere((s) => s['codec_type'] == 'video');
+  return MediaInfo(
+    v['width'] as int,
+    v['height'] as int,
+    v['r_frame_rate'] as String,
+    double.parse(j['format']['duration'] as String),
+    streams.any((s) => s['codec_type'] == 'audio'),
+  );
+}
+
+/// One piece of a joined cut: a whole clip (intro/outro) or a [start, end] part of the service video.
+typedef JoinPiece = ({String path, MediaInfo info, Span? part});
+
+/// ffmpeg arguments that join [pieces] into one file the size and frame rate of [target]: each piece
+/// is scaled and padded (no stretching), a piece without sound gets silence, then `concat`.
+List<String> joinArgs(List<JoinPiece> pieces, MediaInfo target, String out) {
+  final inputs = <String>[], filters = <String>[], labels = <String>[];
+  var n = 0;
+  for (final (k, pc) in pieces.indexed) {
+    final part = pc.part;
+    final secs = part == null ? pc.info.duration : part.end - part.start;
+    if (part != null)
+      inputs.addAll(['-ss', _sec(part.start), '-to', _sec(part.end)]);
+    inputs.addAll(['-i', pc.path]);
+    final vi = n++;
+    var ai = vi;
+    if (!pc.info.hasAudio) {
+      inputs.addAll([
+        '-f',
+        'lavfi',
+        '-t',
+        _sec(secs),
+        '-i',
+        'anullsrc=r=48000:cl=stereo',
+      ]);
+      ai = n++;
+    }
+    final w = target.width, h = target.height;
+    filters.add(
+      '[$vi:v]scale=$w:$h:force_original_aspect_ratio=decrease,'
+      'pad=$w:$h:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=${target.rate},format=yuv420p[v$k]',
+    );
+    filters.add('[$ai:a]aresample=48000,aformat=channel_layouts=stereo[a$k]');
+    labels.add('[v$k][a$k]');
+  }
+  filters.add('${labels.join()}concat=n=${pieces.length}:v=1:a=1[v][a]');
+  return [
+    '-y',
+    ...inputs,
+    '-filter_complex',
+    filters.join(';'),
+    '-map',
+    '[v]',
+    '-map',
+    '[a]',
+    '-c:v',
+    'libx264',
+    '-preset',
+    'veryfast',
+    '-crf',
+    '20',
+    '-c:a',
+    'aac',
+    '-b:a',
+    '160k',
+    '-movflags',
+    '+faststart',
+    '-nostats',
+    '-progress',
+    'pipe:1',
+    out,
+  ];
+}
+
 /// Seconds from an ffmpeg `-progress` line `out_time_us=…`; null for other lines.
 double? parseFfmpegProgress(String line) {
   final m = RegExp(r'^out_time_us=(\d+)$').firstMatch(line);
@@ -97,19 +225,47 @@ Future<void> _ffmpeg(
   },
 );
 
-/// Cuts the sermon (stream copy) into [outDir]; returns the file.
+/// Cuts the sermon into [outDir]; returns the file. One part and no clips = stream copy (seconds);
+/// cut-out pieces or an [intro]/[outro] re-encode everything into one file via [joinArgs].
 Future<File> cutSermon(
   File video,
   SermonPlan plan,
   String date,
   Directory outDir, {
+  File? intro,
+  File? outro,
+  void Function(double frac)? onProgress,
   Future<void>? cancel,
   void Function(String line)? log,
 }) async {
   outDir.createSync(recursive: true);
   final out = p.join(outDir.path, sermonFileName(date, plan.title));
+  final parts = plan.parts();
+  if (parts.length == 1 && intro == null && outro == null) {
+    await _ffmpeg(
+      sermonArgs(video.path, parts.single.start, parts.single.end, out),
+      cancel: cancel,
+      log: log,
+    );
+    return File(out);
+  }
+  final main = await probeMedia(video);
+  Future<JoinPiece> clip(File f) async =>
+      (path: f.path, info: await probeMedia(f), part: null);
+  final pieces = <JoinPiece>[
+    if (intro != null) await clip(intro),
+    for (final s in parts) (path: video.path, info: main, part: s),
+    if (outro != null) await clip(outro),
+  ];
   await _ffmpeg(
-    sermonArgs(video.path, plan.sermonStart, plan.sermonEnd, out),
+    joinArgs(pieces, main, out),
+    duration: pieces.fold<double>(
+      0,
+      (a, pc) =>
+          a +
+          (pc.part == null ? pc.info.duration : pc.part!.end - pc.part!.start),
+    ),
+    onProgress: onProgress,
     cancel: cancel,
     log: log,
   );
@@ -145,6 +301,29 @@ Future<File> cutShort(
     shortArgs(p.basename(video.path), srt, s.start, s.end, out),
     cwd: work.path,
     duration: s.end - s.start,
+    onProgress: onProgress,
+    cancel: cancel,
+    log: log,
+  );
+  return File(out);
+}
+
+/// Exports [sermon] (the cut mp4) as `JJJJ-MM-DD Tema.mp3` in [outDir] for WhatsApp.
+Future<File> cutAudio(
+  File sermon,
+  String title,
+  String date,
+  Directory outDir, {
+  double? duration,
+  void Function(double frac)? onProgress,
+  Future<void>? cancel,
+  void Function(String line)? log,
+}) async {
+  outDir.createSync(recursive: true);
+  final out = p.join(outDir.path, sermonFileName(date, title, ext: 'mp3'));
+  await _ffmpeg(
+    audioArgs(sermon.path, out, title),
+    duration: duration,
     onProgress: onProgress,
     cancel: cancel,
     log: log,
