@@ -3,7 +3,7 @@
 //   wanneer: ná fetchMeta
 //   groep: core | Kern
 //   skryf: —
-//   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI, kandidaat-gebede op woordvlak (merkwoord tot Amen-woord, vir findBounds), SRT
+//   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI, spraakblokke (pouse/Amen/musiek), kandidaat-gebede op woordvlak (merkwoord tot Amen-woord, vir findBounds), SRT
 //   status: bou
 import 'dart:convert';
 import 'dart:math' as math;
@@ -214,5 +214,58 @@ List<Prayer> prayers(List<Segment> segs) {
       from = i;
     }
   }
+  return out;
+}
+
+/// Longest spoken length of one word; a word ends where the next starts, so a pause shows only as a long gap.
+const kMaxWordLength = 1.0;
+
+/// A gap of this many seconds between one word's spoken end ([kMaxWordLength] at most) and the next word's
+/// start ends a block. Real pauses are shorter than the gap: 2 s gave 87 blocks for YWz5gf0onjk, 3 s gives ~39.
+const kBlockPause = 3.0;
+
+double _spokenEnd(Word w) =>
+    w.start +
+    math.min(w.end - w.start, isAmen(w.text) ? kAmenLength : kMaxWordLength);
+
+// stap: diensindeling 2 Spraakblokke | die woorde word gesny by musiek, 'n pouse van 2 s en "Amen"; elke blok kry later 'n etiket
+/// Cuts the spoken words into blocks: a new block after a pause of [kBlockPause] seconds, after an "Amen",
+/// and around every music stretch of [sound] (words inside music are dropped: that is singing).
+/// Caption sound tags (`[geproes]`) are no words.
+List<Block> blocks(List<Segment> segs, List<TimeBlock> sound) {
+  final music = [
+    for (final b in sound)
+      if (b.kind == SegmentKind.music) b,
+  ];
+  final out = <Block>[];
+  var cur = <Word>[];
+  void close() {
+    if (cur.isNotEmpty) out.add(Block(cur, _spokenEnd(cur.last)));
+    cur = [];
+  }
+
+  for (final s in segs) {
+    if (s.kind == SegmentKind.music) continue;
+    var inTag = false;
+    for (final w in wordsOf(s)) {
+      if (w.text.startsWith('[')) inTag = true;
+      final tag = inTag;
+      if (w.text.endsWith(']')) inTag = false;
+      if (tag) continue;
+      if (music.any((b) => w.start >= b.start && w.start < b.end)) {
+        close();
+        continue;
+      }
+      if (cur.isNotEmpty) {
+        final pause = w.start - _spokenEnd(cur.last) >= kBlockPause;
+        final crosses = music.any(
+          (b) => b.start >= cur.last.start && b.start < w.start,
+        );
+        if (pause || crosses || isAmen(cur.last.text)) close();
+      }
+      cur.add(w);
+    }
+  }
+  close();
   return out;
 }

@@ -1,10 +1,11 @@
 import 'dart:math' as math;
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/sound.dart';
+
+import 'fixture_sermons.dart';
 
 /// Expected music stretches per service from navorsing/spektrogram-prototipe/segmente.txt.
 Map<String, List<(int, int)>> _expected() {
@@ -34,24 +35,12 @@ Map<String, List<(int, int)>> _expected() {
   return out;
 }
 
-SoundFeatures _load(String id) {
-  final j = jsonDecode(
-    utf8.decode(
-      gzip.decode(File('test/fixtures/sound/$id.json.gz').readAsBytesSync()),
-    ),
-  ) as Map<String, dynamic>;
-  List<double> f(String k) => [
-    for (final v in j[k] as List) (v as num).toDouble(),
-  ];
-  return SoundFeatures(f('db'), f('lef'), f('flat'));
-}
-
 void main() {
   test('sound.json round trip: loadSound reads what saveSound wrote', () {
     final d = Directory.systemTemp.createTempSync('snd');
     addTearDown(() => d.deleteSync(recursive: true));
     expect(loadSound(d), isEmpty);
-    final b = classify(_load('YWz5gf0onjk'));
+    final b = classify(fixtureSoundFeatures('YWz5gf0onjk'));
     saveSound(d, b);
     final r = loadSound(d);
     expect(r.length, b.length);
@@ -63,7 +52,7 @@ void main() {
 
   test('YWz5gf0onjk music at 11:40-14:44, 22:10-23:30, 56:34-60:52', () {
     final music = [
-      for (final b in classify(_load('YWz5gf0onjk')))
+      for (final b in classify(fixtureSoundFeatures('YWz5gf0onjk')))
         if (b.kind == SegmentKind.music) (b.start, b.end),
     ];
     for (final w in [(700, 884), (1330, 1410), (3394, 3652)]) {
@@ -119,7 +108,7 @@ void main() {
   for (final e in _expected().entries) {
     test('classify ${e.key}: every music stretch within 2 s', () {
       final music = [
-        for (final b in classify(_load(e.key)))
+        for (final b in classify(fixtureSoundFeatures(e.key)))
           if (b.kind == SegmentKind.music) (b.start.round(), b.end.round()),
       ];
       expect(music.length, e.value.length, reason: '$music');

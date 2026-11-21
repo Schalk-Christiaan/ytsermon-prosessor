@@ -7,6 +7,7 @@ import 'dart:io';
 
 import 'package:preekverwerker/core/captions.dart';
 import 'package:preekverwerker/core/models.dart';
+import 'package:preekverwerker/core/sound.dart';
 
 typedef FixtureSermon = ({
   String id,
@@ -36,3 +37,19 @@ List<FixtureSermon> fixtureSermons() => [
       ),
     ),
 ];
+
+/// The saved per-second sound features of video [id] (`test/fixtures/sound/<id>.json.gz`).
+SoundFeatures fixtureSoundFeatures(String id) {
+  final j = jsonDecode(
+    utf8.decode(
+      gzip.decode(File('test/fixtures/sound/$id.json.gz').readAsBytesSync()),
+    ),
+  ) as Map<String, dynamic>;
+  List<double> f(String k) => [
+    for (final v in j[k] as List) (v as num).toDouble(),
+  ];
+  return SoundFeatures(f('db'), f('lef'), f('flat'));
+}
+
+/// The classified sound blocks of video [id].
+List<TimeBlock> fixtureSound(String id) => classify(fixtureSoundFeatures(id));

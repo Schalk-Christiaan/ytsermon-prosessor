@@ -42,6 +42,33 @@ class TimeBlock {
   final SegmentKind kind;
 }
 
+/// What a speech block is, as named by the AI (`ander` = anything else or unknown).
+enum BlockLabel {
+  gebed,
+  preek,
+  skriflesing,
+  geloofsbelydenis,
+  seengroet,
+  wet,
+  aankondiging,
+  kollekte,
+  seen,
+  ander,
+}
+
+/// One spoken stretch of the service: words without a long pause, a music stretch or an "Amen" inside.
+/// [label] is null until the AI has named it.
+class Block {
+  Block(this.words, this.end, {this.label});
+  final List<Word> words;
+
+  /// End of the last word as spoken: an "Amen" counts `kAmenLength`, any other word at most `kMaxWordLength`.
+  final double end;
+  BlockLabel? label;
+  double get start => words.first.start;
+  String get text => words.map((w) => w.text).join(' ');
+}
+
 /// A candidate prayer in the service: from its first cue to the end of its "Amen" word.
 class Prayer {
   const Prayer(this.start, this.end);
