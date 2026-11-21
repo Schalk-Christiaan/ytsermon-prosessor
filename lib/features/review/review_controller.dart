@@ -496,6 +496,7 @@ class ReviewController extends ChangeNotifier {
 
   /// Marks the sermon `goedgekeur` and queues the cut job (it downloads the video itself).
   void approveAndCut() {
+    plan!.doubt = null; // approving is the human check the doubt asked for
     _save();
     store.save(sermon!..state = SermonState.goedgekeur);
     jobs.enqueue(id!, JobKind.cut);

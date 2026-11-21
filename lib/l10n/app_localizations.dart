@@ -507,6 +507,36 @@ abstract class L {
   /// **'Beplan weer'**
   String get replan;
 
+  /// No description provided for @doubtNoSermon.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen preek van 15 minute of langer gevind nie; die hele diens is gekies. Stel die grense self.'**
+  String get doubtNoSermon;
+
+  /// No description provided for @doubtNoPrayerBefore.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen gebed voor die preek gevind nie; die snit begin by die preek self. Kontroleer die begin.'**
+  String get doubtNoPrayerBefore;
+
+  /// No description provided for @doubtNoPrayerAfter.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen gebed ná die preek gevind nie; die snit eindig by die preek self. Kontroleer die einde.'**
+  String get doubtNoPrayerAfter;
+
+  /// No description provided for @doubtTwoSermons.
+  ///
+  /// In af, this message translates to:
+  /// **'Twee lang stukke sonder \"Amen\"; dalk twee preke. Kontroleer albei grense.'**
+  String get doubtTwoSermons;
+
+  /// No description provided for @goToBoundary.
+  ///
+  /// In af, this message translates to:
+  /// **'Gaan na die grens'**
+  String get goToBoundary;
+
   /// No description provided for @skip.
   ///
   /// In af, this message translates to:

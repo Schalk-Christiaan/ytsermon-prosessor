@@ -212,6 +212,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          if (plan.doubt != null) ...[
+            _doubt(l, th, plan.doubt!),
+            const SizedBox(height: 12),
+          ],
           ServiceTimeline(
             duration: _c.duration,
             blocks: _c.blocks,
@@ -328,6 +332,40 @@ class _ReviewScreenState extends State<ReviewScreen> {
         icon: const Icon(Icons.redo_rounded),
       ),
     ],
+  );
+
+  /// Why the code is unsure of the cut, with a jump to the boundary to check.
+  Widget _doubt(L l, ThemeData th, BoundsDoubt d) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    decoration: BoxDecoration(
+      color: th.colorScheme.tertiaryContainer,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      children: [
+        Icon(
+          Icons.warning_amber_rounded,
+          color: th.colorScheme.onTertiaryContainer,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(switch (d) {
+            BoundsDoubt.noSermon => l.doubtNoSermon,
+            BoundsDoubt.noPrayerBefore => l.doubtNoPrayerBefore,
+            BoundsDoubt.noPrayerAfter => l.doubtNoPrayerAfter,
+            BoundsDoubt.twoSermons => l.doubtTwoSermons,
+          }, style: TextStyle(color: th.colorScheme.onTertiaryContainer)),
+        ),
+        TextButton(
+          onPressed: () => _c.seek(
+            d == BoundsDoubt.noPrayerAfter
+                ? _c.plan!.sermonEnd
+                : _c.plan!.sermonStart,
+          ),
+          child: Text(l.goToBoundary),
+        ),
+      ],
+    ),
   );
 
   Widget _cuts(L l, ThemeData th, SermonPlan plan) => plan.cuts.isEmpty

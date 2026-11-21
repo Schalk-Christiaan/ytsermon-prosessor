@@ -132,6 +132,30 @@ void main() {
     await t.pump(const Duration(seconds: 5));
   });
 
+  testWidgets(
+    'hersien: unsure bounds show the reason and jump to the boundary',
+    (t) async {
+      await _fonts();
+      t.view.physicalSize = const Size(1100, 720);
+      t.view.devicePixelRatio = 1;
+      final c = ready();
+      c.plan!.doubt = BoundsDoubt.noPrayerAfter;
+      await t.pumpWidget(
+        _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
+      );
+      await t.pump(const Duration(seconds: 1));
+      expect(find.textContaining('Geen gebed ná die preek'), findsOneWidget);
+      await t.tap(find.text('Gaan na die grens'));
+      await t.pump();
+      expect(c.position.value, 3210);
+      c.plan!.doubt = null;
+      await t.pumpWidget(
+        _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
+      );
+      expect(find.text('Gaan na die grens'), findsNothing);
+    },
+  );
+
   testWidgets('hersien: an uploaded sermon offers "Werk op YouTube by"', (
     t,
   ) async {
