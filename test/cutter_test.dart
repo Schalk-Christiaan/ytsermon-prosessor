@@ -127,8 +127,11 @@ void main() {
         '2',
         src.path,
       ]);
-      final out = await cutAudio(src, 'Toets: tema', '2026-11-16', d);
-      expect(p.basename(out.path), '2026-11-16 Toets tema.mp3');
+      final out = await cutAudio(
+        src,
+        'Toets: tema',
+        File(p.join(d.path, 'a.mp3')),
+      );
       final r = await Process.run('ffprobe', [
         '-v',
         'error',
@@ -187,11 +190,10 @@ void main() {
       shorts: [],
       cuts: [Span(4, 6)],
     );
-    final out = await cutSermon(
+    final out = await cutParts(
       main,
-      plan,
-      '2026-11-16',
-      d,
+      plan.parts(),
+      File(p.join(d.path, 'o.mp4')),
       intro: intro,
       outro: outro,
     );

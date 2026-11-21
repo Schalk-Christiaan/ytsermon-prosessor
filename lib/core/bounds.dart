@@ -111,6 +111,43 @@ Bounds findBounds(List<Block> blocks, List<TimeBlock> sound) {
   );
 }
 
+// stap: diensindeling 7 Net die woord | alle spraak tussen die gebede (Skriflesing ingesluit), sonder gebede en sang, in een snit aanmekaar
+/// The kept pieces of "Net die woord": every labelled block that is not a prayer, inside the [within] spans
+/// (the sermon cut), joined into one span while neither a prayer nor music comes between.
+List<Span> wordParts(
+  List<({double start, double end, BlockLabel label})> labels,
+  List<TimeBlock> sound,
+  List<Span> within,
+) {
+  final runs = <Span>[];
+  Span? run;
+  for (final b in labels) {
+    if (b.label == BlockLabel.gebed) {
+      run = null;
+    } else if (run != null &&
+        sound.any(
+          (t) =>
+              t.kind == SegmentKind.music &&
+              t.end > run!.end &&
+              t.start < b.start,
+        )) {
+      run = null;
+    }
+    if (b.label == BlockLabel.gebed) continue;
+    if (run == null) runs.add(run = Span(b.start, b.end));
+    run.end = b.end;
+  }
+  return [
+    for (final r in runs)
+      for (final w in within)
+        if (r.end > w.start && r.start < w.end)
+          Span(
+            r.start < w.start ? w.start : r.start,
+            r.end > w.end ? w.end : r.end,
+          ),
+  ];
+}
+
 /// Silences `(start, end)` in absolute seconds from ffmpeg `silencedetect` output, whose times are
 /// relative to the window that began at [from]. A silence still open at the window's end is closed by it.
 List<(double, double)> parseSilences(String out, double from) {

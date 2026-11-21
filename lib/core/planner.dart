@@ -222,13 +222,26 @@ void saveAnalysis(Directory dir, Analysis a) =>
       }),
     );
 
+Map<String, dynamic>? _analysis(Directory dir) {
+  final f = File(p.join(dir.path, kAnalysisFile));
+  return f.existsSync()
+      ? jsonDecode(f.readAsStringSync()) as Map<String, dynamic>
+      : null;
+}
+
+/// The saved songs of the work folder [dir]; empty when the service was never analysed.
+List<Song> loadSongs(Directory dir) => [
+  for (final x in (_analysis(dir)?['songs'] as List? ?? const []))
+    Song.fromJson(x as Map<String, dynamic>),
+];
+
+/// The saved service label (`nagmaal`, `doop` …) of [dir], or null.
+String? loadService(Directory dir) => _analysis(dir)?['service'] as String?;
+
 /// The saved labelled spans of the work folder [dir]; empty when the service was never analysed.
 List<({double start, double end, BlockLabel label})> loadLabels(Directory dir) {
-  final f = File(p.join(dir.path, kAnalysisFile));
-  if (!f.existsSync()) return [];
-  final j = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
   return [
-    for (final b in j['blocks'] as List)
+    for (final b in (_analysis(dir)?['blocks'] as List? ?? const []))
       (
         start: (b['start'] as num).toDouble(),
         end: (b['end'] as num).toDouble(),
