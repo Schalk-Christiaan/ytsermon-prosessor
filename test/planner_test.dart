@@ -15,11 +15,8 @@ SermonPlan okPlan() => SermonPlan(
   shorts: [Short(start: 1500, end: 1560, title: 'a')],
 );
 
-/// Candidates G1 (opening, 23:00–24:00) and G2 (closing, 51:00–52:00).
-const prayers = [
-  Prayer(23 * 60, 24 * 60, 'Onse Vader', 'Amen.'),
-  Prayer(51 * 60, 52 * 60, 'Kom ons dank saam', 'Amen.'),
-];
+/// The cut `findBounds` found: 23:00–52:00.
+const bounds = Bounds(23 * 60, 52 * 60);
 
 void main() {
   const duration = 3728.0;
@@ -73,8 +70,6 @@ void main() {
           return {
             'message': {
               'content': jsonEncode({
-                'openingPrayer': 1,
-                'closingPrayer': 2,
                 'title': 'T',
                 'description': 'D',
                 'shorts': [
@@ -87,11 +82,10 @@ void main() {
       );
       final p = await planner.plan(
         compactText: '[23:00] hallo',
-        prayers: prayers,
+        bounds: bounds,
         duration: duration,
         originalDescription: 'Psalm 1',
       );
-      expect(p.sermonStart, 1380);
       expect(p.shorts.single.end, 1560);
       expect(seen!['model'], 'qwen3:8b');
       expect(seen!['stream'], false);
@@ -105,9 +99,16 @@ void main() {
       expect(jsonEncode(seen!['messages']), contains('Psalm 1'));
       expect(
         seen!['messages'][1]['content'],
-        contains('G2 51:00–52:00 (01:00): "Kom ons dank saam" … "Amen."'),
+        contains('Die snit: 23:00 tot 52:00'),
       );
-      expect(p.sermonEnd, 52 * 60, reason: 'cut includes the closing prayer');
+      expect(jsonEncode(seen!['format']), isNot(contains('Prayer')));
+      expect(
+        p.sermonStart,
+        23 * 60,
+        reason: 'the cut is the code\'s, not Ollama\'s',
+      );
+      expect(p.sermonEnd, 52 * 60);
+      expect(p.doubt, isNull);
     },
   );
 
@@ -118,8 +119,6 @@ void main() {
         chat: (_) async => {
           'message': {
             'content': jsonEncode({
-              'openingPrayer': 1,
-              'closingPrayer': 2,
               'title': 'T',
               'description': 'D',
               'shorts': [
@@ -131,7 +130,7 @@ void main() {
       );
       final p = await planner.plan(
         compactText: 'x',
-        prayers: prayers,
+        bounds: bounds,
         duration: 3728,
         originalDescription: '',
       );
@@ -145,8 +144,6 @@ void main() {
       chat: (_) async => {
         'message': {
           'content': jsonEncode({
-            'openingPrayer': 1,
-            'closingPrayer': 1,
             'title': 'T',
             'description': 'D',
             'shorts': <dynamic>[],
@@ -157,12 +154,35 @@ void main() {
     expect(
       planner.plan(
         compactText: 'x',
-        prayers: prayers,
+        bounds: const Bounds(0, 100),
         duration: duration,
         originalDescription: '',
       ),
       throwsA(isA<PlanException>()),
     );
+  });
+
+  test('plan() keeps the doubt of unsure bounds', () async {
+    final planner = Planner(
+      chat: (_) async => {
+        'message': {
+          'content': jsonEncode({
+            'title': 'T',
+            'description': 'D',
+            'shorts': <dynamic>[],
+          }),
+        },
+      },
+    );
+    final p = await planner.plan(
+      compactText: 'x',
+      bounds: const Bounds(23 * 60, 52 * 60, reason: BoundsDoubt.noPrayerAfter),
+      duration: duration,
+      originalDescription: '',
+    );
+    expect(p.doubt, BoundsDoubt.noPrayerAfter);
+    expect(SermonPlan.fromJson(p.toJson()).doubt, BoundsDoubt.noPrayerAfter);
+    expect(okPlan().toJson().containsKey('doubt'), isFalse);
   });
 
   test(
@@ -177,7 +197,7 @@ void main() {
       final p = await planner.loadOrPlan(
         dir,
         compactText: 'x',
-        prayers: prayers,
+        bounds: bounds,
         duration: duration,
         originalDescription: '',
       );
@@ -197,8 +217,6 @@ void main() {
           return {
             'message': {
               'content': jsonEncode({
-                'openingPrayer': 1,
-                'closingPrayer': 2,
                 'title': 'T',
                 'description': 'D',
                 'shorts': <dynamic>[],
@@ -210,7 +228,7 @@ void main() {
       final f = planner.loadOrPlan(
         dir,
         compactText: 'x',
-        prayers: prayers,
+        bounds: bounds,
         duration: duration,
         originalDescription: '',
         cancel: cancel.future,
@@ -221,42 +239,4 @@ void main() {
       dir.deleteSync(recursive: true);
     },
   );
-
-  test('plan() rejects a prayer number outside the list', () async {
-    final planner = Planner(
-      chat: (_) async => {
-        'message': {
-          'content': jsonEncode({
-            'openingPrayer': 1,
-            'closingPrayer': 7,
-            'title': 'T',
-            'description': 'D',
-            'shorts': <dynamic>[],
-          }),
-        },
-      },
-    );
-    expect(
-      planner.plan(
-        compactText: 'x',
-        prayers: prayers,
-        duration: duration,
-        originalDescription: '',
-      ),
-      throwsA(isA<PlanException>()),
-    );
-  });
-
-  test('plan() needs two candidate prayers', () {
-    final planner = Planner(chat: (_) async => throw StateError('no call'));
-    expect(
-      planner.plan(
-        compactText: 'x',
-        prayers: prayers.take(1).toList(),
-        duration: duration,
-        originalDescription: '',
-      ),
-      throwsA(isA<PlanException>()),
-    );
-  });
 }

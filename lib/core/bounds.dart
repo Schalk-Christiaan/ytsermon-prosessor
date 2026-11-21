@@ -1,12 +1,17 @@
 // @stelsel bounds
 //   soort: module
-//   wanneer: ná parseJson3 en prayers, in planJob
+//   wanneer: ná parseJson3 en prayers, in planJob (met die video af, vir die stilte-snap)
 //   groep: core | Kern
 //   skryf: —
-//   doel: kies die snit-grense met reëls (geen KI): preek = langste stuk sonder Amen of musiek, begin by die gebed voor, einde by die Amen van die eerste gebed ná die preek
+//   doel: kies die snit-grense met reëls (geen KI): preek = langste stuk sonder Amen of musiek, begin by die gebed voor, einde by die Amen van die eerste gebed ná die preek; snapBounds pas albei by die naaste stilte aan (ffmpeg silencedetect)
 //   status: bou
+import 'dart:io';
+import 'dart:math' as math;
+
 import 'captions.dart';
+import 'cutter.dart';
 import 'models.dart';
+import 'tools.dart';
 
 /// Shortest stretch without "Amen" or music that counts as the sermon.
 const kMinSermon = 15 * 60.0;
@@ -92,3 +97,22 @@ double snapStart(double t, List<(double, double)> silences) =>
 /// The cut end: the start of the first silence that ends after the "Amen" [t]; none = [t] unchanged.
 double snapEnd(double t, List<(double, double)> silences) =>
     silences.where((s) => s.$2 > t).firstOrNull?.$1 ?? t;
+
+/// Snaps both cuts of [b] to the silence around them: one ffmpeg call over 6 s of sound per cut
+/// (see [silenceArgs]); where none is found the word time stays. [Bounds.reason] is kept.
+Future<Bounds> snapBounds(File video, Bounds b, {Future<void>? cancel}) async {
+  Future<List<(double, double)>> around(double t) async {
+    final from = math.max(0.0, t - 3), out = StringBuffer();
+    await runTool(
+      'ffmpeg',
+      silenceArgs(video.path, from, t + 3),
+      onErr: out.write,
+      cancel: cancel,
+    );
+    return parseSilences(out.toString(), from);
+  }
+
+  final start = snapStart(b.start, await around(b.start));
+  final end = snapEnd(b.end, await around(b.end));
+  return Bounds(start, end, reason: b.reason);
+}

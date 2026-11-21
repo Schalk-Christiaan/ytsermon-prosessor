@@ -46,12 +46,13 @@ class JobCancelled implements Exception {
 }
 
 /// Runs [exe] (a tool name found via [findExecutable], or an absolute path) with [args];
-/// stdout lines go to [onLine], stderr is buffered. Non-zero exit throws [ProcessException]
+/// stdout lines go to [onLine], stderr is buffered (and each chunk also goes to [onErr]). Non-zero exit throws [ProcessException]
 /// carrying stderr; completing [cancel] kills the process and throws [JobCancelled].
 Future<void> runTool(
   String exe,
   List<String> args, {
   void Function(String line)? onLine,
+  void Function(String chunk)? onErr,
   String? cwd,
   Future<void>? cancel,
 }) async {
@@ -65,7 +66,10 @@ Future<void> runTool(
     _killTree(proc);
   });
   final err = StringBuffer();
-  final errDone = proc.stderr.transform(utf8.decoder).forEach(err.write);
+  final errDone = proc.stderr.transform(utf8.decoder).forEach((c) {
+    err.write(c);
+    onErr?.call(c);
+  });
   final done = proc.stdout
       .transform(utf8.decoder)
       .transform(const LineSplitter())

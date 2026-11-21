@@ -12,6 +12,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
+import 'bounds.dart';
 import 'captions.dart';
 import 'channel.dart';
 import 'cutter.dart';
@@ -285,9 +286,10 @@ class JobQueue extends ChangeNotifier {
   }
 }
 
-// stap: v1 2 Beplan | onderskrifte + video af, Ollama kies die gebede; die preek loop van gebed tot gebed
+// stap: v1 2 Beplan | onderskrifte + video af; kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks
 // tak: Ollama af → "Ollama het nie geantwoord nie" met Probeer weer in Werkry
-/// Fetches meta and captions, asks Ollama for a plan; fills the sermon's date.
+/// Fetches meta, captions and video (the silence snap needs the sound), lets `findBounds` pick the cut
+/// and asks Ollama for the text; fills the sermon's date. An existing plan.json is kept as it is.
 JobRun planJob(SermonStore store) => (c) async {
   c.phase(JobPhase.meta);
   final m = await fetchMeta(c.id, store.root, cancel: c.cancel, log: c.log);
@@ -296,14 +298,28 @@ JobRun planJob(SermonStore store) => (c) async {
     ..scripture = scriptureFrom(m.info.descriptionText)
     ..duration = m.info.durationSeconds;
   store.save(s);
-  c.phase(JobPhase.plan);
   final segs = parseJson3(m.captions.readAsStringSync());
+  var bounds = const Bounds(0, 0);
+  if (!File(p.join(m.dir.path, kPlanFile)).existsSync()) {
+    bounds = findBounds(segs, prayers(segs));
+    c.phase(JobPhase.download);
+    c.progress(0);
+    final video = await downloadVideo(
+      m,
+      onProgress: (v) => c.progress(v / 100),
+      cancel: c.cancel,
+      log: c.log,
+    );
+    c.progress(null);
+    bounds = await snapBounds(video, bounds, cancel: c.cancel);
+  }
+  c.phase(JobPhase.plan);
   // Ollama's HTTP call is not killable: cancelling abandons it.
   await Future.any([
     Planner().loadOrPlan(
       m.dir,
       compactText: compact(segs),
-      prayers: prayers(segs),
+      bounds: bounds,
       duration: s.duration,
       originalDescription: m.info.descriptionText,
       cancel: c.cancel,

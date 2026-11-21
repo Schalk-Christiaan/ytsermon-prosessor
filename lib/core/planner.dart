@@ -3,7 +3,7 @@
 //   wanneer: ná captions, een Ollama-oproep per preek
 //   groep: core | Kern
 //   skryf: werkmap/<id>/plan.json
-//   doel: laat qwen3:8b die gebed voor en ná die preek uit die kandidaat-gebede kies (snit = gebed tot gebed), plus Shorts, titel en beskrywing; validate() toets die plan, shortFault() elke Short apart; berg plan.json op
+//   doel: laat qwen3:8b net teks skryf (Shorts, titel, beskrywing) binne die snit wat findBounds reeds bepaal het (geen grense van die KI nie); validate() toets die plan, shortFault() elke Short apart; berg plan.json op
 //   status: bou
 import 'dart:convert';
 import 'dart:io';
@@ -36,35 +36,20 @@ typedef ChatFn = Future<Map<String, dynamic>> Function(
 
 const _systemPrompt =
     '''Jy help 'n Gereformeerde kerk om opnames van sy kerkdienste te verwerk.
-Jy kry die onderskrifte van die hele diens as reëls "[mm:ss] teks" (hoogstens elke 30 sekondes 'n reël; "[musiek]" is sang of musiek), en 'n genommerde lys KANDIDAAT-GEBEDE ("G1", "G2", …) met tye en die eerste en laaste woorde van elke gebed.
-
-Die snit van die preek begin met 'n gebed en eindig met 'n gebed, en sluit albei gebede in.
+Jy kry die onderskrifte van die hele diens as reëls "[mm:ss] teks" (hoogstens elke 30 sekondes 'n reël; "[musiek]" is sang of musiek), en die tye waar die snit van die preek begin en eindig. Die snit is reeds bepaal en sluit die gebede voor en ná die preek in; jy verander dit nie.
 
 Doen die volgende:
-1. Vind die PREEK (die prediker se verkondiging ná die Skriflesing; dit eindig gewoonlik met "Amen" waarna die prediker sê "Kom ons dank saam"). Kies dan uit die kandidaat-gebede:
-   - openingPrayer: die nommer van die LAASTE gebed VOOR die preek en sy Skriflesing (gewoonlik 'n lang gebed of voorbidding wat vir die prediking bid; daarna kom dikwels 'n psalm en die Skriflesing). Nie die geloofsbelydenis ("Almagtige Vader … 'n ewige lewe. Amen") of die seëngroet nie.
-   - closingPrayer: die nommer van die EERSTE gebed NA die preek (die dankgebed, gewoonlik "Kom ons dank saam" of "Laat ons saam dank"). Nie 'n "Amen" binne die preek self nie.
-2. Kies 1 tot 3 SHORTS binne die preek, elk 'n volledige gedagte. Elke Short moet tussen 30 en 80 sekondes lank wees (eindtyd minus begintyd): gebruik die begin van een reël as begintyd en die begin van die volgende of oor-volgende reël as eindtyd (60 sekondes is 'n goeie lengte).
-3. Skryf 'n TITEL (die tema van die preek, hoogstens 100 karakters).
-4. Skryf 'n BESKRYWING in Afrikaans met reëls "Tema: …", "Skriflesing: …", "Fokusgedeelte: …", dan 3 tot 4 sinne opsomming, en laastens die psalms uit die oorspronklike beskrywing (as dit daar is). Hou die beskrywing onder 1500 karakters.
+1. Kies 1 tot 3 SHORTS binne die snit, elk 'n volledige gedagte. Elke Short moet tussen 30 en 80 sekondes lank wees (eindtyd minus begintyd): gebruik die begin van een reël as begintyd en die begin van die volgende of oor-volgende reël as eindtyd (60 sekondes is 'n goeie lengte).
+2. Skryf 'n TITEL (die tema van die preek, hoogstens 100 karakters).
+3. Skryf 'n BESKRYWING in Afrikaans met reëls "Tema: …", "Skriflesing: …", "Fokusgedeelte: …", dan 3 tot 4 sinne opsomming, en laastens die psalms uit die oorspronklike beskrywing (as dit daar is). Hou die beskrywing onder 1500 karakters.
 
-Gee tye as "mm:ss" soos in die onderskrifte en gebede as nommers (1 vir G1). Antwoord net met JSON volgens die skema.''';
-
-/// The numbered candidate list for the prompt: `G1 14:46–21:29 (6:43): "first" … "last"`.
-String prayerList(List<Prayer> prayers) => [
-  for (var i = 0; i < prayers.length; i++)
-    'G${i + 1} ${formatTime(prayers[i].start)}–${formatTime(prayers[i].end)} '
-        '(${formatTime(prayers[i].end - prayers[i].start)}): '
-        '"${prayers[i].first}" … "${prayers[i].last}"',
-].join('\n');
+Gee tye as "mm:ss" soos in die onderskrifte. Antwoord net met JSON volgens die skema.''';
 
 Map<String, dynamic> get _schema {
   const t = {'type': 'string'};
   return {
     'type': 'object',
     'properties': {
-      'openingPrayer': {'type': 'integer'},
-      'closingPrayer': {'type': 'integer'},
       'title': t,
       'description': t,
       'shorts': {
@@ -76,13 +61,7 @@ Map<String, dynamic> get _schema {
         },
       },
     },
-    'required': [
-      'openingPrayer',
-      'closingPrayer',
-      'title',
-      'description',
-      'shorts',
-    ],
+    'required': ['title', 'description', 'shorts'],
   };
 }
 
@@ -150,7 +129,7 @@ Future<Map<String, dynamic>> _ollamaChat(Map<String, dynamic> body) async {
   }
 }
 
-/// Asks Ollama for one [SermonPlan] per sermon (a single call, no retries).
+/// Asks Ollama for the text of one [SermonPlan] per sermon (a single call, no retries); the cut itself is the given [bounds].
 class Planner {
   Planner({ChatFn? chat, this.think = true}) : _chat = chat ?? _ollamaChat;
   final ChatFn _chat;
@@ -158,14 +137,10 @@ class Planner {
 
   Future<SermonPlan> plan({
     required String compactText,
-    required List<Prayer> prayers,
+    required Bounds bounds,
     required double duration,
     required String originalDescription,
   }) async {
-    if (prayers.length < 2)
-      throw PlanException([
-        'Minder as twee gebede in die onderskrifte gevind.',
-      ]);
     final res = await _chat({
       'model': kModel,
       'stream': false,
@@ -186,7 +161,7 @@ class Planner {
         {
           'role': 'user',
           'content':
-              'Duur van die video: ${duration.round()} s.\n\nOorspronklike beskrywing:\n$originalDescription\n\nKandidaat-gebede:\n${prayerList(prayers)}\n\nOnderskrifte:\n$compactText',
+              'Duur van die video: ${duration.round()} s.\n\nOorspronklike beskrywing:\n$originalDescription\n\nDie snit: ${formatTime(bounds.start)} tot ${formatTime(bounds.end)}.\n\nOnderskrifte:\n$compactText',
         },
       ],
     });
@@ -198,14 +173,6 @@ class Planner {
     } on Object {
       throw PlanException(['Die KI het nie geldige JSON gegee nie.']);
     }
-    Prayer? pick(Object? n) => n is num && n >= 1 && n <= prayers.length
-        ? prayers[n.toInt() - 1]
-        : null;
-    final open = pick(j['openingPrayer']), close = pick(j['closingPrayer']);
-    if (open == null || close == null || open.start >= close.start)
-      throw PlanException(['Die KI het nie twee geldige gebede gekies nie.']);
-    // The cut includes both prayers (CONTEXT.md, Besluite).
-    final start = open.start, end = close.end;
     final shorts = <Short>[];
     for (final s in (j['shorts'] as List? ?? const [])) {
       final a = parseTime(s['start']), b = parseTime(s['end']);
@@ -213,11 +180,12 @@ class Planner {
         shorts.add(Short(start: a, end: b, title: '${s['title']}'));
     }
     final plan = SermonPlan(
-      sermonStart: start,
-      sermonEnd: end,
+      sermonStart: bounds.start,
+      sermonEnd: bounds.end,
       title: '${j['title'] ?? ''}'.trim(),
       description: '${j['description'] ?? ''}'.trim(),
       shorts: shorts,
+      doubt: bounds.reason,
     );
     final errors = validate(plan, duration);
     if (errors.isNotEmpty) throw PlanException(errors, plan: plan);
@@ -228,7 +196,7 @@ class Planner {
   Future<SermonPlan> loadOrPlan(
     Directory dir, {
     required String compactText,
-    required List<Prayer> prayers,
+    required Bounds bounds,
     required double duration,
     required String originalDescription,
     Future<void>? cancel,
@@ -243,7 +211,7 @@ class Planner {
     cancel?.then((_) => cancelled = true);
     final plan = await this.plan(
       compactText: compactText,
-      prayers: prayers,
+      bounds: bounds,
       duration: duration,
       originalDescription: originalDescription,
     );

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:preekverwerker/core/channel.dart';
+import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/planner.dart';
 import 'package:preekverwerker/core/recording.dart';
 import 'package:preekverwerker/core/store.dart';
@@ -50,6 +51,7 @@ void main() {
     final plan = await Planner().loadOrPlan(
       m.dir,
       compactText: '',
+      bounds: const Bounds(0, 4),
       duration: s.duration,
       originalDescription: '',
     );

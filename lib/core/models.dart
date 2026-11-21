@@ -101,6 +101,7 @@ class SermonPlan {
     required this.description,
     required this.shorts,
     List<Span>? cuts,
+    this.doubt,
   }) : cuts = cuts ?? [];
   double sermonStart;
   double sermonEnd;
@@ -110,6 +111,9 @@ class SermonPlan {
 
   /// Middle pieces cut out of the sermon (an announcement, a baptism); see [parts].
   List<Span> cuts;
+
+  /// Why the code is unsure of [sermonStart]/[sermonEnd] (see [Bounds]); Hersien shows it until the cut is approved.
+  BoundsDoubt? doubt;
 
   /// The kept segments in order: [sermonStart, sermonEnd] minus [cuts]; the cutter joins these.
   List<Span> parts() {
@@ -134,6 +138,7 @@ class SermonPlan {
     'description': description,
     'shorts': [for (final s in shorts) s.toJson()],
     'cuts': [for (final c in cuts) c.toJson()],
+    if (doubt != null) 'doubt': doubt!.name,
   };
 
   factory SermonPlan.fromJson(Map<String, dynamic> j) => SermonPlan(
@@ -149,5 +154,6 @@ class SermonPlan {
       for (final c in (j['cuts'] as List? ?? const []))
         Span.fromJson(c as Map<String, dynamic>),
     ],
+    doubt: BoundsDoubt.values.asNameMap()[j['doubt']],
   );
 }
