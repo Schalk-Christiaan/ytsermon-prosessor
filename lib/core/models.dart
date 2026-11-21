@@ -5,8 +5,8 @@
 //   skryf: —
 //   doel: Word, Segment (met woordtye), TimeBlock, Prayer, Bounds, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
 //   status: bou
-/// Whether a stretch of the service is speech or music.
-enum SegmentKind { speech, music }
+/// What a stretch of the service sounds like (`silence` and `noise` come from the sound classification).
+enum SegmentKind { speech, music, silence, noise }
 
 /// One spoken word; a word ends where the next one starts (the last one where its line ends).
 class Word {
