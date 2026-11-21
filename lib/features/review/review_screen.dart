@@ -74,7 +74,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     }
   }
 
-  // stap: v4 5 Beplan weer | laat Ollama weer kies as die hele voorstel verkeerd is (bevestiging)
+  // stap: v4 5 Beplan weer | loop die grense en die teks weer van voor af as die hele voorstel verkeerd is (bevestiging)
   Future<void> _replan(L l) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -192,7 +192,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   // stap: v1 3 Hersien | kyk die hakies by die gebede, die titel, Skriflesing en beskrywing
-  // stap: v4 1 Sien die fout | die hakie staan nie by 'n gebed nie; gebedsmerkers wys waar die gebede is
+  // stap: v4 1 Sien die fout | 'n banier wys waarom die kode onseker is en spring na die grens; gebedsmerkers wys waar die gebede is
+  // tak: kode onseker → banier met die rede (ARB) en "Gaan na die grens"
   Widget _ready(L l, ThemeData th) {
     final plan = _c.plan!;
     return Focus(

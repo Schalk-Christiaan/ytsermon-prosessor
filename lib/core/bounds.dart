@@ -24,7 +24,6 @@ const kSimilarStretch = 0.8;
 /// begins before it and ends at the end of the first prayer that begins after it. The order of the
 /// service is not fixed, so nothing else is assumed. Doubt (and its [BoundsDoubt]) when there is no
 /// full sermon, no prayer on one side, or a second stretch, opened by a prayer, nearly as long as the first.
-// vloei: v1
 Bounds findBounds(List<Segment> segs, List<Prayer> prayers) {
   final stretches = <(double, double)>[];
   var from = 0.0;
@@ -100,6 +99,7 @@ double snapEnd(double t, List<(double, double)> silences) =>
 
 /// Snaps both cuts of [b] to the silence around them: one ffmpeg call over 6 s of sound per cut
 /// (see [silenceArgs]); where none is found the word time stays. [Bounds.reason] is kept.
+// skakel: → cutter.silenceArgs (die ffmpeg-oproep vir die stilte)
 Future<Bounds> snapBounds(File video, Bounds b, {Future<void>? cancel}) async {
   Future<List<(double, double)>> around(double t) async {
     final from = math.max(0.0, t - 3), out = StringBuffer();

@@ -3,7 +3,7 @@
 //   wanneer: "Verwerk volgende", "Keur goed en sny", "Beplan weer", "Klank vir WhatsApp", "Laai op" en by begin (hervat)
 //   groep: core | Kern
 //   skryf: <werkmap>/jobs.json | die ry; sermon.json van die preek wat verwerk word
-//   doel: een taak op 'n slag (plan, sny, klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
+//   doel: een taak op 'n slag (plan met grense en stilte-snap, sny, klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
 //   status: bou
 import 'dart:async';
 import 'dart:convert';
@@ -328,7 +328,7 @@ JobRun planJob(SermonStore store) => (c) async {
   ]);
 };
 
-// stap: v1 4 Sny | stroomkopie, of herkodeer met intro/outro en uitgeknipte stukke; uitset in die uitsetgids
+// stap: v1 4 Sny | herkodeer presies van die eerste woord tot ná die Amen (met intro/outro en uitgeknipte stukke saamgevoeg); uitset in die uitsetgids
 // stap: v3 4 Sny sonder YouTube | dieselfde snit; die opname het geen Shorts-onderskrifte nie
 /// Downloads the video and cuts the sermon and its Shorts from the saved plan.
 JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {

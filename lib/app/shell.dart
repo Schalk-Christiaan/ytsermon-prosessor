@@ -15,9 +15,9 @@
 // vloei: v3 | Voer opname in
 // inleiding: 'n Video wat nie op YouTube is nie (USB, kamera) word gekopieer, met die hand begrens en gesny.
 // hoekom: soms faal die regstreekse uitsending; dan is die eie opname die enigste bron.
-// vloei: v4 | Ollama het die grense verkeerd
-// inleiding: Die hakie staan nie by die gebed nie; die mens skuif dit met die transkripsie en die sleutelbord reg.
-// hoekom: die KI is 'n voorstel; die predikant wil nie 'n preek wat halfpad begin nie.
+// vloei: v4 | Die grense is onseker of verkeerd
+// inleiding: Die kode het die gebede nie seker gevind nie (Hersien wys die rede), of die hakie staan nie by die gebed nie; die mens skuif dit met die transkripsie en die sleutelbord reg.
+// hoekom: die grense kom uit reëls, nie 'n KI nie, maar is net so min onfeilbaar; die predikant wil nie 'n preek wat halfpad begin nie.
 // vloei: v5 | Hervat ná 'n onderbreking
 // inleiding: Die app of die krag gaan af in die middel van 'n aflaai of snit; by die volgende begin loop die werk voort.
 // hoekom: 'n uur se aflaai mag nie verlore gaan nie, en niemand moet onthou wat besig was nie.

@@ -3,7 +3,7 @@
 //   wanneer: ná fetchMeta
 //   groep: core | Kern
 //   skryf: —
-//   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI, kandidaat-gebede (preekgrense), SRT en dienstydlyn (spraak/musiek)
+//   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI, kandidaat-gebede op woordvlak (merkwoord tot Amen-woord, vir findBounds), SRT en dienstydlyn (spraak/musiek)
 //   status: bou
 import 'dart:convert';
 import 'dart:math' as math;
