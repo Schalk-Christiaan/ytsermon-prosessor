@@ -12,16 +12,14 @@ kaart: lib/core/*.dart, lib/app/*.dart, lib/features/**/*.dart
 Alles plaaslik: yt-dlp, ffmpeg, Ollama. Ontwikkel en toets op Linux, verskeep na die kerk-PC (Windows 11).
 
 ## Status
-Diensindeling gebou op tak `bou/diensindeling` (worktree `../.bou/ytsermon-prosessor-diensindeling`, 13 commits tot 6e17fd6, nie gemerge nie); plan `planne/diensindeling.md` `klaar` ná hersiening + stap 11–12, nie deur /bewys nie. `flutter test` 190 groen, `dart analyze` skoon. `main` (fa5f3f8+wip) nie gepush nie.
-Laaste regmaak: uitstuur-seën word in `planner.dart` aan sy vaste woorde herken (`_blessing`), want die KI het dit op lBMw/uub as ander/gebed benoem.
-Bekende foute (op die tak, toetse vang dit nie): `lBMwRt3eIus` laaste preekblok #22 as gebed, regte gebed #24 "ander" (gestoorde KI-antwoord deurmekaar, bv. `1023242526`); `6s_FFatG0so` gebed ná preek oor #50–52 verdeel, eerste helfte "preek". Grense-toets laat ±1,5 s toe (Aanvaarding ±0,5).
-Windows-installeerder: tak `bou/windows-installeerder`, plaaslik groen, CI nooit geloop nie (gh-token mis `workflow`-scope).
-Dev-masjien: geen `cmake`/`ninja`; app loop via `flutter build bundle --debug` + kopieer na die bundel (in die worktree: `build/linux/x64/debug/bundle/preekverwerker`, laai die seën-regmaak eers ná herbou). Ou werkgidse hou ou etikette tot herverwerk.
-Ongetoets: skermkiekies uit die lopende app; regte Ollama-etikette net op YWz; handmerke in `sermons.json`; regte YouTube-oplaai; kerk-PC.
-Oop vrae: watter video het die geloofsbelydenis as gebed gekry? Moet die lBMw/6s-grensfoute voor die merge reggemaak word?
-Skills: `projekkonteks:ui-ux` vir UI; `projekkonteks:bewys` vir klaar; `diagnosing-bugs` vir die grensfoute.
+Alles in `main` en gepush: diensindeling, ui-werkvlak (stappe 0–18, ná hersiening) en windows-installeerder gemerge; geen bou-takke of worktrees oor. Planne fase 2–6, diensindeling en ui-werkvlak `klaar`; `/bewys` geslaag 2026-11-21: `flutter test` 273 groen, integrasietoets lig+donker, E2E YWz + ffprobe, Stelsel groen (Schalk), kaart-hoofstukke `klaar bewys=7236634`.
+Windows-CI: eerste lopie (44913477297) het by "Maak Setup.exe" gefaal (Pascal-reël wat met `[` begin, `setup.iss:118`); regmaak gepush, tweede lopie 44914060183 loop. `planne/windows-installeerder.md` nog `bou`.
+Bekende foute (toetse vang dit nie): `lBMwRt3eIus` laaste preekblok #22 as gebed, gebed #24 "ander"; `6s_FFatG0so` gebed ná preek oor #50–52 verdeel. Grense-toets laat ±1,5 s toe (Aanvaarding ±0,5).
+Oop uit ui-werkvlak: voorskou klein by 1100 breed (voorstel: gereedskap- en vervoerbalk een ry); video-tekstuur swart in toetskiekies.
+Dev-masjien: cmake/ninja nou op PATH; `flutter run -d linux` werk (ou CMake-kas met venv-ninja uitgevee). Kiekies (`planne/ui-werkvlak/`, 4,6 MB PNG) is met `git add -f` gecommit.
+Ongetoets: regte YouTube-oplaai; kerk-PC (Setup.exe).
 **Laaste sessie:** 2026-11-21
-**Volgende:** Schalk besluit oor die lBMw/6s-grensfoute (regmaak op die tak met 'n rooi toets per diens, of eers merge `git merge --no-ff bou/diensindeling`, `git worktree remove`, `git branch -d`); daarna `/bewys`.
+**Volgende:** kyk na CI-lopie 44914060183 (`gh run view 44914060183`); groen → `gh run download 44914060183 -n Setup`, `windows-installeerder` op `hersien`/`klaar` en Setup.exe op die kerk-PC; rooi → `--log-failed` en herstel `installer/setup.iss`.
 
 ## Gebruikers
 - **Schalk**: tegnies; sleutelbord (I/O, ←/→, Shift, spasie, Ctrl+Z), spoed en die log. Struikel oor: stadige herhaalwerk, muis-net-paaie.
