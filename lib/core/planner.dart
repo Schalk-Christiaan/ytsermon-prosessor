@@ -2,7 +2,7 @@
 //   soort: module
 //   wanneer: ná captions, een Ollama-oproep per preek
 //   groep: core | Kern
-//   skryf: werkmap/<id>/plan.json
+//   skryf: werkmap/<id>/plan.json, analysis.json | die plan; die etikette van die spraakblokke, die liedere en die diens-soort
 //   doel: laat qwen3:8b net teks skryf (Shorts, titel, beskrywing) binne die snit wat findBounds reeds bepaal het (geen grense van die KI nie); analyse() benoem die spraakblokke en liedere (nooit tye); validate() toets die plan, shortFault() elke Short apart; berg plan.json op
 //   status: bou
 import 'dart:convert';
@@ -362,7 +362,7 @@ class Planner {
   /// text of the plan (title, description, Shorts). Sets [Block.label] on [blocks]; an unknown or missing
   /// label becomes `ander`. A song name that is a psalm missing from [psalms] (the description's list,
   /// when it has one) becomes null.
-  // stap: diensindeling 5 KI-etikette | een Ollama-oproep sonder onderskrifte kry die blokke, liedere en beskrywing en gee net nommers terug (gebed voor en ná die preek); die blokke tussen die twee gebede word preek; die KI kies nooit tye nie
+  // stap: diensindeling 4 KI-etikette | een Ollama-oproep sonder onderskrifte kry die blokke, liedere en beskrywing en gee net nommers terug (gebed voor en ná die preek); die blokke tussen die twee gebede word preek; die KI kies nooit tye nie
   Future<Analysis> analyse({
     required List<Block> blocks,
     required List<TimeBlock> sound,

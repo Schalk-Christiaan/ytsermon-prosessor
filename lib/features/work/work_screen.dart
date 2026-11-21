@@ -3,7 +3,7 @@
 //   wanneer: Werk (rail)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag-, klaar- en fout-lyste; klaar-items: Speel, Wys in gids, Klank vir WhatsApp, Laai op, Wys op YouTube; oplaai-teller
+//   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag-, klaar- en fout-lyste; klaar-items: Speel, Wys in gids, Klank vir WhatsApp, Kopieer WhatsApp-teks, Laai op, Wys op YouTube; oplaai-teller
 //   status: bou
 import 'dart:io';
 

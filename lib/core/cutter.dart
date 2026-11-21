@@ -2,7 +2,7 @@
 //   soort: module
 //   wanneer: by 'Keur goed en sny' en 'Klank vir WhatsApp'
 //   groep: core | Kern
-//   skryf: out/
+//   skryf: out/<jaar>/<diens>/ | Volle preek.mp4, Net die woord.mp4, Sang/*.mp3, Shorts
 //   doel: gids per diens (serviceDir), sny Volle preek en Net die woord (herkodeer net die stuk, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif), elke lied as mp3 en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg; skryf die WhatsApp-teks
 //   status: bou
 import 'dart:convert';
@@ -247,7 +247,7 @@ Future<void> _ffmpeg(
   },
 );
 
-// stap: preekgrense 4 Herkodeer | libx264 presies op die grense (nie -c copy nie, wat net op 'n sleutelraam sny)
+// stap: preekgrense 2 Herkodeer | libx264 presies op die grense (nie -c copy nie, wat net op 'n sleutelraam sny)
 /// Cuts [parts] of [video] into [out] (its folder is made); returns it. One part and no clips = one re-encode
 /// of just that part; several parts or an [intro]/[outro] re-encode everything into one file via [joinArgs].
 Future<File> cutParts(
@@ -351,7 +351,7 @@ Future<File> cutAudio(
   return out;
 }
 
-// stap: diensindeling 8 Uitvoere | `<uitgids>/<jaar>/<datum> <Oggend|Aand> - <tema>/` kry Volle preek.mp4, Net die woord.mp4, Sang/NN <lied>.mp3, WhatsApp.txt en diens.json
+// stap: diensindeling 9 Uitvoere | `<uitgids>/<jaar>/<datum> <Oggend|Aand> - <tema>/` kry Volle preek.mp4, Net die woord.mp4, Sang/NN <lied>.mp3, WhatsApp.txt en diens.json
 /// The folder of one service: `<outDir>/<year>/<date> <Oggend|Aand> - <theme>` (no theme: no ` - …`).
 String serviceDir(String outDir, ServiceInfo info) => p.join(
   outDir,

@@ -2,7 +2,7 @@
 //   soort: module
 //   wanneer: in planJob, ná die aflaai (die video is nodig)
 //   groep: core | Kern
-//   skryf: —
+//   skryf: <werkmap>/<id>/sound.json | die klas van elke sekonde (stilte/musiek/spraak/geraas)
 //   doel: een ffmpeg-proses gee 16 kHz-PCM; Dart bereken per sekonde lae-energie-rame, platheid en dB en klassifiseer in stilte/musiek/spraak/geraas (spektrogram, nie YouTube se [musiek]-merkers nie)
 //   status: bou
 import 'dart:async';

@@ -3,7 +3,7 @@
 //   wanneer: "Verwerk volgende", "Keur goed en sny", "Beplan weer", "Klank vir WhatsApp", "Laai op" en by begin (hervat)
 //   groep: core | Kern
 //   skryf: <werkmap>/jobs.json | die ry; sermon.json van die preek wat verwerk word
-//   doel: een taak op 'n slag (plan met grense en stilte-snap, sny, klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
+//   doel: een taak op 'n slag (plan: klank → blokke → etikette → grense → stilte-snap; sny: die gekose uitvoere in die diensgids met WhatsApp.txt en diens.json; klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
 //   status: bou
 import 'dart:async';
 import 'dart:convert';
@@ -345,7 +345,7 @@ JobRun planJob(SermonStore store) => (c) async {
 
 // stap: v1 4 Sny | herkodeer presies van die eerste woord tot ná die Amen (met intro/outro en uitgeknipte stukke saamgevoeg); uitset in die uitsetgids
 // stap: v3 4 Sny sonder YouTube | dieselfde snit; die opname het geen Shorts-onderskrifte nie
-// stap: diensindeling 9 Sny die uitvoere | Volle preek, Net die woord en Sang soos in Instellings gekies, in die diensgids; dan WhatsApp.txt en diens.json
+// stap: diensindeling 10 Sny die uitvoere | Volle preek, Net die woord en Sang soos in Instellings gekies, in die diensgids; dan WhatsApp.txt en diens.json
 /// Downloads the video and makes the chosen outputs (Instellings `exports`) of the service in its [serviceDir]:
 /// the sermon with the Shorts, "Net die woord", each song as mp3; then writes `WhatsApp.txt` and `diens.json`.
 JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {

@@ -3,7 +3,7 @@
 //   wanneer: Hersien (rail)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: die preekredigeerder: preek uit Preke → plan → hakies, I/O, uitknip, transkripsie, Shorts, ontdoen (kortpaaie) → keur goed en sny
+//   doel: die preekredigeerder: preek uit Preke → plan → hakies, I/O, uitknip, transkripsie, Shorts, ontdoen (kortpaaie) → kies uitvoere, Oggend/Aand en soort diens (liedname op die tydlyn) → keur goed en sny
 //   status: bou
 
 import 'package:flutter/material.dart';
@@ -653,7 +653,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           },
         );
 
-  // stap: diensindeling 10 Kies die uitvoere | drie merkblokkies (almal aan, onthou in Instellings), Oggend/Aand en die soort diens; die sny gebruik dit
+  // stap: diensindeling 7 Kies die uitvoere | drie merkblokkies (almal aan, onthou in Instellings), Oggend/Aand en die soort diens; die sny gebruik dit
   /// The outputs the cut makes and the service's day part and kind.
   Widget _outputs(L l, ThemeData th) {
     final names = {'full': l.outFull, 'word': l.outWord, 'songs': l.outSongs};

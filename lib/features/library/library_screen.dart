@@ -112,7 +112,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  // stap: diensindeling 13 Preke-aansig | per jaar, nuutste eerste; Speel, Wys in gids en Kopieer WhatsApp-teks per diens
+  // stap: diensindeling 12 Preke-aansig | per jaar, nuutste eerste; Speel, Wys in gids en Kopieer WhatsApp-teks per diens
   Widget _sermons(L l, ThemeData th, List<LibraryService> shown) {
     final rows = <Widget>[];
     String? year;
@@ -164,7 +164,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return ListView(children: rows);
   }
 
-  // stap: diensindeling 14 Sang-aansig | alle liedere met naam, diens en datum; 'n soektog wys net die liedere wat pas
+  // stap: diensindeling 13 Sang-aansig | alle liedere met naam, diens en datum; 'n soektog wys net die liedere wat pas
   Widget _songs(L l, ThemeData th, List<LibraryService> shown, String q) {
     final rows = <Widget>[];
     for (final s in shown) {

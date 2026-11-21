@@ -3,7 +3,7 @@
 //   wanneer: Snitlyste (rail)
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | reëls en jabloon
-//   doel: snitlysreëls aan/af en in volgorde, voorskou hoeveel preke in elke snitlys val, beskrywingsjabloon
+//   doel: snitlysreëls aan/af en in volgorde, voorskou hoeveel preke in elke snitlys val, beskrywingsjabloon, WhatsApp-sjabloon met voorskou
 //   status: bou
 import 'package:flutter/material.dart';
 
@@ -153,7 +153,7 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
                     style: th.textTheme.bodyMedium,
                   ),
                 ],
-                // stap: diensindeling 12 WhatsApp-sjabloon | die teks met plekhouers en 'n voorskou met die nuutste preek
+                // stap: diensindeling 8 WhatsApp-sjabloon | die teks met plekhouers en 'n voorskou met die nuutste preek
                 _heading(th, l.whatsappTemplate),
                 TextField(
                   key: const ValueKey('whatsappTemplate'),

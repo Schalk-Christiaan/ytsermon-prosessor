@@ -48,7 +48,7 @@ const _notPrayer = {
   BlockLabel.seen,
 };
 
-// stap: diensindeling 6 Grense uit etikette | preek = langste loop `preek`-blokke (≥ 15 min); begin by die eerste blok van die gebed daarvoor (terug tot by musiek), einde by die Amen van die gebed daarna; twyfel gee 'n rede vir Hersien
+// stap: diensindeling 5 Grense uit etikette | preek = langste loop `preek`-blokke (≥ 15 min); begin by die eerste blok van die gebed daarvoor (terug tot by musiek), einde by die Amen van die gebed daarna; twyfel gee 'n rede vir Hersien
 /// Picks the cut from the labelled [blocks]: the sermon is the longest run of `preek` blocks (at least
 /// [kMinSermon]). The cut starts at the prayer before it: the last `gebed` block before the run, back to
 /// the first block of the same stretch without music in between (a long prayer is several blocks and the
@@ -111,7 +111,7 @@ Bounds findBounds(List<Block> blocks, List<TimeBlock> sound) {
   );
 }
 
-// stap: diensindeling 7 Net die woord | alle spraak tussen die gebede (Skriflesing ingesluit), sonder gebede en sang, in een snit aanmekaar
+// stap: diensindeling 6 Net die woord | alle spraak tussen die gebede (Skriflesing ingesluit), sonder gebede en sang, in een snit aanmekaar
 /// The kept pieces of "Net die woord": every labelled block that is not a prayer, inside the [within] spans
 /// (the sermon cut), joined into one span while neither a prayer nor music comes between.
 List<Span> wordParts(
@@ -174,7 +174,7 @@ double snapStart(double t, List<(double, double)> silences) =>
 double snapEnd(double t, List<(double, double)> silences) =>
     silences.where((s) => s.$2 > t).firstOrNull?.$1 ?? t;
 
-// stap: preekgrense 3 Stilte-snap | begin na die einde van die laaste stilte voor die eerste woord, einde by die begin van die eerste stilte ná "Amen" (ffmpeg silencedetect, ±3 s)
+// stap: preekgrense 1 Stilte-snap | begin na die einde van die laaste stilte voor die eerste woord, einde by die begin van die eerste stilte ná "Amen" (ffmpeg silencedetect, ±3 s)
 /// Snaps both cuts of [b] to the silence around them: one ffmpeg call over 6 s of sound per cut
 /// (see [silenceArgs]); where none is found the word time stays. [Bounds.reason] is kept.
 // skakel: → cutter.silenceArgs (die ffmpeg-oproep vir die stilte)

@@ -76,6 +76,7 @@ class ServiceInfo {
         ],
       );
 
+  // stap: diensindeling 3 Diensdatum | die dag en Oggend/Aand uit die stroom se begintyd (nie upload_date nie, wat 'n dag laat is); tema, Skriflesing en psalms uit die beskrywing
   /// From yt-dlp's info.json: the day and Oggend/Aand from [serviceStart], the rest from the description.
   factory ServiceInfo.fromInfo(Map<String, dynamic> j, {Duration? offset}) {
     final t = serviceStart(j, offset: offset);
