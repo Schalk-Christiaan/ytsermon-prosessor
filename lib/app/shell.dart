@@ -3,7 +3,7 @@
 //   wanneer: by opstart
 //   groep: app | App-raam
 //   skryf: —
-//   doel: NavigationRail: Preke (tuis), Hersien, Werk, Snitlyste, Biblioteek, Instellings (Kanaal + Stelsel); begin op Opstelling tot dit klaar is
+//   doel: Rail en inhoud as twee panele (radius 16) op die grond; rail: Preke (tuis), Hersien, Werk, Snitlyste, Biblioteek, Instellings (Kanaal + Stelsel); begin op Opstelling tot dit klaar is
 //   status: bou
 
 // vloei: v1 | Verwerk nuutste diens
@@ -60,6 +60,7 @@ import '../features/settings/system_status.dart';
 import '../features/setup/setup_screen.dart';
 import '../features/work/work_screen.dart';
 import '../l10n/app_localizations.dart';
+import 'theme.dart';
 
 /// The app frame: navigation rail and the five screens; starts on Opstelling until setup is done.
 class Shell extends StatefulWidget {
@@ -121,79 +122,91 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     final l = L.of(context);
     return Scaffold(
-      body: Row(
-        children: [
-          SizedBox(
-            width: 88,
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                _dest(Icons.church_rounded, l.navPreke, 0),
-                _dest(Icons.rate_review_rounded, l.navReview, 1),
-                _dest(Icons.work_history_rounded, l.navWerk, 2),
-                _dest(Icons.playlist_play_rounded, l.navSnitlyste, 3),
-                _dest(Icons.video_library_rounded, l.navBiblioteek, 6),
-                const Spacer(),
-                _dest(Icons.settings_rounded, l.navSettings, 4),
-                const SizedBox(height: 8),
-              ],
+      body: Padding(
+        padding: const EdgeInsets.all(kPanelGap),
+        child: Row(
+          children: [
+            _panel(
+              SizedBox(
+                width: 88,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    _dest(Icons.church_rounded, l.navPreke, 0),
+                    _dest(Icons.rate_review_rounded, l.navReview, 1),
+                    _dest(Icons.work_history_rounded, l.navWerk, 2),
+                    _dest(Icons.playlist_play_rounded, l.navSnitlyste, 3),
+                    _dest(Icons.video_library_rounded, l.navBiblioteek, 6),
+                    const Spacer(),
+                    _dest(Icons.settings_rounded, l.navSettings, 4),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
             ),
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(
-            child: IndexedStack(
-              index: _i,
-              children: [
-                SermonsScreen(
-                  store: widget.store,
-                  jobs: widget.jobs,
-                  list: widget.list,
-                  onOpen: (id) {
-                    _review.open(id);
-                    setState(() => _i = 1);
-                  },
+            const SizedBox(width: kPanelGap),
+            Expanded(
+              child: _panel(
+                IndexedStack(
+                  index: _i,
+                  children: [
+                    SermonsScreen(
+                      store: widget.store,
+                      jobs: widget.jobs,
+                      list: widget.list,
+                      settings: _settings,
+                      onOpen: (id) {
+                        _review.open(id);
+                        setState(() => _i = 1);
+                      },
+                    ),
+                    ReviewScreen(
+                      controller: _review,
+                      settings: _settings,
+                      onWork: () => setState(() => _i = 2),
+                    ),
+                    WorkScreen(
+                      store: widget.store,
+                      jobs: widget.jobs,
+                      onBack: () => setState(() => _i = 0),
+                      quota: _quota,
+                    ),
+                    PlaylistsScreen(store: widget.store, settings: _settings),
+                    SettingsScreen(
+                      settings: _settings,
+                      auth: _auth,
+                      signIn: () => _auth.signIn(openPath),
+                      system: const SystemStatus(),
+                      onSetup: () => setState(() => _i = 5),
+                    ),
+                    // Built only while shown, so it probes Ollama when opened, not at every start.
+                    if (_i == 5)
+                      SetupScreen(
+                        settings: _settings,
+                        auth: _auth,
+                        signIn: () => _auth.signIn(openPath),
+                        onSettings: () => setState(() => _i = 4),
+                        onDone: () => setState(() => _i = 0),
+                      )
+                    else
+                      const SizedBox(),
+                    // Built only while shown, so the folder is read when opened.
+                    if (_i == 6)
+                      LibraryScreen(settings: _settings)
+                    else
+                      const SizedBox(),
+                  ],
                 ),
-                ReviewScreen(
-                  controller: _review,
-                  onWork: () => setState(() => _i = 2),
-                ),
-                WorkScreen(
-                  store: widget.store,
-                  jobs: widget.jobs,
-                  onBack: () => setState(() => _i = 0),
-                  quota: _quota,
-                ),
-                PlaylistsScreen(store: widget.store, settings: _settings),
-                SettingsScreen(
-                  settings: _settings,
-                  auth: _auth,
-                  signIn: () => _auth.signIn(openPath),
-                  system: const SystemStatus(),
-                  onSetup: () => setState(() => _i = 5),
-                ),
-                // Built only while shown, so it probes Ollama when opened, not at every start.
-                if (_i == 5)
-                  SetupScreen(
-                    settings: _settings,
-                    auth: _auth,
-                    signIn: () => _auth.signIn(openPath),
-                    onSettings: () => setState(() => _i = 4),
-                    onDone: () => setState(() => _i = 0),
-                  )
-                else
-                  const SizedBox(),
-                // Built only while shown, so the folder is read when opened.
-                if (_i == 6)
-                  LibraryScreen(settings: _settings)
-                else
-                  const SizedBox(),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+  Widget _panel(Widget child) =>
+      appPanel(context, child, key: const ValueKey('shell.panel'));
 
   Widget _dest(IconData icon, String label, int i) {
     final cs = Theme.of(context).colorScheme;
@@ -202,19 +215,35 @@ class _ShellState extends State<Shell> {
       selected: sel,
       button: true,
       label: label,
-      child: InkWell(
-        onTap: () => setState(() => _i = i),
-        child: Container(
-          width: 88,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          color: sel ? cs.secondary.withValues(alpha: 0.14) : null,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: sel ? cs.secondary : null),
-              const SizedBox(height: 4),
-              Text(label, style: Theme.of(context).textTheme.labelMedium),
-            ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        child: InkWell(
+          key: ValueKey('ctl.skulp.nav-$i'),
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => setState(() => _i = i),
+          child: Ink(
+            width: 72,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: sel
+                ? BoxDecoration(
+                    color: cs.secondaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  )
+                : null,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: sel ? cs.onSecondaryContainer : null),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: sel ? FontWeight.w700 : null,
+                    color: sel ? cs.onSecondaryContainer : null,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

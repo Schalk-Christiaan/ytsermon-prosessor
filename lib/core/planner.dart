@@ -19,6 +19,9 @@ const kMaxShort = 90;
 
 const kPlanFile = 'plan.json';
 
+/// The plan as the AI proposed it, written when a sermon is first opened (Herstel goes back to it).
+const kProposalFile = 'plan.proposal.json';
+
 /// Planning failed in a way the user can act on (no captions, Ollama gave nonsense).
 class PlanException implements Exception {
   PlanException(this.errors, {this.plan});
@@ -351,6 +354,10 @@ class Planner {
     );
     if (cancelled) throw JobCancelled();
     savePlan(dir, plan);
+    final old = File(
+      p.join(dir.path, kProposalFile),
+    ); // a new AI plan is the new proposal
+    if (old.existsSync()) old.deleteSync();
     return plan;
   }
 

@@ -241,6 +241,74 @@ void main() {
       expect(c.plan!.sermonStart, 49);
     });
 
+    test('reset goes back to the proposal in one undoable step', () {
+      final c = editor();
+      c.nudge(true, 5);
+      c.setTitle('ander');
+      expect(c.canReset, isTrue);
+      c.resetToProposal();
+      expect(
+        (c.plan!.sermonStart, c.plan!.sermonEnd, c.plan!.title),
+        (0, 100, 't'),
+      );
+      c.undo();
+      expect((c.plan!.sermonStart, c.plan!.title), (15, 'ander'));
+    });
+
+    test('reset is the AI proposal after 101 edits', () {
+      final c = editor();
+      for (var i = 0; i < 101; i++) {
+        c.setSermon(10 + i % 7, 90 - i % 5);
+        c.setTitle('t$i'); // separate undo groups
+        c.setSermon(11 + i % 3, 80);
+      }
+      c.resetToProposal();
+      expect(
+        (c.plan!.sermonStart, c.plan!.sermonEnd, c.plan!.title),
+        (0, 100, 't'),
+      );
+    });
+
+    test('reset is the AI proposal after reopening', () {
+      final (c, store, _) = testController();
+      final dir = Directory(p.join(store.root.path, 'x'))..createSync();
+      File(p.join(dir.path, 'x.info.json')).writeAsStringSync(
+        '{"title":"T","duration":100,"upload_date":"20261115"}',
+      );
+      File(p.join(dir.path, 'x.af-orig.json3'))
+          .writeAsStringSync('{"events":[]}');
+      savePlan(
+        dir,
+        SermonPlan(
+          sermonStart: 1,
+          sermonEnd: 90,
+          title: 'KI',
+          description: '',
+          shorts: [],
+        ),
+      );
+      c.open('x');
+      c.setSermon(20, 80);
+      c.open('x'); // reopen: the edit is now the saved plan
+      expect(c.canReset, isTrue);
+      c.resetToProposal();
+      expect(
+        (c.plan!.sermonStart, c.plan!.sermonEnd, c.plan!.title),
+        (1, 90, 'KI'),
+      );
+    });
+
+    test('nothing to reset before the first edit; volume stays in 0-100', () {
+      final (c, _, _) = _ready((m, {onProgress}) async => File('v.mp4'), null);
+      expect(c.canReset, isFalse);
+      c.resetToProposal();
+      expect(c.plan!.sermonStart, 0);
+      c.setVolume(150);
+      expect(c.volume.value, 100);
+      c.setVolume(-3);
+      expect(c.volume.value, 0);
+    });
+
     test('typing the title is one undo step', () {
       final c = editor();
       c.setTitle('a');

@@ -50,6 +50,17 @@ void main() {
     );
   });
 
+  test(
+    'levels round trip: one whole dB per second, empty when never analysed',
+    () {
+      final d = Directory.systemTemp.createTempSync('lvl');
+      addTearDown(() => d.deleteSync(recursive: true));
+      expect(loadLevels(d), isEmpty);
+      saveLevels(d, [-61.2, -30.4, -12.5]);
+      expect(loadLevels(d), [-61, -30, -13]);
+    },
+  );
+
   test('YWz5gf0onjk music at 11:40-14:44, 22:10-23:30, 56:34-60:52', () {
     final music = [
       for (final b in classify(fixtureSoundFeatures('YWz5gf0onjk')))

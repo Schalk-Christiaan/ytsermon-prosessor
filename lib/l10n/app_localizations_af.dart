@@ -709,4 +709,73 @@ class LAf extends L {
   String songUnnamed(int n) {
     return 'Lied $n';
   }
+
+  @override
+  String get trackSound => 'Klank';
+
+  @override
+  String get trackService => 'Diens';
+
+  @override
+  String get trackShorts => 'Shorts';
+
+  @override
+  String get seekBack5 => '5 s terug';
+
+  @override
+  String get seekForward5 => '5 s vorentoe';
+
+  @override
+  String get zoom => 'Zoem';
+
+  @override
+  String get zoomField => 'Zoem (×)';
+
+  @override
+  String get markIn => 'Preek begin by speelkop (I)';
+
+  @override
+  String get markOut => 'Preek einde by speelkop (O)';
+
+  @override
+  String get tabSermon => 'Preek';
+
+  @override
+  String get tabOutput => 'Uitvoer';
+
+  @override
+  String get sermonBegin => 'Begin';
+
+  @override
+  String get sermonEndLabel => 'Einde';
+
+  @override
+  String get volume => 'Klankvolume (voorskou)';
+
+  @override
+  String get properties => 'Eienskappe';
+
+  @override
+  String get resetProposal => 'Herstel na voorstel';
+
+  @override
+  String get shortBegin => 'Begin';
+
+  @override
+  String get shortSeconds => 'Lengte (s)';
+
+  @override
+  String get timeFieldError => 'Ongeldig; tik soos 23:04 of 60';
+
+  @override
+  String get previewVideoMissing => 'Video nog nie gereed nie';
+
+  @override
+  String get viewList => 'Lys';
+
+  @override
+  String get viewGrid => 'Rooster';
+
+  @override
+  String get noMatches => 'Geen preke pas by die soektog of filter nie';
 }

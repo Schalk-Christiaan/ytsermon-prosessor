@@ -76,4 +76,16 @@ void main() {
     }
     expect(srt, contains('dis by hierdie erediens inskakel'));
   });
+
+  test('parseClock reads what a time field shows and what people type', () {
+    expect(parseClock('23:04'), 1384);
+    expect(parseClock(' 1:02:03 '), 3723);
+    expect(parseClock('23:04.5'), 1384.5);
+    expect(parseClock('23:04,5'), 1384.5);
+    expect(parseClock('90'), 90);
+    for (final bad in ['', 'abc', '1:2:3:4', '-5', '12:xx']) {
+      expect(parseClock(bad), isNull, reason: bad);
+    }
+    expect(parseClock(formatTime(1384)), 1384);
+  });
 }

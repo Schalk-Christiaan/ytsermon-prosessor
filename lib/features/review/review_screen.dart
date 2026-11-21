@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../../app/theme.dart';
 import '../../core/captions.dart';
 import '../../core/jobs.dart';
 import '../../core/models.dart';
@@ -19,11 +20,17 @@ import '../../core/store.dart';
 import '../../l10n/app_localizations.dart';
 import 'review_controller.dart';
 import 'service_timeline.dart';
-import 'transcript.dart';
+import 'properties_panel.dart';
+import 'transport_bar.dart';
 
 /// Hersien, the sermon editor: video, transcript, timeline, cuts, Shorts and actions.
 class ReviewScreen extends StatefulWidget {
-  const ReviewScreen({super.key, required this.controller, this.onWork});
+  const ReviewScreen({
+    super.key,
+    required this.controller,
+    this.onWork,
+    this.settings,
+  });
 
   /// Owned by the shell, which opens a sermon in it from Preke.
   final ReviewController controller;
@@ -31,33 +38,18 @@ class ReviewScreen extends StatefulWidget {
   /// Goes to Werk, where the cut runs and "Laai op" follows (V1: Oom Johan must not hunt for it).
   final VoidCallback? onWork;
 
+  /// The shell's one [AppSettings]; a second instance would overwrite the other screens' saves.
+  final AppSettings? settings;
+
   @override
   State<ReviewScreen> createState() => _ReviewScreenState();
 }
 
 class _ReviewScreenState extends State<ReviewScreen> {
   late final _c = widget.controller;
-  final _title = TextEditingController();
-  final _desc = TextEditingController();
-  (int, int)? _synced;
-  int _tab = 1;
-  late final _settings = AppSettings.load(_c.store.root);
-
-  @override
-  void dispose() {
-    _title.dispose();
-    _desc.dispose();
-    super.dispose();
-  }
-
-  void _syncFields() {
-    if (_c.state == ReviewState.ready &&
-        _synced != (_c.planRevision, _c.edits)) {
-      _synced = (_c.planRevision, _c.edits);
-      _title.text = _c.plan!.title;
-      _desc.text = _c.plan!.description;
-    }
-  }
+  double _zoom = 1;
+  bool _propsOpen = false;
+  late final _settings = widget.settings ?? AppSettings.load(_c.store.root);
 
   Future<void> _cut(L l) async {
     final m = ScaffoldMessenger.of(context);
@@ -84,10 +76,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
         content: Text(l.replanConfirm),
         actions: [
           TextButton(
+            key: const ValueKey('ctl.hersien.replan-cancel'),
             onPressed: () => Navigator.pop(c, false),
             child: Text(l.cancel),
           ),
           FilledButton(
+            key: const ValueKey('ctl.hersien.replan-confirm'),
             onPressed: () => Navigator.pop(c, true),
             child: Text(l.replan),
           ),
@@ -103,9 +97,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
     return ListenableBuilder(
       listenable: _c,
       builder: (context, _) {
-        _syncFields();
         return Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(kPanelGap),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [Expanded(child: _body(l))],
@@ -129,7 +122,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
             children: [
               Text(l.unplanned, style: th.textTheme.titleMedium),
               const SizedBox(height: 16),
-              FilledButton(onPressed: _c.replan, child: Text(l.planNow)),
+              FilledButton(
+                key: const ValueKey('ctl.hersien.plan-now'),
+                onPressed: _c.replan,
+                child: Text(l.planNow),
+              ),
             ],
           ),
         );
@@ -150,10 +147,15 @@ class _ReviewScreenState extends State<ReviewScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  FilledButton(onPressed: _c.replan, child: Text(l.retry)),
+                  FilledButton(
+                    key: const ValueKey('ctl.hersien.retry'),
+                    onPressed: _c.replan,
+                    child: Text(l.retry),
+                  ),
                   if (_c.meta != null) ...[
                     const SizedBox(width: 12),
                     OutlinedButton(
+                      key: const ValueKey('ctl.hersien.set-manually'),
                       onPressed: _c.setManually,
                       child: Text(l.setManually),
                     ),
@@ -198,146 +200,145 @@ class _ReviewScreenState extends State<ReviewScreen> {
   // tak: kode onseker → banier met die rede (ARB) en "Gaan na die grens"
   Widget _ready(L l, ThemeData th) {
     final plan = _c.plan!;
+    final wide = MediaQuery.sizeOf(context).width >= 1280;
+    final props = appPanel(
+      context,
+      key: const ValueKey('review.properties'),
+      elevation: wide ? 0 : 8,
+      Padding(
+        padding: const EdgeInsets.all(16),
+        child: PropertiesPanel(c: _c, settings: _settings),
+      ),
+    );
+    final stage = appPanel(
+      context,
+      key: const ValueKey('review.stage'),
+      Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: _preview(th)),
+            const SizedBox(height: 8),
+            // Compact rows under 1280: the preview gets the height they free.
+            Theme(
+              data: wide
+                  ? th
+                  : th.copyWith(visualDensity: VisualDensity.compact),
+              child: Column(
+                children: [
+                  ToolBar(c: _c, showHint: wide),
+                  TransportBar(
+                    c: _c,
+                    zoom: _zoom,
+                    onZoom: (v) => setState(() => _zoom = v),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            ServiceTimeline(
+              duration: _c.duration,
+              blocks: _c.sound,
+              levels: _c.levels,
+              zoom: _zoom,
+              sermonStart: plan.sermonStart,
+              sermonEnd: plan.sermonEnd,
+              shorts: plan.shorts,
+              cuts: plan.cuts,
+              prayers: _c.prayerMarks,
+              songs: _c.songs,
+              faulty: {
+                for (final s in plan.shorts)
+                  if (shortFault(s, plan) != null) s,
+              },
+              position: _c.position,
+              animateKey: _c.planRevision,
+              onSeek: _c.seek,
+              onSermonChanged: (s, e) => _c.setSermon(s, e, save: false),
+              onSermonCommit: _c.commit,
+              onNudge: (start, d) {
+                _c.nudge(start, d);
+                _c.seek(start ? plan.sermonStart : plan.sermonEnd);
+              },
+              onShortMove: (s, d) => _c.moveShort(s, d, save: false),
+            ),
+          ],
+        ),
+      ),
+    );
     return Focus(
       autofocus: true,
       onKeyEvent: _key,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _preview(th)),
-                const SizedBox(width: 24),
-                SizedBox(width: 400, child: _meta(l, th, plan)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (plan.doubt != null) ...[
-            _doubt(l, th, plan.doubt!),
-            const SizedBox(height: 12),
-          ],
-          ServiceTimeline(
-            duration: _c.duration,
-            blocks: _c.sound,
-            sermonStart: plan.sermonStart,
-            sermonEnd: plan.sermonEnd,
-            shorts: plan.shorts,
-            cuts: plan.cuts,
-            prayers: _c.prayerMarks,
-            songs: _c.songs,
-            faulty: {
-              for (final s in plan.shorts)
-                if (shortFault(s, plan) != null) s,
-            },
-            position: _c.position,
-            animateKey: _c.planRevision,
-            onSeek: _c.seek,
-            onSermonChanged: (s, e) => _c.setSermon(s, e, save: false),
-            onSermonCommit: _c.commit,
-            onNudge: (start, d) {
-              _c.nudge(start, d);
-              _c.seek(start ? plan.sermonStart : plan.sermonEnd);
-            },
-            onShortMove: (s, d) => _c.moveShort(s, d, save: false),
-          ),
-          _playBar(l, th),
-          const SizedBox(height: 8),
           Row(
             children: [
-              SegmentedButton<int>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: 1,
-                    label: Text(l.shortsTab(plan.shorts.length)),
-                  ),
-                  ButtonSegment(
-                    value: 0,
-                    label: Text(l.cutsTab(plan.cuts.length)),
-                  ),
-                ],
-                selected: {_tab},
-                onSelectionChanged: (v) => setState(() => _tab = v.single),
-              ),
-              const SizedBox(width: 16),
-              _tab == 0
-                  ? TextButton.icon(
-                      onPressed: _c.addCut,
-                      icon: const Icon(Icons.content_cut_rounded),
-                      label: Text(l.addCut),
-                    )
-                  : TextButton.icon(
-                      onPressed: () => _c.addShort(l.newShortTitle),
-                      icon: const Icon(Icons.add_rounded),
-                      label: Text(l.addShort),
-                    ),
-              const Spacer(),
-              Flexible(
+              Expanded(
                 child: Text(
-                  l.editorKeys,
-                  textAlign: TextAlign.end,
-                  style: th.textTheme.labelMedium,
+                  plan.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: th.textTheme.titleLarge,
                 ),
               ),
+              IconButton(
+                key: const ValueKey('ctl.hersien.undo'),
+                tooltip: l.undo,
+                onPressed: _c.canUndo ? _c.undo : null,
+                icon: const Icon(Icons.undo_rounded),
+              ),
+              IconButton(
+                key: const ValueKey('ctl.hersien.redo'),
+                tooltip: l.redo,
+                onPressed: _c.canRedo ? _c.redo : null,
+                icon: const Icon(Icons.redo_rounded),
+              ),
+              if (!wide)
+                IconButton(
+                  key: const ValueKey('ctl.hersien.properties-toggle'),
+                  tooltip: l.properties,
+                  isSelected: _propsOpen,
+                  onPressed: () => setState(() => _propsOpen = !_propsOpen),
+                  icon: const Icon(Icons.tune_rounded),
+                ),
             ],
           ),
-          SizedBox(
-            height: 72,
-            child: _tab == 0 ? _cuts(l, th, plan) : _shorts(l, th, plan),
+          if (plan.doubt != null) ...[
+            _doubt(l, th, plan.doubt!),
+            const SizedBox(height: kPanelGap),
+          ],
+          Expanded(
+            child: wide
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: stage),
+                      const SizedBox(width: kPanelGap),
+                      SizedBox(width: 380, child: props),
+                    ],
+                  )
+                : Stack(
+                    children: [
+                      Positioned.fill(child: stage),
+                      if (_propsOpen)
+                        Positioned(
+                          top: 0,
+                          bottom: 0,
+                          right: 0,
+                          width: 380,
+                          child: props,
+                        ),
+                    ],
+                  ),
           ),
-          const SizedBox(height: 4),
-          _outputs(l, th),
+          const SizedBox(height: kPanelGap),
           _actions(l, th),
         ],
       ),
     );
   }
-
-  Widget _playBar(L l, ThemeData th) => Row(
-    children: [
-      IconButton(
-        tooltip: l.playPause,
-        onPressed: _c.playPause,
-        icon: const Icon(Icons.play_arrow_rounded),
-      ),
-      ValueListenableBuilder<double>(
-        valueListenable: _c.position,
-        builder: (context, v, _) => Text(
-          formatTime(v),
-          style: th.textTheme.labelLarge?.copyWith(
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-        ),
-      ),
-      const SizedBox(width: 16),
-      TextButton(
-        onPressed: () => _c.playFrom(true),
-        child: Text(l.playFromStart),
-      ),
-      TextButton(onPressed: () => _c.playFrom(false), child: Text(l.playEnd)),
-      TextButton.icon(
-        onPressed: _c.previewCut,
-        icon: Icon(
-          _c.previewing ? Icons.check_rounded : Icons.slideshow_rounded,
-        ),
-        label: Text(l.previewCut),
-      ),
-      const Spacer(),
-      IconButton(
-        tooltip: l.undo,
-        onPressed: _c.canUndo ? _c.undo : null,
-        icon: const Icon(Icons.undo_rounded),
-      ),
-      IconButton(
-        tooltip: l.redo,
-        onPressed: _c.canRedo ? _c.redo : null,
-        icon: const Icon(Icons.redo_rounded),
-      ),
-    ],
-  );
 
   /// Why the code is unsure of the cut, with a jump to the boundary to check.
   Widget _doubt(L l, ThemeData th, BoundsDoubt d) => Container(
@@ -362,6 +363,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           }, style: TextStyle(color: th.colorScheme.onTertiaryContainer)),
         ),
         TextButton(
+          key: const ValueKey('ctl.hersien.go-to-boundary'),
           onPressed: () => _c.seek(
             d == BoundsDoubt.noPrayerAfter
                 ? _c.plan!.sermonEnd
@@ -372,57 +374,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
       ],
     ),
   );
-
-  Widget _cuts(L l, ThemeData th, SermonPlan plan) => plan.cuts.isEmpty
-      ? Align(
-          alignment: Alignment.topLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(l.noCuts, style: th.textTheme.bodyMedium),
-          ),
-        )
-      : ListView.builder(
-          itemCount: plan.cuts.length,
-          itemExtent: 48,
-          itemBuilder: (context, i) {
-            final c = plan.cuts[i];
-            return Row(
-              children: [
-                SizedBox(
-                  width: 120,
-                  child: Text(l.cutN(i + 1), style: th.textTheme.titleSmall),
-                ),
-                SizedBox(
-                  width: 140,
-                  child: Text(
-                    l.shortRange(formatTime(c.start), formatTime(c.end)),
-                    style: th.textTheme.bodyMedium?.copyWith(
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => _c.setCutStart(c),
-                  child: Text(l.startHere),
-                ),
-                TextButton(
-                  onPressed: () => _c.setCutEnd(c),
-                  child: Text(l.endHere),
-                ),
-                TextButton(
-                  onPressed: () => _c.seek(c.start - 3),
-                  child: Text(l.play),
-                ),
-                const Spacer(),
-                IconButton(
-                  tooltip: l.remove,
-                  onPressed: () => _c.removeCut(c),
-                  icon: const Icon(Icons.delete_outline_rounded),
-                ),
-              ],
-            );
-          },
-        );
 
   Widget _preview(ThemeData th) => Center(
     child: AspectRatio(
@@ -467,253 +418,22 @@ class _ReviewScreenState extends State<ReviewScreen> {
     ),
   );
 
-  // stap: v8 1 Maak reg | open die opgelaaide preek in Hersien en wysig titel of beskrywing
-  Widget _meta(L l, ThemeData th, SermonPlan plan) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      TextField(
-        key: const ValueKey('title'),
-        controller: _title,
-        minLines: 1,
-        maxLines: 2,
-        maxLength: 100,
-        maxLengthEnforcement: MaxLengthEnforcement.enforced,
-        buildCounter:
-            (c, {required currentLength, required isFocused, maxLength}) =>
-                isFocused
-                ? Text(
-                    l.counter(currentLength, maxLength ?? 100),
-                    style: th.textTheme.labelMedium,
-                  )
-                : null,
-        style: th.textTheme.titleLarge,
-        decoration: InputDecoration(
-          labelText: l.title,
-          border: const OutlineInputBorder(),
-        ),
-        onChanged: _c.setTitle,
-      ),
-      const SizedBox(height: 12),
-      SizedBox(
-        height: 88,
-        child: TextField(
-          controller: _desc,
-          maxLength: 5000,
-          maxLines: null,
-          expands: true,
-          textAlignVertical: TextAlignVertical.top,
-          buildCounter:
-              (c, {required currentLength, required isFocused, maxLength}) =>
-                  isFocused
-                  ? Text(
-                      l.counter(currentLength, maxLength ?? 5000),
-                      style: th.textTheme.labelMedium,
-                    )
-                  : null,
-          decoration: InputDecoration(
-            labelText: l.description,
-            alignLabelWithHint: true,
-            border: const OutlineInputBorder(),
-          ),
-          onChanged: _c.setDescription,
-        ),
-      ),
-      const SizedBox(height: 8),
-      Text(l.transcript, style: th.textTheme.titleSmall),
-      const SizedBox(height: 4),
-      Expanded(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            border: Border.all(color: th.colorScheme.outlineVariant),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Transcript(
-            segments: _c.segments,
-            prayers: _c.prayerMarks,
-            position: _c.position,
-            onSeek: _c.seek,
-          ),
-        ),
-      ),
-      const SizedBox(height: 4),
-      Row(
-        children: [
-          if (_c.saved) ...[
-            Icon(
-              Icons.check_rounded,
-              size: 16,
-              color: th.colorScheme.secondary,
-            ),
-            const SizedBox(width: 4),
-            Text(l.saved, style: th.textTheme.labelMedium),
-          ],
-        ],
-      ),
-    ],
-  );
-
-  Widget _shorts(L l, ThemeData th, SermonPlan plan) => plan.shorts.isEmpty
-      ? Align(
-          alignment: Alignment.topLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(l.noShorts, style: th.textTheme.bodyMedium),
-          ),
-        )
-      : ListView.builder(
-          itemCount: plan.shorts.length,
-          itemExtent: 48,
-          itemBuilder: (context, i) {
-            final s = plan.shorts[i];
-            final fault = shortFault(s, plan);
-            final secs = (s.end - s.start).round();
-            final reason = switch (fault) {
-              ShortFault.tooLong => l.shortTooLong(secs),
-              ShortFault.tooShort => l.shortTooShort(secs),
-              ShortFault.outside => l.shortOutside,
-              null => null,
-            };
-            final err = th.colorScheme.error;
-            return Row(
-              children: [
-                Container(
-                  width: 27,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: fault == null ? th.colorScheme.tertiary : err,
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    (i + 1).toString(),
-                    style: th.textTheme.labelMedium,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 140,
-                  child: Text(
-                    l.shortRange(formatTime(s.start), formatTime(s.end)),
-                    style: th.textTheme.bodyMedium?.copyWith(
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    key: ValueKey(('short', i, _c.planRevision, _c.edits)),
-                    initialValue: s.title,
-                    style: th.textTheme.bodyMedium,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: l.shortLength(i + 1),
-                      border: InputBorder.none,
-                    ),
-                    onChanged: (v) => _c.setShortTitle(s, v),
-                  ),
-                ),
-                if (reason != null) ...[
-                  Icon(Icons.error_outline_rounded, size: 18, color: err),
-                  const SizedBox(width: 4),
-                  Text(reason, style: TextStyle(color: err)),
-                ],
-                SizedBox(
-                  width: 160,
-                  child: Slider(
-                    semanticFormatterCallback: (_) => l.shortLength(i + 1),
-                    min: 20,
-                    max: secs > 120 ? secs.toDouble() : 120,
-                    value: secs.clamp(20, 100000).toDouble(),
-                    onChanged: (v) =>
-                        _c.setShortEnd(s, s.start + v, save: false),
-                    onChangeEnd: (_) => _c.commit(),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => _c.setShortStart(s),
-                  child: Text(l.startHere),
-                ),
-                TextButton(
-                  onPressed: () {
-                    _c.seek(s.start);
-                    _c.playPause();
-                  },
-                  child: Text(l.play),
-                ),
-                IconButton(
-                  tooltip: l.remove,
-                  onPressed: () => _c.removeShort(s),
-                  icon: const Icon(Icons.delete_outline_rounded),
-                ),
-              ],
-            );
-          },
-        );
-
-  // stap: diensindeling 7 Kies die uitvoere | drie merkblokkies (almal aan, onthou in Instellings), Oggend/Aand en die soort diens; die sny gebruik dit
-  /// The outputs the cut makes and the service's day part and kind.
-  Widget _outputs(L l, ThemeData th) {
-    final names = {'full': l.outFull, 'word': l.outWord, 'songs': l.outSongs};
-    final kinds = {
-      null: l.serviceKindNone,
-      'nagmaal': l.serviceKindNagmaal,
-      'doop': l.serviceKindDoop,
-      'kategismus': l.serviceKindKategismus,
-      'belydenis': l.serviceKindBelydenis,
-      'feesdag': l.serviceKindFeesdag,
-    };
-    return Wrap(
-      spacing: 8,
-      runSpacing: 0,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Text(l.outputsLabel, style: th.textTheme.labelLarge),
-        for (final e in names.entries)
-          FilterChip(
-            label: Text(e.value),
-            selected: _settings.exports.contains(e.key),
-            onSelected: (on) => setState(() {
-              on
-                  ? _settings.exports.add(e.key)
-                  : _settings.exports.remove(e.key);
-              _settings.save();
-            }),
-          ),
-        const SizedBox(width: 16),
-        Text(l.serviceDayLabel, style: th.textTheme.labelLarge),
-        SegmentedButton<bool>(
-          showSelectedIcon: false,
-          segments: [
-            ButtonSegment(value: false, label: Text(l.serviceMorning)),
-            ButtonSegment(value: true, label: Text(l.serviceEvening)),
-          ],
-          selected: {_c.service.evening},
-          onSelectionChanged: (v) => _c.setEvening(v.single),
-        ),
-        DropdownButton<String?>(
-          value: kinds.containsKey(_c.service.label) ? _c.service.label : null,
-          items: [
-            for (final e in kinds.entries)
-              DropdownMenuItem(value: e.key, child: Text(e.value)),
-          ],
-          onChanged: _c.setServiceKind,
-          hint: Text(l.serviceKind),
-        ),
-      ],
-    );
-  }
-
   Widget _actions(L l, ThemeData th) => Row(
     mainAxisAlignment: MainAxisAlignment.end,
     children: [
-      TextButton(onPressed: _c.skip, child: Text(l.skip)),
+      TextButton(
+        key: const ValueKey('ctl.hersien.skip'),
+        onPressed: _c.skip,
+        child: Text(l.skip),
+      ),
       const SizedBox(width: 12),
       // A recording without captions has nothing for the LLM to plan from.
       if (_c.segments.isNotEmpty) ...[
-        OutlinedButton(onPressed: () => _replan(l), child: Text(l.replan)),
+        OutlinedButton(
+          key: const ValueKey('ctl.hersien.replan'),
+          onPressed: () => _replan(l),
+          child: Text(l.replan),
+        ),
         const SizedBox(width: 12),
       ],
       if (_c.hasShortFault) ...[
@@ -722,11 +442,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
       ],
       if (_uploaded) ...[
         OutlinedButton(
+          key: const ValueKey('ctl.hersien.approve'),
           onPressed: _c.hasShortFault ? null : () => _cut(l),
           child: Text(l.approveAndCut),
         ),
         const SizedBox(width: 12),
         FilledButton.icon(
+          key: const ValueKey('ctl.hersien.push'),
           onPressed: _c.updating ? null : () => _push(l),
           icon: _c.updating
               ? const SizedBox.square(
@@ -738,6 +460,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         ),
       ] else
         FilledButton(
+          key: const ValueKey('ctl.hersien.approve'),
           onPressed: _c.hasShortFault ? null : () => _cut(l),
           child: Text(l.approveAndCut),
         ),

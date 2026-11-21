@@ -94,7 +94,7 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
                   children: [
                     for (final (i, r) in _order.indexed)
                       SwitchListTile(
-                        key: ValueKey('rule-$r'),
+                        key: ValueKey('ctl.snitlyste.rule-$r'),
                         contentPadding: EdgeInsets.zero,
                         value: rules.contains(r),
                         title: Text(r == 'book' ? l.ruleBook : l.ruleYear),
@@ -119,7 +119,7 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
                 if (none > 0) _count(th, l, l.noPlaylist, none, quiet: true),
                 _heading(th, l.template),
                 TextField(
-                  key: const ValueKey('template'),
+                  key: const ValueKey('ctl.snitlyste.template'),
                   controller: _template,
                   minLines: 4,
                   maxLines: 8,
@@ -156,7 +156,7 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
                 // stap: diensindeling 8 WhatsApp-sjabloon | die teks met plekhouers en 'n voorskou met die nuutste preek
                 _heading(th, l.whatsappTemplate),
                 TextField(
-                  key: const ValueKey('whatsappTemplate'),
+                  key: const ValueKey('ctl.snitlyste.whatsapp'),
                   controller: _whatsapp,
                   minLines: 4,
                   maxLines: 8,

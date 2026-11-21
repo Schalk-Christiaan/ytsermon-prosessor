@@ -57,6 +57,7 @@ class PreekApp extends StatelessWidget {
     required this.settings,
     required this.auth,
     required this.quota,
+    this.themeMode = ThemeMode.system,
   });
   final SermonStore store;
   final JobQueue jobs;
@@ -64,11 +65,15 @@ class PreekApp extends StatelessWidget {
   final GoogleAuth auth;
   final UploadQuota quota;
 
+  /// Test seam: the integration test runs the app in light and dark.
+  final ThemeMode themeMode;
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     onGenerateTitle: (c) => L.of(c).appTitle,
     theme: buildTheme(Brightness.light),
     darkTheme: buildTheme(Brightness.dark),
+    themeMode: themeMode,
     localizationsDelegates: const [
       L.delegate,
       GlobalMaterialLocalizations.delegate,

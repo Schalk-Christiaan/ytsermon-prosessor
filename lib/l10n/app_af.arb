@@ -475,5 +475,28 @@
         "type": "int"
       }
     }
-  }
+  },
+  "trackSound": "Klank",
+  "trackService": "Diens",
+  "trackShorts": "Shorts",
+  "seekBack5": "5 s terug",
+  "seekForward5": "5 s vorentoe",
+  "zoom": "Zoem",
+  "zoomField": "Zoem (×)",
+  "markIn": "Preek begin by speelkop (I)",
+  "markOut": "Preek einde by speelkop (O)",
+  "tabSermon": "Preek",
+  "tabOutput": "Uitvoer",
+  "sermonBegin": "Begin",
+  "sermonEndLabel": "Einde",
+  "volume": "Klankvolume (voorskou)",
+  "properties": "Eienskappe",
+  "resetProposal": "Herstel na voorstel",
+  "shortBegin": "Begin",
+  "shortSeconds": "Lengte (s)",
+  "timeFieldError": "Ongeldig; tik soos 23:04 of 60",
+  "previewVideoMissing": "Video nog nie gereed nie",
+  "viewList": "Lys",
+  "viewGrid": "Rooster",
+  "noMatches": "Geen preke pas by die soektog of filter nie"
 }

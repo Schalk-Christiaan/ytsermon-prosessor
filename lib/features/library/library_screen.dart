@@ -65,6 +65,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           Row(
             children: [
               SegmentedButton<int>(
+                key: const ValueKey('ctl.biblioteek.view'),
                 showSelectedIcon: false,
                 segments: [
                   ButtonSegment(value: 0, label: Text(l.libraryPreke)),
@@ -77,7 +78,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               SizedBox(
                 width: 320,
                 child: TextField(
-                  key: const ValueKey('librarySearch'),
+                  key: const ValueKey('ctl.biblioteek.search'),
                   controller: _search,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
@@ -90,6 +91,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
               const Spacer(),
               TextButton.icon(
+                key: const ValueKey('ctl.biblioteek.reload'),
                 onPressed: () =>
                     setState(() => _all = widget.load(widget.settings.outDir)),
                 icon: const Icon(Icons.refresh_rounded),
@@ -143,15 +145,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
             children: [
               if (s.video != null)
                 TextButton(
+                  key: const ValueKey('ctl.biblioteek.play'),
                   onPressed: () => widget.open(s.video!),
                   child: Text(l.play),
                 ),
               TextButton(
+                key: const ValueKey('ctl.biblioteek.show'),
                 onPressed: () => widget.open(s.dir.path, select: true),
                 child: Text(l.showInFolder),
               ),
               Builder(
                 builder: (ctx) => TextButton(
+                  key: const ValueKey('ctl.biblioteek.copy'),
                   onPressed: () => _copy(ctx, l, s),
                   child: Text(l.copyWhatsappText),
                 ),
@@ -183,10 +188,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     spacing: 4,
                     children: [
                       TextButton(
+                        key: const ValueKey('ctl.biblioteek.song-play'),
                         onPressed: () => widget.open(song.file!),
                         child: Text(l.play),
                       ),
                       TextButton(
+                        key: const ValueKey('ctl.biblioteek.song-show'),
                         onPressed: () => widget.open(song.file!, select: true),
                         child: Text(l.showInFolder),
                       ),

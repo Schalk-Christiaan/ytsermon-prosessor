@@ -106,6 +106,18 @@ class ReviewController extends ChangeNotifier {
   FetchedMeta? meta;
   List<Segment> segments = [];
   List<TimeBlock> sound = [];
+
+  /// Loudness per second (dB) for the waveform; empty when the service was analysed before levels were kept.
+  List<double> levels = [];
+
+  /// Preview volume 0-100 (the player only; the cut is not changed).
+  final volume = ValueNotifier<double>(100);
+
+  void setVolume(double v) {
+    volume.value = v.clamp(0, 100);
+    if (videoReady) player.setVolume(volume.value);
+  }
+
   SermonPlan? plan;
   double duration = 0;
 
@@ -186,6 +198,7 @@ class ReviewController extends ChangeNotifier {
       duration = j.durationSeconds;
       segments = parseJson3(m.captions.readAsStringSync());
       sound = loadSound(dir);
+      levels = loadLevels(dir);
       _loadService(meta!);
     }
     final pf = File(p.join(dir.path, kPlanFile));
@@ -197,6 +210,7 @@ class ReviewController extends ChangeNotifier {
       planRevision++;
       _undo.clear();
       _redo.clear();
+      _pinProposal(read: true);
       if (_download == null && !jobs.hasPending(id!)) _startDownload(meta!);
     } else if (_active(JobKind.plan)) {
       state = ReviewState.loading;
@@ -283,6 +297,7 @@ class ReviewController extends ChangeNotifier {
     planRevision++;
     _undo.clear();
     _redo.clear();
+    _pinProposal();
     _save();
     final s = sermon;
     if (s != null) store.save(s..state = SermonState.beplan);
@@ -347,6 +362,35 @@ class ReviewController extends ChangeNotifier {
       jsonDecode(from.removeLast()) as Map<String, dynamic>,
     );
     _group = null;
+    edits++;
+    _save();
+    notifyListeners();
+  }
+
+  /// The plan as the AI proposed it (JSON), kept apart from the undo stack (capped at 100) and
+  /// saved beside the plan so it survives reopening.
+  String? _proposal;
+
+  /// Pins the current plan as the proposal; with [read] a saved proposal wins (the plan may be edited).
+  void _pinProposal({bool read = false}) {
+    final f = File(p.join(meta!.dir.path, kProposalFile));
+    if (read && f.existsSync()) {
+      _proposal = f.readAsStringSync();
+      return;
+    }
+    _proposal = jsonEncode(plan!.toJson());
+    f.writeAsStringSync(_proposal!);
+  }
+
+  /// True while the plan differs from the proposal.
+  bool get canReset =>
+      _proposal != null && jsonEncode(plan!.toJson()) != _proposal;
+
+  /// "Herstel": back to the plan as it was when it opened (the AI proposal), as one undoable step.
+  void resetToProposal() {
+    if (!canReset) return;
+    _edit();
+    plan = SermonPlan.fromJson(jsonDecode(_proposal!) as Map<String, dynamic>);
     edits++;
     _save();
     notifyListeners();
@@ -562,6 +606,7 @@ class ReviewController extends ChangeNotifier {
     meta = m;
     segments = segs;
     sound = const [];
+    levels = [];
     _loadService(m);
     plan = p;
     duration = dur;
@@ -569,6 +614,7 @@ class ReviewController extends ChangeNotifier {
     planRevision++;
     _undo.clear();
     _redo.clear();
+    _proposal = jsonEncode(plan!.toJson());
     notifyListeners();
   }
 
@@ -577,6 +623,7 @@ class ReviewController extends ChangeNotifier {
     position.removeListener(_skipCuts);
     jobs.removeListener(_onJobs);
     _pos?.cancel();
+    volume.dispose();
     if (videoReady) player.dispose();
     super.dispose();
   }
