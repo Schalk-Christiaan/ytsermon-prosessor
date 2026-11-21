@@ -36,6 +36,25 @@ List<String> sermonArgs(String video, double start, double end, String out) => [
   out,
 ];
 
+/// ffmpeg arguments that print the silences (below -35 dB for 0.3 s) of the window [from, to] of [video] on stderr;
+/// times are relative to [from] (see `parseSilences`).
+List<String> silenceArgs(String video, double from, double to) => [
+  '-hide_banner',
+  '-nostats',
+  '-ss',
+  _sec(from),
+  '-t',
+  _sec(to - from),
+  '-i',
+  video,
+  '-vn',
+  '-af',
+  'silencedetect=noise=-35dB:d=0.3',
+  '-f',
+  'null',
+  '-',
+];
+
 /// ffmpeg arguments for a 1080x1920 Short with burned-in subtitles.
 /// Run with cwd = work dir: [srt] and `fonts/` stay relative because a Windows drive letter breaks the filter.
 List<String> shortArgs(

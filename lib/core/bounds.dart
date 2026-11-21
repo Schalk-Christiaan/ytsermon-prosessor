@@ -66,3 +66,29 @@ Bounds findBounds(List<Segment> segs, List<Prayer> prayers) {
         : null,
   );
 }
+
+/// Silences `(start, end)` in absolute seconds from ffmpeg `silencedetect` output, whose times are
+/// relative to the window that began at [from]. A silence still open at the window's end is closed by it.
+List<(double, double)> parseSilences(String out, double from) {
+  final r = <(double, double)>[];
+  double? open;
+  for (final m in RegExp(r'silence_(start|end): (-?[\d.]+)').allMatches(out)) {
+    final t = from + double.parse(m.group(2)!);
+    if (m.group(1) == 'start') {
+      open = t;
+    } else if (open != null) {
+      r.add((open, t));
+      open = null;
+    }
+  }
+  return r;
+}
+
+/// The cut start: the end of the last silence that begins at or before the first word [t], so the
+/// cut falls right before the speech; no silence = [t] unchanged.
+double snapStart(double t, List<(double, double)> silences) =>
+    silences.where((s) => s.$1 <= t).lastOrNull?.$2 ?? t;
+
+/// The cut end: the start of the first silence that ends after the "Amen" [t]; none = [t] unchanged.
+double snapEnd(double t, List<(double, double)> silences) =>
+    silences.where((s) => s.$2 > t).firstOrNull?.$1 ?? t;

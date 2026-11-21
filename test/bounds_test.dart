@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preekverwerker/core/bounds.dart';
 import 'package:preekverwerker/core/captions.dart';
@@ -41,5 +44,31 @@ void main() {
     final b = findBounds(segs, prayers(segs));
     expect(b.sure, isFalse);
     expect(b.reason, BoundsDoubt.twoSermons);
+  });
+
+  test('silence snap lands within 0.5 s of the hand marks', () {
+    final sil = jsonDecode(
+      File('test/fixtures/silences.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
+    for (final f in fixtureSermons()) {
+      List<(double, double)> at(String k) => parseSilences(
+        sil[f.id][k]['out'] as String,
+        (sil[f.id][k]['from'] as num).toDouble(),
+      );
+      final b = findBounds(f.segs, prayers(f.segs));
+      final tol = lineLevel.contains(f.id) ? 2.0 : 0.5;
+      expect(
+        snapStart(b.start, at('start')),
+        closeTo(f.start, tol),
+        reason: f.id,
+      );
+      expect(snapEnd(b.end, at('end')), closeTo(f.end, tol), reason: f.id);
+    }
+  });
+
+  test('no silence: the word time stays', () {
+    expect(snapStart(10, []), 10);
+    expect(snapEnd(10, []), 10);
+    expect(parseSilences('silence_start: 5.5\n', 100), isEmpty);
   });
 }

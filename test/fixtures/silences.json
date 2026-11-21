@@ -1,22 +1,22 @@
 {
  "YWz5gf0onjk": {
   "start": {
-   "from": 883.6,
-   "out": "silence_start: 0\nsilence_end: 3.043188\nsilence_start: 4.624437\nsilence_end: 5.231937\nsilence_start: 5.410188\nsilence_end: 6"
+   "from": 883.601,
+   "out": "silence_start: 0\nsilence_end: 3.042188\nsilence_start: 4.623438\nsilence_end: 5.230938\nsilence_start: 5.409187\nsilence_end: 6"
   },
   "end": {
-   "from": 3358.13,
-   "out": "silence_start: 0.859812\nsilence_end: 1.417375\nsilence_start: 1.963\nsilence_end: 3.01975\nsilence_start: 3.39975\nsilence_end: 5.698313"
+   "from": 3358.828,
+   "out": "silence_start: 0.161812\nsilence_end: 0.719375\nsilence_start: 1.265\nsilence_end: 2.32175\nsilence_start: 2.70175\nsilence_end: 5.000312\nsilence_start: 5.002813\nsilence_end: 6"
   }
  },
  "6s_FFatG0so": {
   "start": {
-   "from": 1547.11,
-   "out": "silence_start: 0\nsilence_end: 3.107625"
+   "from": 1547.107,
+   "out": "silence_start: 0\nsilence_end: 3.110625"
   },
   "end": {
-   "from": 4129.34,
-   "out": "silence_start: 2.264063\nsilence_end: 3.138375\nsilence_start: 3.525625\nsilence_end: 5.850313"
+   "from": 4130.036,
+   "out": "silence_start: 1.568063\nsilence_end: 2.442375\nsilence_start: 2.829625\nsilence_end: 5.154313"
   }
  },
  "pJzN-k-rVfQ": {
@@ -25,48 +25,18 @@
    "out": "silence_start: 0\nsilence_end: 2.567\nsilence_start: 2.567188\nsilence_end: 3.069438\nsilence_start: 4.421563\nsilence_end: 6"
   },
   "end": {
-   "from": 3462.36,
-   "out": "silence_start: 0\nsilence_end: 1.013813\nsilence_start: 2.0805\nsilence_end: 2.914438\nsilence_start: 3.21975\nsilence_end: 6"
+   "from": 3463.059,
+   "out": "silence_start: 0\nsilence_end: 0.314812\nsilence_start: 1.3815\nsilence_end: 2.215438\nsilence_start: 2.52075\nsilence_end: 6"
   }
  },
  "uub_CnO7bd0": {
   "start": {
-   "from": 705.04,
-   "out": ""
+   "from": 708.92,
+   "out": "silence_start: 5.5305\nsilence_end: 6"
   },
   "end": {
-   "from": 3140.2,
-   "out": "silence_start: 1.949375\nsilence_end: 3.029063\nsilence_start: 3.364063\nsilence_end: 5.789438"
-  }
- },
- "XTfXVwYFc6A": {
-  "start": {
-   "from": 1170.72,
-   "out": "silence_start: 2.479313\nsilence_end: 3.146562\nsilence_start: 4.463312\nsilence_end: 6"
-  },
-  "end": {
-   "from": 3026.24,
-   "out": "silence_start: 2.018375\nsilence_end: 2.929688\nsilence_start: 3.560125\nsilence_end: 5.935313"
-  }
- },
- "2BwvqIxLERM": {
-  "start": {
-   "from": 781.04,
-   "out": "silence_start: 0\nsilence_end: 2.628062\nsilence_start: 4.293125\nsilence_end: 6"
-  },
-  "end": {
-   "from": 2949.68,
-   "out": "silence_start: 1.086313\nsilence_end: 1.837625\nsilence_start: 2.570875\nsilence_end: 2.958375\nsilence_start: 3.30425\nsilence_end: 6"
-  }
- },
- "Dj_1f4HAPvY": {
-  "start": {
-   "from": 1649.56,
-   "out": "silence_start: 0\nsilence_end: 2.9215\nsilence_start: 4.5165\nsilence_end: 6"
-  },
-  "end": {
-   "from": 4312.04,
-   "out": "silence_start: 1.715188\nsilence_end: 2.8985\nsilence_start: 3.274938\nsilence_end: 5.966625"
+   "from": 3140.9,
+   "out": "silence_start: 1.249375\nsilence_end: 2.329063\nsilence_start: 2.664062\nsilence_end: 5.089437\nsilence_start: 5.098688\nsilence_end: 5.988437"
   }
  },
  "IdZO-xP3iB0": {
@@ -75,8 +45,38 @@
    "out": "silence_start: 0\nsilence_end: 2.262125\nsilence_start: 2.36175\nsilence_end: 2.984313\nsilence_start: 4.66025\nsilence_end: 5.877187"
   },
   "end": {
-   "from": 2861.64,
-   "out": "silence_start: 0.171\nsilence_end: 0.503812\nsilence_start: 0.503875\nsilence_end: 3.107188\nsilence_start: 3.129125\nsilence_end: 5.289562\nsilence_start: 5.290938\nsilence_end: 5.645812"
+   "from": 2861.399,
+   "out": "silence_start: 0.412\nsilence_end: 0.744812\nsilence_start: 0.744875\nsilence_end: 3.348187\nsilence_start: 3.370125\nsilence_end: 5.530563\nsilence_start: 5.531937\nsilence_end: 5.886813"
+  }
+ },
+ "2BwvqIxLERM": {
+  "start": {
+   "from": 781.04,
+   "out": "silence_start: 0\nsilence_end: 2.628062\nsilence_start: 4.293125\nsilence_end: 6"
+  },
+  "end": {
+   "from": 2950.38,
+   "out": "silence_start: 0.386313\nsilence_end: 1.137625\nsilence_start: 1.870875\nsilence_end: 2.258375\nsilence_start: 2.60425\nsilence_end: 5.566875"
+  }
+ },
+ "Dj_1f4HAPvY": {
+  "start": {
+   "from": 1649.559,
+   "out": "silence_start: 0\nsilence_end: 2.9225\nsilence_start: 4.5175\nsilence_end: 6"
+  },
+  "end": {
+   "from": 4312.74,
+   "out": "silence_start: 1.015188\nsilence_end: 2.1985\nsilence_start: 2.574937\nsilence_end: 5.266625\nsilence_start: 5.26725\nsilence_end: 6"
+  }
+ },
+ "XTfXVwYFc6A": {
+  "start": {
+   "from": 1170.72,
+   "out": "silence_start: 2.479313\nsilence_end: 3.146562\nsilence_start: 4.463312\nsilence_end: 6"
+  },
+  "end": {
+   "from": 3026.94,
+   "out": "silence_start: 1.318375\nsilence_end: 2.229688\nsilence_start: 2.860125\nsilence_end: 5.235313\nsilence_start: 5.335312\nsilence_end: 6"
   }
  },
  "a1kwRShCDpE": {
@@ -85,8 +85,8 @@
    "out": "silence_start: 0.088625\nsilence_end: 0.528\nsilence_start: 0.624\nsilence_end: 1.46875\nsilence_start: 1.469062\nsilence_end: 3.09275\nsilence_start: 3.980125\nsilence_end: 5.502\nsilence_start: 5.508563\nsilence_end: 6"
   },
   "end": {
-   "from": 2572.24,
-   "out": "silence_start: 0.28525\nsilence_end: 1.522125\nsilence_start: 1.890937\nsilence_end: 2.291\nsilence_start: 4.489375\nsilence_end: 4.852938\nsilence_start: 5.185062\nsilence_end: 6"
+   "from": 2571.527,
+   "out": "silence_start: 0\nsilence_end: 0.688562\nsilence_start: 0.99825\nsilence_end: 2.235125\nsilence_start: 2.603938\nsilence_end: 3.004\nsilence_start: 5.202375\nsilence_end: 5.565938"
   }
  }
 }
