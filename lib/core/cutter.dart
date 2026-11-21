@@ -3,7 +3,7 @@
 //   wanneer: by 'Keur goed en sny' en 'Klank vir WhatsApp'
 //   groep: core | Kern
 //   skryf: out/
-//   doel: sny die preek (stroomkopie, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif) en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg
+//   doel: sny die preek (herkodeer net die preekstuk, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif) en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg
 //   status: bou
 import 'dart:convert';
 import 'dart:io';
@@ -22,7 +22,8 @@ String _clean(String s) => s.replaceAll(RegExp(r'[<>:"/\\|?*]'), '').trim();
 String sermonFileName(String date, String title, {String ext = 'mp4'}) =>
     '$date ${_clean(title)}.$ext';
 
-/// ffmpeg arguments for a keyframe-accurate-enough stream copy of [start, end].
+/// ffmpeg arguments that re-encode exactly [start, end] (a stream copy can only start at a keyframe,
+/// up to seconds off the prayer); `-ss` before `-i` seeks fast and stays frame-accurate when re-encoding.
 List<String> sermonArgs(String video, double start, double end, String out) => [
   '-y',
   '-ss',
@@ -31,8 +32,21 @@ List<String> sermonArgs(String video, double start, double end, String out) => [
   _sec(end),
   '-i',
   video,
-  '-c',
-  'copy',
+  '-c:v',
+  'libx264',
+  '-preset',
+  'veryfast',
+  '-crf',
+  '20',
+  '-pix_fmt',
+  'yuv420p',
+  '-c:a',
+  'aac',
+  '-movflags',
+  '+faststart',
+  '-nostats',
+  '-progress',
+  'pipe:1',
   out,
 ];
 
@@ -244,7 +258,7 @@ Future<void> _ffmpeg(
   },
 );
 
-/// Cuts the sermon into [outDir]; returns the file. One part and no clips = stream copy (seconds);
+/// Cuts the sermon into [outDir]; returns the file. One part and no clips = one re-encode of just that part;
 /// cut-out pieces or an [intro]/[outro] re-encode everything into one file via [joinArgs].
 Future<File> cutSermon(
   File video,
@@ -263,6 +277,8 @@ Future<File> cutSermon(
   if (parts.length == 1 && intro == null && outro == null) {
     await _ffmpeg(
       sermonArgs(video.path, parts.single.start, parts.single.end, out),
+      duration: parts.single.end - parts.single.start,
+      onProgress: onProgress,
       cancel: cancel,
       log: log,
     );
