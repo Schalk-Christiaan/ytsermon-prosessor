@@ -89,6 +89,7 @@ class _SystemStatusState extends State<SystemStatus> {
             ),
           ),
           OutlinedButton(
+            key: const ValueKey('ctl.instellings.update-ytdlp'),
             onPressed: () => updateYtDlpSnack(context),
             child: Text(l.updateYtDlp),
           ),

@@ -84,10 +84,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
         content: Text(l.replanConfirm),
         actions: [
           TextButton(
+            key: const ValueKey('ctl.hersien.replan-cancel'),
             onPressed: () => Navigator.pop(c, false),
             child: Text(l.cancel),
           ),
           FilledButton(
+            key: const ValueKey('ctl.hersien.replan-confirm'),
             onPressed: () => Navigator.pop(c, true),
             child: Text(l.replan),
           ),
@@ -129,7 +131,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
             children: [
               Text(l.unplanned, style: th.textTheme.titleMedium),
               const SizedBox(height: 16),
-              FilledButton(onPressed: _c.replan, child: Text(l.planNow)),
+              FilledButton(
+                key: const ValueKey('ctl.hersien.plan-now'),
+                onPressed: _c.replan,
+                child: Text(l.planNow),
+              ),
             ],
           ),
         );
@@ -150,10 +156,15 @@ class _ReviewScreenState extends State<ReviewScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  FilledButton(onPressed: _c.replan, child: Text(l.retry)),
+                  FilledButton(
+                    key: const ValueKey('ctl.hersien.retry'),
+                    onPressed: _c.replan,
+                    child: Text(l.retry),
+                  ),
                   if (_c.meta != null) ...[
                     const SizedBox(width: 12),
                     OutlinedButton(
+                      key: const ValueKey('ctl.hersien.set-manually'),
                       onPressed: _c.setManually,
                       child: Text(l.setManually),
                     ),
@@ -248,6 +259,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           Row(
             children: [
               SegmentedButton<int>(
+                key: const ValueKey('ctl.hersien.tab'),
                 showSelectedIcon: false,
                 segments: [
                   ButtonSegment(
@@ -265,11 +277,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
               const SizedBox(width: 16),
               _tab == 0
                   ? TextButton.icon(
+                      key: const ValueKey('ctl.hersien.add-cut'),
                       onPressed: _c.addCut,
                       icon: const Icon(Icons.content_cut_rounded),
                       label: Text(l.addCut),
                     )
                   : TextButton.icon(
+                      key: const ValueKey('ctl.hersien.add-short'),
                       onPressed: () => _c.addShort(l.newShortTitle),
                       icon: const Icon(Icons.add_rounded),
                       label: Text(l.addShort),
@@ -299,6 +313,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Widget _playBar(L l, ThemeData th) => Row(
     children: [
       IconButton(
+        key: const ValueKey('ctl.hersien.play-pause'),
         tooltip: l.playPause,
         onPressed: _c.playPause,
         icon: const Icon(Icons.play_arrow_rounded),
@@ -314,11 +329,17 @@ class _ReviewScreenState extends State<ReviewScreen> {
       ),
       const SizedBox(width: 16),
       TextButton(
+        key: const ValueKey('ctl.hersien.play-from-start'),
         onPressed: () => _c.playFrom(true),
         child: Text(l.playFromStart),
       ),
-      TextButton(onPressed: () => _c.playFrom(false), child: Text(l.playEnd)),
+      TextButton(
+        key: const ValueKey('ctl.hersien.play-end'),
+        onPressed: () => _c.playFrom(false),
+        child: Text(l.playEnd),
+      ),
       TextButton.icon(
+        key: const ValueKey('ctl.hersien.preview-cut'),
         onPressed: _c.previewCut,
         icon: Icon(
           _c.previewing ? Icons.check_rounded : Icons.slideshow_rounded,
@@ -327,11 +348,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
       ),
       const Spacer(),
       IconButton(
+        key: const ValueKey('ctl.hersien.undo'),
         tooltip: l.undo,
         onPressed: _c.canUndo ? _c.undo : null,
         icon: const Icon(Icons.undo_rounded),
       ),
       IconButton(
+        key: const ValueKey('ctl.hersien.redo'),
         tooltip: l.redo,
         onPressed: _c.canRedo ? _c.redo : null,
         icon: const Icon(Icons.redo_rounded),
@@ -362,6 +385,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           }, style: TextStyle(color: th.colorScheme.onTertiaryContainer)),
         ),
         TextButton(
+          key: const ValueKey('ctl.hersien.go-to-boundary'),
           onPressed: () => _c.seek(
             d == BoundsDoubt.noPrayerAfter
                 ? _c.plan!.sermonEnd
@@ -402,19 +426,23 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   ),
                 ),
                 TextButton(
+                  key: const ValueKey('ctl.hersien.cut-start'),
                   onPressed: () => _c.setCutStart(c),
                   child: Text(l.startHere),
                 ),
                 TextButton(
+                  key: const ValueKey('ctl.hersien.cut-end'),
                   onPressed: () => _c.setCutEnd(c),
                   child: Text(l.endHere),
                 ),
                 TextButton(
+                  key: const ValueKey('ctl.hersien.cut-play'),
                   onPressed: () => _c.seek(c.start - 3),
                   child: Text(l.play),
                 ),
                 const Spacer(),
                 IconButton(
+                  key: const ValueKey('ctl.hersien.cut-remove'),
                   tooltip: l.remove,
                   onPressed: () => _c.removeCut(c),
                   icon: const Icon(Icons.delete_outline_rounded),
@@ -472,7 +500,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       TextField(
-        key: const ValueKey('title'),
+        key: const ValueKey('ctl.hersien.title'),
         controller: _title,
         minLines: 1,
         maxLines: 2,
@@ -497,6 +525,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       SizedBox(
         height: 88,
         child: TextField(
+          key: const ValueKey('ctl.hersien.description'),
           controller: _desc,
           maxLength: 5000,
           maxLines: null,
@@ -604,7 +633,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 ),
                 Expanded(
                   child: TextFormField(
-                    key: ValueKey(('short', i, _c.planRevision, _c.edits)),
+                    key: ValueKey(
+                      'ctl.hersien.short-title.$i.${_c.planRevision}.${_c.edits}',
+                    ),
                     initialValue: s.title,
                     style: th.textTheme.bodyMedium,
                     decoration: InputDecoration(
@@ -623,6 +654,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 SizedBox(
                   width: 160,
                   child: Slider(
+                    key: const ValueKey('ctl.hersien.short-length'),
                     semanticFormatterCallback: (_) => l.shortLength(i + 1),
                     min: 20,
                     max: secs > 120 ? secs.toDouble() : 120,
@@ -633,10 +665,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   ),
                 ),
                 TextButton(
+                  key: const ValueKey('ctl.hersien.short-start'),
                   onPressed: () => _c.setShortStart(s),
                   child: Text(l.startHere),
                 ),
                 TextButton(
+                  key: const ValueKey('ctl.hersien.short-play'),
                   onPressed: () {
                     _c.seek(s.start);
                     _c.playPause();
@@ -644,6 +678,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   child: Text(l.play),
                 ),
                 IconButton(
+                  key: const ValueKey('ctl.hersien.short-remove'),
                   tooltip: l.remove,
                   onPressed: () => _c.removeShort(s),
                   icon: const Icon(Icons.delete_outline_rounded),
@@ -673,6 +708,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         Text(l.outputsLabel, style: th.textTheme.labelLarge),
         for (final e in names.entries)
           FilterChip(
+            key: ValueKey('ctl.hersien.out-${e.key}'),
             label: Text(e.value),
             selected: _settings.exports.contains(e.key),
             onSelected: (on) => setState(() {
@@ -685,6 +721,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         const SizedBox(width: 16),
         Text(l.serviceDayLabel, style: th.textTheme.labelLarge),
         SegmentedButton<bool>(
+          key: const ValueKey('ctl.hersien.service-day'),
           showSelectedIcon: false,
           segments: [
             ButtonSegment(value: false, label: Text(l.serviceMorning)),
@@ -694,6 +731,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           onSelectionChanged: (v) => _c.setEvening(v.single),
         ),
         DropdownButton<String?>(
+          key: const ValueKey('ctl.hersien.service-kind'),
           value: kinds.containsKey(_c.service.label) ? _c.service.label : null,
           items: [
             for (final e in kinds.entries)
@@ -709,11 +747,19 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Widget _actions(L l, ThemeData th) => Row(
     mainAxisAlignment: MainAxisAlignment.end,
     children: [
-      TextButton(onPressed: _c.skip, child: Text(l.skip)),
+      TextButton(
+        key: const ValueKey('ctl.hersien.skip'),
+        onPressed: _c.skip,
+        child: Text(l.skip),
+      ),
       const SizedBox(width: 12),
       // A recording without captions has nothing for the LLM to plan from.
       if (_c.segments.isNotEmpty) ...[
-        OutlinedButton(onPressed: () => _replan(l), child: Text(l.replan)),
+        OutlinedButton(
+          key: const ValueKey('ctl.hersien.replan'),
+          onPressed: () => _replan(l),
+          child: Text(l.replan),
+        ),
         const SizedBox(width: 12),
       ],
       if (_c.hasShortFault) ...[
@@ -722,11 +768,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
       ],
       if (_uploaded) ...[
         OutlinedButton(
+          key: const ValueKey('ctl.hersien.approve'),
           onPressed: _c.hasShortFault ? null : () => _cut(l),
           child: Text(l.approveAndCut),
         ),
         const SizedBox(width: 12),
         FilledButton.icon(
+          key: const ValueKey('ctl.hersien.push'),
           onPressed: _c.updating ? null : () => _push(l),
           icon: _c.updating
               ? const SizedBox.square(
@@ -738,6 +786,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         ),
       ] else
         FilledButton(
+          key: const ValueKey('ctl.hersien.approve'),
           onPressed: _c.hasShortFault ? null : () => _cut(l),
           child: Text(l.approveAndCut),
         ),

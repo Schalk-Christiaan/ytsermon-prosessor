@@ -168,6 +168,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
+                  key: const ValueKey('ctl.preke.import-title'),
                   controller: title,
                   autofocus: true,
                   decoration: InputDecoration(
@@ -177,6 +178,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
+                  key: const ValueKey('ctl.preke.import-date'),
                   icon: const Icon(Icons.event_rounded),
                   label: Text(l.serviceDate(_ymd(date))),
                   onPressed: () async {
@@ -194,10 +196,12 @@ class _SermonsScreenState extends State<SermonsScreen> {
           ),
           actions: [
             TextButton(
+              key: const ValueKey('ctl.preke.import-cancel'),
               onPressed: () => Navigator.pop(context, false),
               child: Text(l.cancel),
             ),
             FilledButton(
+              key: const ValueKey('ctl.preke.import-confirm'),
               onPressed: () => Navigator.pop(context, true),
               child: Text(l.importConfirm),
             ),
@@ -321,6 +325,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
       Text(l.navPreke, style: th.textTheme.headlineMedium),
       const Spacer(),
       TextButton.icon(
+        key: const ValueKey('ctl.preke.import'),
         onPressed: _importing ? null : _import,
         icon: _importing
             ? const SizedBox.square(
@@ -331,9 +336,14 @@ class _SermonsScreenState extends State<SermonsScreen> {
         label: Text(_importing ? l.importing : l.importRecording),
       ),
       const SizedBox(width: 8),
-      OutlinedButton(onPressed: _processNext, child: Text(l.processNext)),
+      OutlinedButton(
+        key: const ValueKey('ctl.preke.process-next'),
+        onPressed: _processNext,
+        child: Text(l.processNext),
+      ),
       const SizedBox(width: 12),
       FilledButton(
+        key: const ValueKey('ctl.preke.process-latest'),
         onPressed: _loading ? null : _processLatest,
         child: Text(l.processLatest),
       ),
@@ -349,6 +359,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
       SizedBox(
         width: 240,
         child: TextField(
+          key: const ValueKey('ctl.preke.search'),
           controller: _search,
           focusNode: _searchFocus,
           onChanged: (_) => setState(() {}),
@@ -362,6 +373,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
       ),
       const SizedBox(width: 8),
       FilterChip(
+        key: const ValueKey('ctl.preke.filter-not-uploaded'),
         avatar: const Icon(Icons.cloud_off_rounded, size: 18),
         label: Text(l.filterNotUploaded),
         selected: _notUploaded,
@@ -369,6 +381,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
       ),
       for (final s in SermonState.values)
         FilterChip(
+          key: ValueKey('ctl.preke.filter-${s.name}'),
           avatar: Icon(stateIcon(s), size: 18),
           label: Text(stateLabel(l, s)),
           selected: _filter.contains(s),
@@ -392,6 +405,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
             Expanded(child: Text(text)),
             if (onClose != null)
               IconButton(
+                key: const ValueKey('ctl.preke.dismiss'),
                 tooltip: l.dismiss,
                 onPressed: onClose,
                 icon: const Icon(Icons.close_rounded),
@@ -417,10 +431,15 @@ class _SermonsScreenState extends State<SermonsScreen> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                FilledButton(onPressed: _refresh, child: Text(l.retry)),
+                FilledButton(
+                  key: const ValueKey('ctl.preke.retry'),
+                  onPressed: _refresh,
+                  child: Text(l.retry),
+                ),
                 if (_error != null) ...[
                   const SizedBox(width: 12),
                   OutlinedButton(
+                    key: const ValueKey('ctl.preke.update-ytdlp'),
                     onPressed: () => updateYtDlpSnack(context),
                     child: Text(l.updateYtDlp),
                   ),
@@ -442,10 +461,12 @@ class _SermonsScreenState extends State<SermonsScreen> {
   Widget _row(L l, ThemeData th, Sermon s) {
     final queued = widget.jobs.hasPending(s.id);
     return InkWell(
+      key: const ValueKey('ctl.preke.row'),
       onTap: () => widget.onOpen(s.id),
       child: Row(
         children: [
           Checkbox(
+            key: const ValueKey('ctl.preke.select'),
             value: _selected.contains(s.id),
             onChanged: (v) => setState(() {
               v == true ? _selected.add(s.id) : _selected.remove(s.id);

@@ -62,7 +62,7 @@ class Transcript extends StatelessWidget {
           final prayer = inPrayer(i);
           final now = pos >= s.start && pos < s.end;
           return InkWell(
-            key: ValueKey('line-${s.start}'),
+            key: ValueKey('ctl.hersien.transcript-line.${s.start}'),
             onTap: () => onSeek(s.start),
             child: Container(
               color: now ? th.colorScheme.secondaryContainer : null,

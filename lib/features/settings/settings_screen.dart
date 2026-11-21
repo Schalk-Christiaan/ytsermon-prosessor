@@ -147,6 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       if (widget.onSetup != null)
                         TextButton(
+                          key: const ValueKey('ctl.instellings.setup'),
                           onPressed: widget.onSetup,
                           child: Text(l.navSetup),
                         ),
@@ -169,11 +170,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       if (ok)
                         TextButton(
+                          key: const ValueKey('ctl.instellings.disconnect'),
                           onPressed: _disconnect,
                           child: Text(l.disconnect),
                         )
                       else
                         FilledButton(
+                          key: const ValueKey('ctl.instellings.connect'),
                           onPressed: configured && !_busy ? _connect : null,
                           child: Text(l.connect),
                         ),
@@ -192,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                   const SizedBox(height: 16),
                   TextField(
-                    key: const ValueKey('clientFile'),
+                    key: const ValueKey('ctl.instellings.client-file'),
                     controller: _file,
                     decoration: InputDecoration(
                       labelText: l.clientFile,
@@ -207,6 +210,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Text(l.uploadPrivacy),
                       const SizedBox(width: 16),
                       SegmentedButton<String>(
+                        key: const ValueKey('ctl.instellings.privacy'),
                         segments: [
                           ButtonSegment(
                             value: 'private',
@@ -232,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 24),
                   TextField(
-                    key: const ValueKey('outDir'),
+                    key: const ValueKey('ctl.instellings.out-dir'),
                     controller: _out,
                     decoration: InputDecoration(
                       labelText: l.outFolder,
@@ -303,6 +307,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
           ),
           OutlinedButton(
+            key: ValueKey(
+              'ctl.instellings.choose-${intro ? 'intro' : 'outro'}',
+            ),
             onPressed: () async {
               final v = await widget.pickVideo();
               if (v != null) set(v);
@@ -311,6 +318,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           if (path != null)
             IconButton(
+              key: ValueKey(
+                'ctl.instellings.remove-${intro ? 'intro' : 'outro'}',
+              ),
               tooltip: l.remove,
               onPressed: () => set(null),
               icon: const Icon(Icons.close_rounded),

@@ -99,8 +99,16 @@ class _SetupScreenState extends State<SetupScreen> {
     // Only the first open step's button is filled: one primary action at a time.
     final first = [running, model, channel, folder].indexOf(false) + 1;
     Widget btn(int n, String label, VoidCallback? onPressed) => n == first
-        ? FilledButton(onPressed: onPressed, child: Text(label))
-        : OutlinedButton(onPressed: onPressed, child: Text(label));
+        ? FilledButton(
+            key: ValueKey('ctl.opstelling.step-$n'),
+            onPressed: onPressed,
+            child: Text(label),
+          )
+        : OutlinedButton(
+            key: ValueKey('ctl.opstelling.step-$n'),
+            onPressed: onPressed,
+            child: Text(label),
+          );
     return Align(
       alignment: Alignment.topLeft,
       child: ConstrainedBox(
@@ -206,6 +214,7 @@ class _SetupScreenState extends State<SetupScreen> {
             Row(
               children: [
                 FilledButton(
+                  key: const ValueKey('ctl.opstelling.begin'),
                   onPressed: all
                       ? () {
                           widget.settings
@@ -218,6 +227,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 ),
                 const SizedBox(width: 16),
                 TextButton(
+                  key: const ValueKey('ctl.opstelling.check'),
                   onPressed: _busy == null ? _check : null,
                   child: Text(l.checkAgain),
                 ),

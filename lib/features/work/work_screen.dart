@@ -148,7 +148,11 @@ class WorkScreen extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 12),
-      OutlinedButton(onPressed: jobs.cancel, child: Text(l.cancel)),
+      OutlinedButton(
+        key: const ValueKey('ctl.werk.cancel'),
+        onPressed: jobs.cancel,
+        child: Text(l.cancel),
+      ),
     ],
   );
 
@@ -181,6 +185,7 @@ class WorkScreen extends StatelessWidget {
         trailing: id == null
             ? null
             : TextButton(
+                key: const ValueKey('ctl.werk.open-youtube'),
                 onPressed: () =>
                     open('https://studio.youtube.com/video/$id/edit'),
                 child: Text(l.openOnYouTube),
@@ -197,24 +202,32 @@ class WorkScreen extends StatelessWidget {
       j,
       trailing: Row(
         children: [
-          TextButton(onPressed: () => open(file), child: Text(l.play)),
           TextButton(
+            key: const ValueKey('ctl.werk.play'),
+            onPressed: () => open(file),
+            child: Text(l.play),
+          ),
+          TextButton(
+            key: const ValueKey('ctl.werk.show'),
             onPressed: () => open(file, select: true),
             child: Text(l.showInFolder),
           ),
           Builder(
             builder: (ctx) => TextButton(
+              key: const ValueKey('ctl.werk.copy'),
               onPressed: () => _copyWhatsapp(ctx, l, file),
               child: Text(l.copyWhatsappText),
             ),
           ),
           if (j.kind == JobKind.cut) ...[
             TextButton(
+              key: const ValueKey('ctl.werk.audio'),
               onPressed: () => jobs.enqueue(j.sermon, JobKind.audio),
               child: Text(l.whatsappAudio),
             ),
             if (s?.state != SermonState.opgelaai)
               TextButton(
+                key: const ValueKey('ctl.werk.upload'),
                 onPressed: () => jobs.enqueue(j.sermon, JobKind.upload),
                 child: Text(l.upload),
               ),
@@ -248,6 +261,7 @@ class WorkScreen extends StatelessWidget {
           th,
           j,
           trailing: TextButton(
+            key: const ValueKey('ctl.werk.retry'),
             onPressed: () => jobs.retry(j),
             child: Text(l.retry),
           ),
@@ -268,6 +282,7 @@ class WorkScreen extends StatelessWidget {
         ),
         if (j.log.isNotEmpty)
           ExpansionTile(
+            key: const ValueKey('ctl.werk.log'),
             title: Text(l.technicalLog),
             tilePadding: EdgeInsets.zero,
             children: [

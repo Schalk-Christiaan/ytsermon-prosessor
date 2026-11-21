@@ -150,6 +150,9 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                 width: _kHandleW,
                 height: _kBarH,
                 child: _Handle(
+                  key: ValueKey(
+                    'ctl.hersien.handle-${isStart ? 'start' : 'end'}',
+                  ),
                   label: label,
                   onDrag: (dx) => _drag(isStart, dx, w),
                   onEnd: widget.onSermonCommit,
@@ -169,6 +172,7 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                     children: [
                       Positioned.fill(
                         child: GestureDetector(
+                          key: const ValueKey('ctl.hersien.timeline'),
                           behavior: HitTestBehavior.opaque,
                           onTapUp: (d) => widget.onSeek(
                             d.localPosition.dx / w * widget.duration,
@@ -210,6 +214,7 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                           child: MouseRegion(
                             cursor: SystemMouseCursors.grab,
                             child: GestureDetector(
+                              key: const ValueKey('ctl.hersien.short-block'),
                               behavior: HitTestBehavior.opaque,
                               onHorizontalDragUpdate: (d) => widget.onShortMove(
                                 sh,
@@ -263,6 +268,7 @@ class _ServiceTimelineState extends State<ServiceTimeline>
 
 class _Handle extends StatefulWidget {
   const _Handle({
+    super.key,
     required this.label,
     required this.onDrag,
     required this.onEnd,

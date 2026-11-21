@@ -203,6 +203,7 @@ class _ShellState extends State<Shell> {
       button: true,
       label: label,
       child: InkWell(
+        key: ValueKey('ctl.skulp.nav-$i'),
         onTap: () => setState(() => _i = i),
         child: Container(
           width: 88,
