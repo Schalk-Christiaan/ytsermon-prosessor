@@ -31,6 +31,7 @@ class AppSettings {
       template = j['template'] as String? ?? kDefaultTemplate,
       outDir = j['outDir'] as String? ?? defaultOutDir(),
       setupDone = j['setupDone'] as bool? ?? false,
+      sermonGrid = j['sermonGrid'] as bool? ?? false,
       intro = j['intro'] as String?,
       outro = j['outro'] as String?,
       exports = {...((j['exports'] as List?)?.cast<String>() ?? kExports)},
@@ -68,6 +69,9 @@ class AppSettings {
   /// The Opstelling list was completed once; the app then starts on Preke.
   bool setupDone;
 
+  /// Preke shows the grid instead of the list (remembered across restarts).
+  bool sermonGrid;
+
   /// Which outputs a cut makes (see [kExports]); all by default.
   Set<String> exports;
 
@@ -84,6 +88,7 @@ class AppSettings {
     'rules': rules,
     'outDir': outDir,
     'setupDone': setupDone,
+    'sermonGrid': sermonGrid,
     'intro': intro,
     'outro': outro,
     'exports': [

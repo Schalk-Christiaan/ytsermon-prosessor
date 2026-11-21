@@ -1406,6 +1406,24 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Video nog nie gereed nie'**
   String get previewVideoMissing;
+
+  /// No description provided for @viewList.
+  ///
+  /// In af, this message translates to:
+  /// **'Lys'**
+  String get viewList;
+
+  /// No description provided for @viewGrid.
+  ///
+  /// In af, this message translates to:
+  /// **'Rooster'**
+  String get viewGrid;
+
+  /// No description provided for @noMatches.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen preke pas by die soektog of filter nie'**
+  String get noMatches;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

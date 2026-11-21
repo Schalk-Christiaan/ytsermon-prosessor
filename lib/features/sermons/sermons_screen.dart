@@ -15,6 +15,7 @@ import 'package:path/path.dart' as p;
 import '../../core/channel.dart';
 import '../../core/jobs.dart';
 import '../../core/recording.dart';
+import '../../core/settings.dart';
 import '../../core/store.dart';
 import '../../l10n/app_localizations.dart';
 import '../settings/settings_screen.dart';
@@ -74,6 +75,7 @@ class SermonsScreen extends StatefulWidget {
 class _SermonsScreenState extends State<SermonsScreen> {
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
+  late final _settings = AppSettings.load(widget.store.root);
   final _filter = <SermonState>{};
   bool _notUploaded = false;
   final _selected = <String>{};
@@ -320,32 +322,66 @@ class _SermonsScreenState extends State<SermonsScreen> {
     );
   }
 
-  Widget _header(L l, ThemeData th) => Row(
+  Widget _header(L l, ThemeData th) => Wrap(
+    alignment: WrapAlignment.spaceBetween,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    runSpacing: 8,
     children: [
-      Text(l.navPreke, style: th.textTheme.headlineMedium),
-      const Spacer(),
-      TextButton.icon(
-        key: const ValueKey('ctl.preke.import'),
-        onPressed: _importing ? null : _import,
-        icon: _importing
-            ? const SizedBox.square(
-                dimension: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.video_file_rounded),
-        label: Text(_importing ? l.importing : l.importRecording),
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(l.navPreke, style: th.textTheme.headlineMedium),
+          const SizedBox(width: 16),
+          SegmentedButton<bool>(
+            key: const ValueKey('ctl.preke.view'),
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: false,
+                icon: const Icon(Icons.view_list_rounded),
+                label: Text(l.viewList),
+              ),
+              ButtonSegment(
+                value: true,
+                icon: const Icon(Icons.grid_view_rounded),
+                label: Text(l.viewGrid),
+              ),
+            ],
+            selected: {_settings.sermonGrid},
+            onSelectionChanged: (v) => setState(() {
+              _settings.sermonGrid = v.single;
+              _settings.save();
+            }),
+          ),
+        ],
       ),
-      const SizedBox(width: 8),
-      OutlinedButton(
-        key: const ValueKey('ctl.preke.process-next'),
-        onPressed: _processNext,
-        child: Text(l.processNext),
-      ),
-      const SizedBox(width: 12),
-      FilledButton(
-        key: const ValueKey('ctl.preke.process-latest'),
-        onPressed: _loading ? null : _processLatest,
-        child: Text(l.processLatest),
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextButton.icon(
+            key: const ValueKey('ctl.preke.import'),
+            onPressed: _importing ? null : _import,
+            icon: _importing
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.video_file_rounded),
+            label: Text(_importing ? l.importing : l.importRecording),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton(
+            key: const ValueKey('ctl.preke.process-next'),
+            onPressed: _processNext,
+            child: Text(l.processNext),
+          ),
+          const SizedBox(width: 12),
+          FilledButton(
+            key: const ValueKey('ctl.preke.process-latest'),
+            onPressed: _loading ? null : _processLatest,
+            child: Text(l.processLatest),
+          ),
+        ],
       ),
     ],
   );
@@ -450,6 +486,24 @@ class _SermonsScreenState extends State<SermonsScreen> {
         ),
       );
     }
+    if (rows.isEmpty) {
+      return Align(
+        alignment: Alignment.topLeft,
+        child: Text(l.noMatches, style: th.textTheme.bodyMedium),
+      );
+    }
+    if (_settings.sermonGrid) {
+      return GridView.builder(
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 300,
+          mainAxisExtent: 232,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: rows.length,
+        itemBuilder: (context, i) => _card(l, th, rows[i]),
+      );
+    }
     return ListView.builder(
       itemCount: rows.length,
       itemExtent: 64,
@@ -457,64 +511,149 @@ class _SermonsScreenState extends State<SermonsScreen> {
     );
   }
 
-  // stap: v2 2 Kies die ou preek | klik die ry → Hersien; nog nie beplan nie → Hersien beplan dit eers (laaistap)
-  Widget _row(L l, ThemeData th, Sermon s) {
+  Widget _status(L l, ThemeData th, Sermon s) {
     final queued = widget.jobs.hasPending(s.id);
-    return InkWell(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          queued ? Icons.hourglass_top_rounded : stateIcon(s.state),
+          size: 18,
+          color: s.state == SermonState.fout ? th.colorScheme.error : null,
+        ),
+        const SizedBox(width: 6),
+        Flexible(child: Text(queued ? l.inQueue : stateLabel(l, s.state))),
+      ],
+    );
+  }
+
+  Widget _select(Sermon s) => Checkbox(
+    key: const ValueKey('ctl.preke.select'),
+    value: _selected.contains(s.id),
+    onChanged: (v) => setState(() {
+      v == true ? _selected.add(s.id) : _selected.remove(s.id);
+    }),
+  );
+
+  /// Grid card: thumbnail, date, title, state.
+  Widget _card(L l, ThemeData th, Sermon s) => Card(
+    clipBehavior: Clip.antiAlias,
+    margin: EdgeInsets.zero,
+    child: InkWell(
       key: const ValueKey('ctl.preke.row'),
       onTap: () => widget.onOpen(s.id),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Checkbox(
-            key: const ValueKey('ctl.preke.select'),
-            value: _selected.contains(s.id),
-            onChanged: (v) => setState(() {
-              v == true ? _selected.add(s.id) : _selected.remove(s.id);
-            }),
+          Stack(
+            children: [
+              SermonThumb(sermon: s, width: 300, height: 140),
+              Positioned(top: 0, left: 0, child: _select(s)),
+            ],
           ),
-          SizedBox(
-            width: 104,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
             child: Text(s.date ?? l.noDate, style: th.textTheme.labelMedium),
           ),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  s.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: th.textTheme.headlineSmall?.copyWith(fontSize: 18),
-                ),
-                if (s.scripture != null)
-                  Text(
-                    s.scripture!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: th.textTheme.bodySmall,
-                  ),
-              ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              s.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: th.textTheme.titleMedium,
             ),
           ),
-          const SizedBox(width: 16),
-          SizedBox(
-            width: 140,
-            child: Row(
-              children: [
-                Icon(
-                  queued ? Icons.hourglass_top_rounded : stateIcon(s.state),
-                  size: 18,
-                  color: s.state == SermonState.fout
-                      ? th.colorScheme.error
-                      : null,
-                ),
-                const SizedBox(width: 6),
-                Text(queued ? l.inQueue : stateLabel(l, s.state)),
-              ],
-            ),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: _status(l, th, s),
           ),
         ],
+      ),
+    ),
+  );
+
+  // stap: v2 2 Kies die ou preek | klik die ry → Hersien; nog nie beplan nie → Hersien beplan dit eers (laaistap)
+  Widget _row(L l, ThemeData th, Sermon s) => InkWell(
+    key: const ValueKey('ctl.preke.row'),
+    onTap: () => widget.onOpen(s.id),
+    child: Row(
+      children: [
+        _select(s),
+        SermonThumb(sermon: s, width: 80, height: 45),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 104,
+          child: Text(s.date ?? l.noDate, style: th.textTheme.labelMedium),
+        ),
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                s.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: th.textTheme.headlineSmall?.copyWith(fontSize: 18),
+              ),
+              if (s.scripture != null)
+                Text(
+                  s.scripture!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: th.textTheme.bodySmall,
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        SizedBox(width: 140, child: _status(l, th, s)),
+      ],
+    ),
+  );
+}
+
+/// The YouTube thumbnail of a sermon; no network, a local recording or a failed load shows
+/// the state icon on a panel tone instead (Image.network's own cache, no extra layer).
+class SermonThumb extends StatelessWidget {
+  const SermonThumb({
+    super.key,
+    required this.sermon,
+    required this.width,
+    required this.height,
+  });
+  final Sermon sermon;
+  final double width, height;
+
+  @override
+  Widget build(BuildContext context) {
+    final th = Theme.of(context);
+    final fallback = ColoredBox(
+      key: const ValueKey('preke.thumb-fallback'),
+      color: th.colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Icon(
+          stateIcon(sermon.state),
+          color: th.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: isRecording(sermon.id)
+            ? fallback
+            : Image.network(
+                'https://i.ytimg.com/vi/${sermon.id}/mqdefault.jpg',
+                fit: BoxFit.cover,
+                semanticLabel: sermon.title,
+                errorBuilder: (_, _, _) => fallback,
+                loadingBuilder: (_, child, p) => p == null ? child : fallback,
+              ),
       ),
     );
   }

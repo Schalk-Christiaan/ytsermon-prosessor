@@ -29,6 +29,7 @@ const kControls = <String, Set<String>>{
     'ctl.preke.update-ytdlp',
     'ctl.preke.row',
     'ctl.preke.select',
+    'ctl.preke.view',
     'ctl.preke.import-title',
     'ctl.preke.import-date',
     'ctl.preke.import-cancel',

@@ -495,5 +495,8 @@
   "shortBegin": "Begin",
   "shortSeconds": "Lengte (s)",
   "timeFieldError": "Ongeldig; tik soos 23:04 of 60",
-  "previewVideoMissing": "Video nog nie gereed nie"
+  "previewVideoMissing": "Video nog nie gereed nie",
+  "viewList": "Lys",
+  "viewGrid": "Rooster",
+  "noMatches": "Geen preke pas by die soektog of filter nie"
 }

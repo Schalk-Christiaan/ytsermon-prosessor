@@ -769,4 +769,13 @@ class LAf extends L {
 
   @override
   String get previewVideoMissing => 'Video nog nie gereed nie';
+
+  @override
+  String get viewList => 'Lys';
+
+  @override
+  String get viewGrid => 'Rooster';
+
+  @override
+  String get noMatches => 'Geen preke pas by die soektog of filter nie';
 }
