@@ -36,7 +36,7 @@ Toestand van 'n preek (een veld, een betekenis, ook in die UI met woord + ikoon)
 
 ## Ontwerpstelsel
 
-Modus: **Bedien**. Bekende Material 3-desktoppatrone; die identiteit leef in palet, tipe en een kenmerkende skuif. Gebruikstoneel: een vrywilliger in die kerkkantoor, oordag, Maandag ná die diens; lig tema as verstek, donker ontwerp en beskikbaar (volg stelsel).
+Modus: **Bedien**. Sien DESIGN.md. Bekende Material 3-desktoppatrone; die identiteit leef in palet, tipe en een kenmerkende skuif. Gebruikstoneel: een vrywilliger in die kerkkantoor, oordag, Maandag ná die diens; lig tema as verstek, donker ontwerp en beskikbaar (volg stelsel).
 
 **Grond in die onderwerp:** 'n Gereformeerde kerk aan die Oranjerivier: kansel van hout, die Woord in druk, die rivier.
 
