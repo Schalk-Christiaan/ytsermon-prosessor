@@ -3,7 +3,7 @@
 //   wanneer: by opstart
 //   groep: app | App-raam
 //   skryf: —
-//   doel: NavigationRail: Preke (tuis), Hersien, Werk, Snitlyste, Instellings (Kanaal + Stelsel); begin op Opstelling tot dit klaar is
+//   doel: NavigationRail: Preke (tuis), Hersien, Werk, Snitlyste, Biblioteek, Instellings (Kanaal + Stelsel); begin op Opstelling tot dit klaar is
 //   status: bou
 
 // vloei: v1 | Verwerk nuutste diens
@@ -50,6 +50,7 @@ import '../core/settings.dart';
 import '../core/store.dart';
 import '../core/tools.dart';
 import '../core/youtube.dart';
+import '../features/library/library_screen.dart';
 import '../features/playlists/playlists_screen.dart';
 import '../features/review/review_controller.dart';
 import '../features/review/review_screen.dart';
@@ -87,7 +88,7 @@ class Shell extends StatefulWidget {
 }
 
 class _ShellState extends State<Shell> {
-  // 0 Preke, 1 Hersien, 2 Werk, 3 Snitlyste, 4 Instellings, 5 Opstelling (no rail item)
+  // 0 Preke, 1 Hersien, 2 Werk, 3 Snitlyste, 4 Instellings, 5 Opstelling (no rail item), 6 Biblioteek
   // stap: v6 1 Begin op Opstelling | tot setupDone waar is, wys die app net die Opstelling-lys
   late int _i = _settings.setupDone ? 0 : 5;
   late final _review = ReviewController(store: widget.store, jobs: widget.jobs)
@@ -131,6 +132,7 @@ class _ShellState extends State<Shell> {
                 _dest(Icons.rate_review_rounded, l.navReview, 1),
                 _dest(Icons.work_history_rounded, l.navWerk, 2),
                 _dest(Icons.playlist_play_rounded, l.navSnitlyste, 3),
+                _dest(Icons.video_library_rounded, l.navBiblioteek, 6),
                 const Spacer(),
                 _dest(Icons.settings_rounded, l.navSettings, 4),
                 const SizedBox(height: 8),
@@ -178,6 +180,11 @@ class _ShellState extends State<Shell> {
                     onSettings: () => setState(() => _i = 4),
                     onDone: () => setState(() => _i = 0),
                   )
+                else
+                  const SizedBox(),
+                // Built only while shown, so the folder is read when opened.
+                if (_i == 6)
+                  LibraryScreen(settings: _settings)
                 else
                   const SizedBox(),
               ],

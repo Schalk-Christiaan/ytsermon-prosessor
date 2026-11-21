@@ -17,6 +17,7 @@ import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/store.dart';
 import 'package:preekverwerker/core/settings.dart';
 import 'package:preekverwerker/core/youtube.dart';
+import 'package:preekverwerker/features/library/library_screen.dart';
 import 'package:preekverwerker/features/playlists/playlists_screen.dart';
 import 'package:preekverwerker/features/settings/settings_screen.dart';
 import 'package:preekverwerker/features/setup/setup_screen.dart';
@@ -26,6 +27,7 @@ import 'package:preekverwerker/features/work/work_screen.dart';
 import 'package:preekverwerker/features/review/review_controller.dart';
 
 import 'helpers.dart';
+import 'library_test.dart' show twoServices;
 
 import 'package:preekverwerker/features/review/review_screen.dart';
 import 'package:preekverwerker/l10n/app_localizations.dart';
@@ -85,13 +87,13 @@ Widget _app(Brightness b, Widget home) => MaterialApp(
 void main() {
   final shots = Directory('out/shots')..createSync(recursive: true);
 
-  ReviewController ready() {
+  ReviewController ready([Directory? dir]) {
     final segs = parseJson3(
       File('test/fixtures/sample.af-orig.json3').readAsStringSync(),
     );
     final c = testController().$1;
     c.debugReady(
-      FetchedMeta('x', Directory.systemTemp, {'title': 'Preek'}),
+      FetchedMeta('x', dir ?? Directory.systemTemp, {'title': 'Preek'}),
       segs,
       SermonPlan(
         sermonStart: 1384,
@@ -1215,8 +1217,9 @@ void main() {
     await _fonts();
     t.view.physicalSize = const Size(1280, 800);
     t.view.devicePixelRatio = 1;
-    final c = ready();
-    c.meta!.dir.createSync(recursive: true);
+    final d = Directory.systemTemp.createTempSync('hers');
+    addTearDown(() => d.deleteSync(recursive: true));
+    final c = ready(d);
     await t.pumpWidget(
       _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
     );
@@ -1310,4 +1313,86 @@ void main() {
       await t.pump(const Duration(seconds: 5));
     },
   );
+
+  testWidgets('biblioteek: search "Psalm 42" shows only the song', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final out = twoServices();
+    addTearDown(() => out.deleteSync(recursive: true));
+    final set = AppSettings.load(Directory.systemTemp.createTempSync('lset'))
+      ..outDir = out.path;
+    final opened = <(String, bool)>[];
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: LibraryScreen(
+            settings: set,
+            open: (path, {select = false}) async => opened.add((path, select)),
+          ),
+        ),
+      ),
+    );
+    await t.pump();
+    expect(find.text('Uit die oorvloed van die hart'), findsOneWidget);
+    expect(find.text('Genade'), findsOneWidget);
+    await t.tap(find.text('Sang'));
+    await t.pump();
+    expect(find.text('Psalm 33'), findsOneWidget);
+    await t.enterText(find.byKey(const ValueKey('librarySearch')), 'Psalm 42');
+    await t.pump();
+    expect(find.widgetWithText(ListTile, 'Psalm 42'), findsOneWidget);
+    expect(find.text('Psalm 33'), findsNothing);
+    await t.tap(find.text('Speel'));
+    expect(opened.single.$1, endsWith('Sang/02 Psalm 42.mp3'));
+    await t.tap(find.text('Preke'));
+    await t.pump();
+    expect(find.text('Genade'), findsNothing);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  for (final b in Brightness.values) {
+    for (final sang in [false, true]) {
+      testWidgets(
+        'biblioteek skermkiekie ${b.name} ${sang ? 'sang' : 'preke'}',
+        (t) async {
+          await _fonts();
+          t.view.physicalSize = const Size(1100, 720);
+          t.view.devicePixelRatio = 1;
+          final out = twoServices();
+          addTearDown(() => out.deleteSync(recursive: true));
+          final set = AppSettings.load(
+            Directory.systemTemp.createTempSync('ls'),
+          )..outDir = out.path;
+          final key = GlobalKey();
+          await t.pumpWidget(
+            _app(
+              b,
+              RepaintBoundary(
+                key: key,
+                child: Scaffold(body: LibraryScreen(settings: set)),
+              ),
+            ),
+          );
+          if (sang) await t.tap(find.text('Sang'));
+          await t.pump();
+          expect(t.takeException(), isNull);
+          await t.runAsync(() async {
+            final r =
+                key.currentContext!.findRenderObject() as RenderRepaintBoundary;
+            final img = await r.toImage();
+            final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
+            File(
+              p.join(
+                shots.path,
+                'biblioteek-${sang ? 'sang' : 'preke'}-${b.name}.png',
+              ),
+            ).writeAsBytesSync(bytes!.buffer.asUint8List());
+          });
+          await t.pumpWidget(const SizedBox());
+        },
+      );
+    }
+  }
 }

@@ -681,4 +681,32 @@ class LAf extends L {
   ) {
     return '$diens, $datum, $tema, $skriflesing, $fokus en $belydenis word ingevul; \'n reël sonder inhoud val weg.';
   }
+
+  @override
+  String get navBiblioteek => 'Biblioteek';
+
+  @override
+  String get libraryPreke => 'Preke';
+
+  @override
+  String get librarySang => 'Sang';
+
+  @override
+  String get searchLibrary => 'Soek tema, skriflesing of lied';
+
+  @override
+  String get reload => 'Herlaai';
+
+  @override
+  String libraryEmpty(String folder) {
+    return 'Nog geen dienste in $folder. Sny \'n preek in Hersien, dan verskyn dit hier.';
+  }
+
+  @override
+  String get libraryNoMatch => 'Niks pas by die soektog nie.';
+
+  @override
+  String songUnnamed(int n) {
+    return 'Lied $n';
+  }
 }

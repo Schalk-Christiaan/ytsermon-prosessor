@@ -1238,6 +1238,54 @@ abstract class L {
     String fokus,
     String belydenis,
   );
+
+  /// No description provided for @navBiblioteek.
+  ///
+  /// In af, this message translates to:
+  /// **'Biblioteek'**
+  String get navBiblioteek;
+
+  /// No description provided for @libraryPreke.
+  ///
+  /// In af, this message translates to:
+  /// **'Preke'**
+  String get libraryPreke;
+
+  /// No description provided for @librarySang.
+  ///
+  /// In af, this message translates to:
+  /// **'Sang'**
+  String get librarySang;
+
+  /// No description provided for @searchLibrary.
+  ///
+  /// In af, this message translates to:
+  /// **'Soek tema, skriflesing of lied'**
+  String get searchLibrary;
+
+  /// No description provided for @reload.
+  ///
+  /// In af, this message translates to:
+  /// **'Herlaai'**
+  String get reload;
+
+  /// No description provided for @libraryEmpty.
+  ///
+  /// In af, this message translates to:
+  /// **'Nog geen dienste in {folder}. Sny \'n preek in Hersien, dan verskyn dit hier.'**
+  String libraryEmpty(String folder);
+
+  /// No description provided for @libraryNoMatch.
+  ///
+  /// In af, this message translates to:
+  /// **'Niks pas by die soektog nie.'**
+  String get libraryNoMatch;
+
+  /// No description provided for @songUnnamed.
+  ///
+  /// In af, this message translates to:
+  /// **'Lied {n}'**
+  String songUnnamed(int n);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

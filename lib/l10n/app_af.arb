@@ -453,5 +453,27 @@
         "type": "String"
       }
     }
+  },
+  "navBiblioteek": "Biblioteek",
+  "libraryPreke": "Preke",
+  "librarySang": "Sang",
+  "searchLibrary": "Soek tema, skriflesing of lied",
+  "reload": "Herlaai",
+  "libraryEmpty": "Nog geen dienste in {folder}. Sny 'n preek in Hersien, dan verskyn dit hier.",
+  "@libraryEmpty": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryNoMatch": "Niks pas by die soektog nie.",
+  "songUnnamed": "Lied {n}",
+  "@songUnnamed": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   }
 }
