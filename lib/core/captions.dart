@@ -6,6 +6,7 @@
 //   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI, kandidaat-gebede (preekgrense), SRT en dienstydlyn (spraak/musiek)
 //   status: bou
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'models.dart';
 
@@ -170,11 +171,12 @@ List<TimeBlock> timeline(List<Segment> segs, {double gap = 10}) {
   return out;
 }
 
-final _amen = RegExp(r'\bamen\b[.!,]*', caseSensitive: false);
+final _amen = RegExp(r'^amen[.!,]*$', caseSensitive: false);
 
-/// Words that open a prayer: an invitation ("Kom ons bid", "Laat ons saam dank") or an address to God.
+/// Words that open a prayer: an invitation ("Kom ons bid", "Laat ons saam dank") or an
+/// address to God; matched against the words from one position on.
 final _prayerCue = RegExp(
-  r'^(?:>>\s*)?(?:(?:kom|laat)\s+ons\b.{0,20}\b(?:bid|dank)|(?:onse?|o|hemelse|liewe|heilige)\s+vader\b|o\s+here\b|almagtige\b|genadige\b)',
+  r'^(?:(?:kom|laat)\s+ons\b.{0,20}\b(?:bid|dank)|(?:onse?|o|hemelse|liewe|heilige|regverdige)\s+vader\b|o\s+here\b|here\s+onse\s+here\b|ons\s+almagtige\b|almagtige\b|genadige\b)',
   caseSensitive: false,
 );
 
@@ -185,48 +187,52 @@ const kMaxPrayer = 15 * 60.0;
 /// "Amen" too but run under ~30 s, while the prayers around the sermon run 1-9 min.
 const kMinPrayer = 45.0;
 
-/// Candidate prayers: the captions are split into chunks that each end at an "Amen" (text after the
-/// Amen on the same line starts the next chunk); a chunk with a prayer cue is a prayer from its first
-/// cue to the end of the Amen line.
-List<Prayer> prayers(List<Segment> segs) {
-  final out = <Prayer>[];
-  final words = <String>[];
-  double? start;
-  void cue(double t, String text) {
-    if (start == null && _prayerCue.hasMatch(text)) start = t;
-    if (start != null) words.add(text);
-  }
+List<Word> _wordsOf(Segment s) =>
+    s.words.isNotEmpty ? s.words : _words([(s.start, s.text)], s.end);
 
-  for (final s in segs) {
-    if (s.kind == SegmentKind.music) continue;
-    final m = _amen.firstMatch(s.text);
-    if (m == null) {
-      cue(s.start, s.text);
-      continue;
+/// A cue only counts at the start of a sentence or after a pause (a line break, music): the creed's
+/// "…die Vader, die Almagtige" and "dan saam bid. Nou eerst Psalm" are no prayers.
+bool _endsSentence(Word prev, Word w) =>
+    RegExp(r'[.!?]$').hasMatch(prev.text) || w.start - prev.end >= 1.0;
+
+/// Spoken length of "Amen", since a word ends where the next starts and the pause after it is not speech.
+const kAmenLength = 0.7;
+
+/// Candidate prayers on word level: a prayer runs from the first word of its cue to the end of the
+/// "Amen" word; the captions are split at each "Amen". Music lines are skipped.
+List<Prayer> prayers(List<Segment> segs) {
+  final w = [
+    for (final s in segs)
+      if (s.kind != SegmentKind.music) ..._wordsOf(s),
+  ];
+  final out = <Prayer>[];
+  int? from;
+  for (var i = 0; i < w.length; i++) {
+    if (_amen.hasMatch(w[i].text)) {
+      final a = from;
+      final end = w[i].start + math.min(kAmenLength, w[i].end - w[i].start);
+      if (a != null &&
+          end - w[a].start >= kMinPrayer &&
+          end - w[a].start <= kMaxPrayer) {
+        final text = [for (var k = a; k <= i; k++) w[k].text];
+        String take(Iterable<String> t) => t.join(' ');
+        out.add(
+          Prayer(
+            w[a].start,
+            end,
+            take(text.take(12)),
+            take(text.skip(text.length > 12 ? text.length - 12 : 0)),
+          ),
+        );
+      }
+      from = null;
+    } else if (from == null &&
+        (i == 0 || _endsSentence(w[i - 1], w[i])) &&
+        _prayerCue.hasMatch(
+          [for (var k = i; k < w.length && k < i + 8; k++) w[k].text].join(' '),
+        )) {
+      from = i;
     }
-    final before = s.text.substring(0, m.end).trim();
-    if (start == null) {
-      cue(s.start, before); // "O Here … Amen" on one line
-    } else {
-      words.add(before);
-    }
-    final a = start;
-    if (a != null && s.end - a >= kMinPrayer && s.end - a <= kMaxPrayer) {
-      final text = words.join(' ').split(RegExp(r'\s+'));
-      String take(Iterable<String> w) => w.join(' ');
-      out.add(
-        Prayer(
-          a,
-          s.end,
-          take(text.take(12)),
-          take(text.skip(text.length > 12 ? text.length - 12 : 0)),
-        ),
-      );
-    }
-    start = null;
-    words.clear();
-    final rest = s.text.substring(m.end).trim();
-    if (rest.isNotEmpty) cue(s.start, rest);
   }
   return out;
 }

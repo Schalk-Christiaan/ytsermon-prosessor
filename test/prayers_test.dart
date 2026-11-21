@@ -15,8 +15,8 @@ void main() {
     ];
     final p = prayers(s);
     expect(p.length, 1);
-    expect(p.single.start, 5);
-    expect(p.single.end, 60);
+    expect(p.single.start, closeTo(6.25, 0.01)); // "Kom" by length inside 5-10
+    expect(p.single.end, closeTo(58.07, 0.01)); // Amen start + 0.7 s
     expect(p.single.first, startsWith('Kom ons dank saam'));
     expect(p.single.last, endsWith('Amen.'));
   });
@@ -29,22 +29,26 @@ void main() {
     expect(prayers(s), isEmpty);
   });
 
+  // Older recordings (no word times) only know the caption line, so their bounds are good to ~3 s.
+  const lineLevel = {'IdZO-xP3iB0', 'a1kwRShCDpE'};
   for (final f in fixtureSermons()) {
-    test('${f.id}: candidates hold both prayer bounds (±30 s)', () {
+    test('${f.id}: candidates hold both prayer bounds', () {
+      final tol = lineLevel.contains(f.id) ? 3.0 : 1.5;
       final p = prayers(f.segs);
+      final why = p
+          .map(
+            (c) => '${c.start.toStringAsFixed(2)}-${c.end.toStringAsFixed(2)}',
+          )
+          .join(', ');
       expect(
-        p.any((c) => (c.start - f.start).abs() <= 30),
+        p.any((c) => (c.start - f.start).abs() <= tol),
         isTrue,
-        reason: p
-            .map((c) => '${formatTime(c.start)}-${formatTime(c.end)}')
-            .join(', '),
+        reason: 'start ${f.start}: $why',
       );
       expect(
-        p.any((c) => (c.end - f.end).abs() <= 30),
+        p.any((c) => (c.end - f.end).abs() <= tol),
         isTrue,
-        reason: p
-            .map((c) => '${formatTime(c.start)}-${formatTime(c.end)}')
-            .join(', '),
+        reason: 'end ${f.end}: $why',
       );
     });
   }
