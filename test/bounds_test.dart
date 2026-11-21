@@ -30,6 +30,25 @@ void main() {
     });
   }
 
+  // lBMwRt3eIus: the AI called the sermon's own last block (it ends in "Amen") the prayer after, so
+  // the real prayer ("Kom ons dank saam" + "Onse Vader …") was labelled `ander` and left out of the cut.
+  test(
+    'lBMwRt3eIus: the closing prayer, not the sermon\'s Amen, ends the cut',
+    () async {
+      final bl = (await fixtureAnalysis('lBMwRt3eIus')).blocks;
+      expect(
+        bl[21].label,
+        BlockLabel.preek,
+        reason: 'the sermon\'s last block',
+      );
+      expect(bl[22].label, BlockLabel.gebed, reason: '"Kom ons dank saam"');
+      expect(bl[23].label, BlockLabel.gebed, reason: '"Onse Vader … Amen"');
+      final b = findBounds(bl, fixtureSound('lBMwRt3eIus'));
+      expect(b.sure, isTrue, reason: '${b.reason}');
+      expect(b.end, closeTo(3297.1, 0.5));
+    },
+  );
+
   test('a service cut short has no full sermon: not sure, no false cut', () {
     final b = findBounds([
       _b(0, 60, BlockLabel.gebed, amen: true),
