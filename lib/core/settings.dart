@@ -11,6 +11,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'channel.dart' show kChannelUrl;
 import 'cutter.dart' show kWhatsappTemplate;
 import 'paths.dart';
 import 'store.dart';
@@ -28,6 +29,7 @@ class AppSettings {
     : clientFile =
           j['clientFile'] as String? ??
           p.join(p.dirname(_file.path), 'client_secret.json'),
+      channelUrl = j['channelUrl'] as String? ?? kChannelUrl,
       privacy = j['privacy'] as String? ?? 'private',
       template = j['template'] as String? ?? kDefaultTemplate,
       outDir = j['outDir'] as String? ?? defaultOutDir(),
@@ -43,12 +45,13 @@ class AppSettings {
 
   factory AppSettings.load(Directory root) {
     final f = File(p.join(root.path, 'settings.json'));
-    return AppSettings._(
-      f,
-      f.existsSync()
-          ? jsonDecode(f.readAsStringSync()) as Map<String, dynamic>
-          : {},
-    );
+    Map<String, dynamic> j = {};
+    try {
+      j = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
+    } on Object {
+      // missing or damaged: start from the defaults rather than fail to open
+    }
+    return AppSettings._(f, j);
   }
 
   final File _file;
@@ -56,6 +59,9 @@ class AppSettings {
 
   /// Google's downloaded `client_secret_*.json` (Desktop app).
   String clientFile;
+
+  /// The YouTube channel whose services are listed (see `normalizeChannelUrl`); the church's by default.
+  String channelUrl;
 
   /// YouTube privacyStatus for uploads: private, unlisted or public.
   String privacy;
@@ -84,6 +90,7 @@ class AppSettings {
 
   void save() => writeJson(_file, {
     'clientFile': clientFile,
+    'channelUrl': channelUrl,
     'privacy': privacy,
     'template': template,
     'rules': rules,

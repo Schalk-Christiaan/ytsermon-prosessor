@@ -123,7 +123,11 @@ class SermonStore extends ChangeNotifier {
       final f = _file(id);
       Sermon? s;
       if (f.existsSync()) {
-        s = Sermon.fromJson(jsonDecode(f.readAsStringSync()));
+        try {
+          s = Sermon.fromJson(jsonDecode(f.readAsStringSync()));
+        } on Object {
+          continue; // one damaged file must not stop the app from starting
+        }
       } else if (hasPlan) {
         final info = File(p.join(d.path, '$id.info.json'));
         final j = info.existsSync()
@@ -167,6 +171,16 @@ class SermonStore extends ChangeNotifier {
       }
       s.order = i;
       _write(s);
+    }
+    // A listing from another channel: untouched sermons of the old one go (an empty list proves nothing).
+    if (listed.isNotEmpty) {
+      final ids = {for (final it in listed) it.id};
+      for (final s in [..._byId.values]) {
+        if (s.state == SermonState.nuut && !ids.contains(s.id)) {
+          _byId.remove(s.id);
+          if (_file(s.id).existsSync()) _file(s.id).deleteSync();
+        }
+      }
     }
     notifyListeners();
     return fresh;

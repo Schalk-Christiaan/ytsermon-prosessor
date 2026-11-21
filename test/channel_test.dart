@@ -17,6 +17,41 @@ void main() {
     expect(videoIdFromUrl('https://example.com/'), isNull);
   });
 
+  test('normalizeChannelUrl takes every form and gives one', () {
+    for (final u in [
+      '@gereformeerdekerk',
+      ' @gereformeerdekerk ',
+      'youtube.com/@gereformeerdekerk',
+      'https://www.youtube.com/@gereformeerdekerk/videos',
+      'http://m.youtube.com/@gereformeerdekerk?si=x',
+    ]) {
+      expect(
+        normalizeChannelUrl(u),
+        'https://www.youtube.com/@gereformeerdekerk',
+        reason: u,
+      );
+    }
+    const id = 'UCabcdefghijklmnopqrstuv';
+    expect(
+      normalizeChannelUrl('https://www.youtube.com/channel/$id/streams'),
+      'https://www.youtube.com/channel/$id',
+    );
+    expect(
+      normalizeChannelUrl('youtube.com/c/KerkNaam'),
+      'https://www.youtube.com/c/KerkNaam',
+    );
+    for (final bad in [
+      '',
+      'kerk',
+      '--exec rm',
+      'https://example.com/@x',
+      'https://www.youtube.com/watch?v=YWz5gf0onjk',
+      '@a b',
+    ]) {
+      expect(normalizeChannelUrl(bad), isNull, reason: bad);
+    }
+  });
+
   test('parseProgress reads yt-dlp download lines', () {
     expect(
       parseProgress('[download]  42.3% of  1.20GiB at 5MiB/s ETA 01:02'),

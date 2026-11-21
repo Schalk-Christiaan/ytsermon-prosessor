@@ -51,7 +51,7 @@ class SermonsScreen extends StatefulWidget {
     required this.store,
     required this.jobs,
     required this.onOpen,
-    this.list = listChannel,
+    this.list,
     this.pickVideo = pickVideoFile,
     this.importFile,
     this.settings,
@@ -62,8 +62,8 @@ class SermonsScreen extends StatefulWidget {
   /// Row tap: open this sermon in Hersien.
   final void Function(String id) onOpen;
 
-  /// Test seam: the channel lister.
-  final Future<List<ChannelItem>> Function() list;
+  /// Test seam: the channel lister (default: the channel set in Instellings).
+  final Future<List<ChannelItem>> Function()? list;
 
   /// Test seams for "Voer opname in"; [importFile] defaults to [importRecording] into [store].
   final Future<String?> Function() pickVideo;
@@ -110,7 +110,9 @@ class _SermonsScreenState extends State<SermonsScreen> {
     });
     final first = widget.store.sorted.isEmpty;
     try {
-      final fresh = widget.store.merge(await widget.list());
+      final fresh = widget.store.merge(
+        await (widget.list?.call() ?? listChannel(_settings.channelUrl)),
+      );
       if (!mounted) return;
       setState(() {
         _loading = false;

@@ -893,6 +893,50 @@ void main() {
     );
   });
 
+  group('kanaal', () {
+    for (final screen in ['instellings', 'opstelling']) {
+      testWidgets('$screen: the channel field checks, then keeps it', (
+        t,
+      ) async {
+        await loadFonts();
+        setView(t, 1100, 900);
+        final seen = <String>[];
+        Future<String> validate(String u) async {
+          seen.add(u);
+          if (u.endsWith('weg')) throw 'nie gevind';
+          return 'Ander Kerk';
+        }
+
+        final AppSettings set;
+        final Widget w;
+        if (screen == 'instellings') {
+          (w, set) = settingsScreen(validate: validate);
+        } else {
+          final r = setupScreen(validate: validate);
+          (w, set) = (r.$1, r.$2);
+        }
+        await t.pumpWidget(appWrap(Brightness.light, w));
+        await t.pumpAndSettle();
+        await typeKey(t, '$screen.channel', 'baie sleg');
+        expect(find.textContaining('lyk nie soos'), findsOneWidget);
+        expect(seen, isEmpty);
+        await typeKey(t, '$screen.channel', '@weg');
+        await t.pumpAndSettle();
+        expect(find.textContaining('Kon nie hierdie kanaal'), findsOneWidget);
+        expect(set.channelUrl, kChannelUrl);
+        await t.enterText(
+          key('$screen.channel').first,
+          'youtube.com/@ander/videos',
+        );
+        await tapKey(t, '$screen.channel-check');
+        await t.pumpAndSettle();
+        expect(find.text('Gevind: Ander Kerk'), findsOneWidget);
+        expect(set.channelUrl, 'https://www.youtube.com/@ander');
+        cover(['$screen.channel-check']);
+      });
+    }
+  });
+
   group('biblioteek', () {
     testWidgets('Preke/Sang view, search, reload, play, show and copy', (
       t,

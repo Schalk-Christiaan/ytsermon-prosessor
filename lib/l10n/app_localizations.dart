@@ -1424,6 +1424,42 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Geen preke pas by die soektog of filter nie'**
   String get noMatches;
+
+  /// No description provided for @channelLabel.
+  ///
+  /// In af, this message translates to:
+  /// **'Jou YouTube-kanaal'**
+  String get channelLabel;
+
+  /// No description provided for @channelHelp.
+  ///
+  /// In af, this message translates to:
+  /// **'Tik @naam, of plak die skakel van die kanaal.'**
+  String get channelHelp;
+
+  /// No description provided for @channelCheck.
+  ///
+  /// In af, this message translates to:
+  /// **'Kontroleer'**
+  String get channelCheck;
+
+  /// No description provided for @channelFound.
+  ///
+  /// In af, this message translates to:
+  /// **'Gevind: {name}'**
+  String channelFound(String name);
+
+  /// No description provided for @channelBadForm.
+  ///
+  /// In af, this message translates to:
+  /// **'Dit lyk nie soos \'n YouTube-kanaal nie. Probeer @naam, of plak die skakel.'**
+  String get channelBadForm;
+
+  /// No description provided for @channelNotFound.
+  ///
+  /// In af, this message translates to:
+  /// **'Kon nie hierdie kanaal vind nie. Kyk die naam en die internet, en probeer weer.'**
+  String get channelNotFound;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -65,4 +65,29 @@ void main() {
     expect(s.byId(a.id)!.state, SermonState.beplan);
     expect(s.byId(a.id)!.date, '2026-11-15');
   });
+
+  test('an unreadable sermon.json is skipped, the others still load', () {
+    final s0 = SermonStore(root)..merge([a, b]);
+    File(p.join(root.path, a.id, 'sermon.json')).writeAsStringSync('{"id": ');
+    final s = SermonStore(root)..load();
+    expect(s.byId(a.id), isNull);
+    expect(s.byId(b.id), isNotNull);
+    expect(s0.sorted.length, 2);
+  });
+
+  test('merge drops untouched sermons that the listing no longer has', () {
+    final s = SermonStore(root)..merge([a, b]);
+    s.byId(b.id)!.state = SermonState.beplan;
+    s.save(s.byId(b.id)!);
+    s.merge([const ChannelItem('ccccccccccc', 'C', 5)]);
+    expect(s.byId(a.id), isNull);
+    expect(s.byId(b.id), isNotNull, reason: 'work was done on it');
+    expect(File(p.join(root.path, a.id, 'sermon.json')).existsSync(), isFalse);
+    s.merge([]);
+    expect(
+      s.byId('ccccccccccc'),
+      isNotNull,
+      reason: 'an empty list is no proof',
+    );
+  });
 }

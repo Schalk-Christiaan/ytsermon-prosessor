@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:preekverwerker/core/channel.dart' show kChannelUrl;
 import 'package:preekverwerker/core/settings.dart';
 
 void main() {
@@ -26,6 +27,24 @@ void main() {
     expect(again.outDir, '/x/y');
     expect(again.setupDone, isTrue);
     expect(File(p.join(d.path, 'settings.json')).existsSync(), isTrue);
+    d.deleteSync(recursive: true);
+  });
+
+  test('an unreadable settings.json gives the defaults', () {
+    final d = Directory.systemTemp.createTempSync('set');
+    File(p.join(d.path, 'settings.json')).writeAsStringSync('');
+    expect(AppSettings.load(d).privacy, 'private');
+    d.deleteSync(recursive: true);
+  });
+
+  test('channelUrl defaults to the church channel and survives a save', () {
+    final d = Directory.systemTemp.createTempSync('set');
+    final s = AppSettings.load(d);
+    expect(s.channelUrl, kChannelUrl);
+    s
+      ..channelUrl = 'https://www.youtube.com/@ander'
+      ..save();
+    expect(AppSettings.load(d).channelUrl, 'https://www.youtube.com/@ander');
     d.deleteSync(recursive: true);
   });
 }

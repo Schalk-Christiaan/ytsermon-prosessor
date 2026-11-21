@@ -69,7 +69,7 @@ class Shell extends StatefulWidget {
     super.key,
     required this.store,
     required this.jobs,
-    this.list = listChannel,
+    this.list,
     this.settings,
     this.auth,
     this.quota,
@@ -82,8 +82,8 @@ class Shell extends StatefulWidget {
   final GoogleAuth? auth;
   final UploadQuota? quota;
 
-  /// Test seam: the channel lister.
-  final Future<List<ChannelItem>> Function() list;
+  /// Test seam: the channel lister (default: the channel set in Instellings).
+  final Future<List<ChannelItem>> Function()? list;
 
   @override
   State<Shell> createState() => _ShellState();
@@ -152,6 +152,7 @@ class _ShellState extends State<Shell> {
                   index: _i,
                   children: [
                     SermonsScreen(
+                      key: ValueKey(_settings.channelUrl),
                       store: widget.store,
                       jobs: widget.jobs,
                       list: widget.list,
@@ -178,6 +179,7 @@ class _ShellState extends State<Shell> {
                       auth: _auth,
                       signIn: () => _auth.signIn(openPath),
                       system: const SystemStatus(),
+                      onChannelChanged: () => setState(() {}),
                       onSetup: () => setState(() => _i = 5),
                     ),
                     // Built only while shown, so it probes Ollama when opened, not at every start.
