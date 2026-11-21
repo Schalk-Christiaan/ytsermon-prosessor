@@ -12,14 +12,14 @@ kaart: lib/core/*.dart, lib/app/*.dart, lib/features/**/*.dart
 Alles plaaslik: yt-dlp, ffmpeg, Ollama. Ontwikkel en toets op Linux, verskeep na die kerk-PC (Windows 11).
 
 ## Status
-Alles in `main` en gepush: diensindeling, ui-werkvlak (stappe 0–18, ná hersiening) en windows-installeerder gemerge; geen bou-takke of worktrees oor. Planne fase 2–6, diensindeling en ui-werkvlak `klaar`; `/bewys` geslaag 2026-11-21: `flutter test` 273 groen, integrasietoets lig+donker, E2E YWz + ffprobe, Stelsel groen (Schalk), kaart-hoofstukke `klaar bewys=7236634`.
-Windows-CI: eerste lopie (44913477297) het by "Maak Setup.exe" gefaal (Pascal-reël wat met `[` begin, `setup.iss:118`); regmaak gepush, tweede lopie 44914060183 loop. `planne/windows-installeerder.md` nog `bou`.
-Bekende foute (toetse vang dit nie): `lBMwRt3eIus` laaste preekblok #22 as gebed, gebed #24 "ander"; `6s_FFatG0so` gebed ná preek oor #50–52 verdeel. Grense-toets laat ±1,5 s toe (Aanvaarding ±0,5).
-Oop uit ui-werkvlak: voorskou klein by 1100 breed (voorstel: gereedskap- en vervoerbalk een ry); video-tekstuur swart in toetskiekies.
-Dev-masjien: cmake/ninja nou op PATH; `flutter run -d linux` werk (ou CMake-kas met venv-ninja uitgevee). Kiekies (`planne/ui-werkvlak/`, 4,6 MB PNG) is met `git add -f` gecommit.
-Ongetoets: regte YouTube-oplaai; kerk-PC (Setup.exe).
+Alles in `main`; Windows-CI groen (44914060183, 44914313563), artefak `Setup` bestaan. `/bewys` 2026-11-21 geslaag (273 toetse, E2E YWz). Nog op die kerk-PC ongetoets.
+Nuwe plan `planne/nagskof-poleer.md` (status `oop`, 21 stappe): foute → kodehersiening → argitektuur → eie kanaal-URL (`kChannelUrl` in `lib/core/channel.dart` word instelling) → persona-kritiek → persona-vloeie → UI/UX + Tab-fokus per skerm → Setup.exe in Windows-VM → `/bewys` → Setup.exe na USB (`/run/media/schalk/Ventoy/Preekverwerker/`) net ná volle VM-toets. Stop by oplaai; niks word na YouTube opgelaai nie.
+Bekende foute (stap A): `lBMwRt3eIus` preekblok #22 as gebed, #24 "ander"; `6s_FFatG0so` gebed ná preek oor #50–52 verdeel; grense-toets ±1,5 s (moet ±0,5).
+Windows-VM (`omarchy-windows`, dockur): begin net via `sudo env PKEXEC_UID=1000 /usr/bin/omarchy-windows-vm __priv up_wait` (sonder dit is `/storage` leeg en laai dit Windows af). Windows was nooit klaar geïnstalleer nie; outo-installasie het 2026-11-21 22:35 begin. Kiekie: `docker exec omarchy-windows sh -c 'printf "screendump /shared/scr.ppm\n" | nc -q1 -U /run/shm/monitor.sock'` → `~/Windows/scr.ppm`; gedeelde gids `~/Windows` = `\\host.lan\Data`. Container kon nie DNS oplos nie: internet in die VM nog onbevestig.
+Oop vrae vir Schalk: is "knoppies selekteerbaar" = Tab/fokus/kopieerbare teks? Personas reg (Oom Koos as maatstaf)?
+Skills vir die bou: diagnosing-bugs, tdd, code-review, codebase-design, projekkonteks:ui-ux, impeccable, run, projekkonteks:bewys (tabel in die plan).
 **Laaste sessie:** 2026-11-21
-**Volgende:** kyk na CI-lopie 44914060183 (`gh run view 44914060183`); groen → `gh run download 44914060183 -n Setup`, `windows-installeerder` op `hersien`/`klaar` en Setup.exe op die kerk-PC; rooi → `--log-failed` en herstel `installer/setup.iss`.
+**Volgende:** `/bou nagskof-poleer`; kyk eers of die VM-installasie klaar is (kiekie hierbo) en of die VM internet het.
 
 ## Gebruikers
 - **Schalk**: tegnies; sleutelbord (I/O, ←/→, Shift, spasie, Ctrl+Z), spoed en die log. Struikel oor: stadige herhaalwerk, muis-net-paaie.
@@ -54,6 +54,8 @@ Ongetoets: regte YouTube-oplaai; kerk-PC (Setup.exe).
 2026-11-21 Elke kontrole word outomaties getoets: inventaris van sleutels + widget-toetse + integration_test op Linux met cmake/ninja (want Schalk wil weet elke knoppie en slider werk)
 2026-11-21 Werkvlak: merge diensindeling eers; geen video-duimnaels in die tydlyn (net golfvorm); Preke verstek lys, rooster een klik weg; geen spoed-knoppies (want Schalk)
 2026-11-21 Impeccable in die projek (.claude/skills), sonder die web-hook (want die detektor/hook werk net op HTML/CSS)
+2026-11-21 Nagskof stop by oplaai; Setup.exe gaan net na die USB-stokkie ná 'n volle Windows-VM-toets (want Schalk)
+2026-11-21 Die kanaal-URL word 'n instelling met die kerk se kanaal as verstek (want ander gemeentes/kanale)
 
 ## Name
 die kanaal = https://www.youtube.com/@gereformeerdekerkoranjeriv5791
