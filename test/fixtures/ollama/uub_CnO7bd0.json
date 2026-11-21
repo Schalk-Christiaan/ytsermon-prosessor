@@ -1,0 +1,39 @@
+{
+  "gebed_voor": 6,
+  "preek_van": 10,
+  "preek_tot": 12,
+  "gebed_na": 14,
+  "gebede": [2, 3, 6, 14, 16],
+  "skriflesing": [8, 11],
+  "geloofsbelydenis": [],
+  "aankondigings": [1, 4, 7, 15, 15],
+  "kollekte": [],
+  "seen": [],
+  "songs": [
+    {
+      "nr": 1,
+      "name": ""
+    },
+    {
+      "nr": 2,
+      "name": ""
+    },
+    {
+      "nr": 3,
+      "name": "Psalm 107:20, 21"
+    },
+    {
+      "nr": 4,
+      "name": "Psalm 146:1,3,5"
+    },
+    {
+      "nr": 5,
+      "name": "Psalm 9:1-5"
+    },
+    {
+      "nr": 6,
+      "name": ""
+    }
+  ],
+  "service": "nagmaal"
+}

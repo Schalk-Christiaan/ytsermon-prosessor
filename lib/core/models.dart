@@ -69,6 +69,29 @@ class Block {
   String get text => words.map((w) => w.text).join(' ');
 }
 
+/// One song (a music stretch of the service); [name] comes from the announcement before it, null when unknown;
+/// [n] is its number (1, 2 …) in the service.
+class Song {
+  const Song(this.start, this.end, this.name, this.n);
+  final double start;
+  final double end;
+  final String? name;
+  final int n;
+
+  Map<String, dynamic> toJson() => {
+    'start': start,
+    'end': end,
+    'name': ?name,
+    'n': n,
+  };
+  factory Song.fromJson(Map<String, dynamic> j) => Song(
+    (j['start'] as num).toDouble(),
+    (j['end'] as num).toDouble(),
+    j['name'] as String?,
+    j['n'] as int,
+  );
+}
+
 /// A candidate prayer in the service: from its first cue to the end of its "Amen" word.
 class Prayer {
   const Prayer(this.start, this.end);

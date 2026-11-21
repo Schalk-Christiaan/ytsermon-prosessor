@@ -228,7 +228,7 @@ double _spokenEnd(Word w) =>
     w.start +
     math.min(w.end - w.start, isAmen(w.text) ? kAmenLength : kMaxWordLength);
 
-// stap: diensindeling 2 Spraakblokke | die woorde word gesny by musiek, 'n pouse van 2 s en "Amen"; elke blok kry later 'n etiket
+// stap: diensindeling 2 Spraakblokke | die woorde word gesny by musiek, 'n pouse van 3 s en "Amen"; elke blok kry later 'n etiket
 /// Cuts the spoken words into blocks: a new block after a pause of [kBlockPause] seconds, after an "Amen",
 /// and around every music stretch of [sound] (words inside music are dropped: that is singing).
 /// Caption sound tags (`[geproes]`) are no words.

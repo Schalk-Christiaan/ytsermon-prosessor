@@ -16,6 +16,23 @@ import 'tools.dart';
 /// Shortest stretch without "Amen" or music that counts as the sermon.
 const kMinSermon = 15 * 60.0;
 
+/// The runs of consecutive blocks labelled `preek`, in order; the sermon is the longest of them.
+List<List<Block>> sermonRuns(List<Block> blocks) {
+  final runs = <List<Block>>[];
+  var open = false;
+  for (final b in blocks) {
+    if (b.label != BlockLabel.preek) {
+      open = false;
+    } else if (open) {
+      runs.last.add(b);
+    } else {
+      runs.add([b]);
+      open = true;
+    }
+  }
+  return runs;
+}
+
 /// A second stretch this close to the longest one (fraction of it) makes the choice doubtful.
 const kSimilarStretch = 0.8;
 

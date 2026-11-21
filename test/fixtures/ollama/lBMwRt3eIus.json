@@ -1,0 +1,56 @@
+{
+  "gebed_voor": 2,
+  "preek_van": 11,
+  "preek_tot": 21,
+  "gebed_na": 24,
+  "gebede": [2, 4, 7, 8, 9, 18],
+  "skriflesing": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "geloofsbelydenis": [
+    6,
+    7
+  ],
+  "aankondigings": [
+    1,
+    3,
+    5,
+    10,
+    25
+  ],
+  "kollekte": [
+    1
+  ],
+  "seen": [
+    1,
+    26
+  ],
+  "songs": [
+    {
+      "nr": 1,
+      "name": "apostoliese geloofsbelydenis"
+    },
+    {
+      "nr": 2,
+      "name": ""
+    },
+    {
+      "nr": 3,
+      "name": "Psalm 34"
+    },
+    {
+      "nr": 4,
+      "name": "Psalm 91"
+    },
+    {
+      "nr": 5,
+      "name": ""
+    }
+  ],
+  "service": "geen"
+}
