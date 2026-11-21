@@ -133,12 +133,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         : ok
         ? l.connected
         : l.notConnected;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Flexible(
-          flex: 3,
-          child: SingleChildScrollView(
+    // One scroll for the whole page, so a short window never squeezes the Stelsel list over the rest.
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 760),
@@ -273,9 +273,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-        ),
-        Expanded(flex: 2, child: widget.system),
-      ],
+          widget.system,
+        ],
+      ),
     );
   }
 

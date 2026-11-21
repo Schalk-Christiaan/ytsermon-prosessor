@@ -7,10 +7,12 @@ import 'package:preekverwerker/app/shell.dart';
 import 'package:preekverwerker/core/channel.dart';
 import 'package:preekverwerker/core/settings.dart';
 import 'package:preekverwerker/features/review/review_screen.dart';
+import 'package:preekverwerker/features/settings/system_status.dart';
 
 import 'screen_kit.dart';
 
 void main() {
+  instellingsShort();
   for (final b in Brightness.values) {
     // The shell's rail destinations: 0 Preke, 2 Werk, 3 Snitlyste, 6 Biblioteek, 4 Instellings, 5 Opstelling.
     testWidgets('shell screens at 1100x720 ${b.name}', (t) async {
@@ -65,6 +67,31 @@ void main() {
       await t.pumpWidget(appWrap(b, setupScreen().$1));
       await t.pump(const Duration(seconds: 1));
       expect(t.takeException(), isNull);
+    });
+  }
+}
+
+/// Step 23: Instellings in a short window: the Stelsel list and "Werk yt-dlp by" must not overlap
+/// "Intro en outro"; the page scrolls as one.
+void instellingsShort() {
+  for (final b in Brightness.values) {
+    testWidgets('Instellings at 1100x420 ${b.name}: one scroll, no overlap', (
+      t,
+    ) async {
+      await loadFonts();
+      setView(t, 1100, 420);
+      final (w, _) = settingsScreen(system: const SystemStatus());
+      await t.pumpWidget(appWrap(b, w));
+      await t.runAsync(() => Future<void>.delayed(const Duration(seconds: 3)));
+      await t.pump(const Duration(seconds: 1));
+      expect(t.takeException(), isNull);
+      final update = find.byKey(const ValueKey('ctl.instellings.update-ytdlp'));
+      await t.ensureVisible(update);
+      await t.pump();
+      final intro = t.getRect(find.text('Intro en outro'));
+      expect(t.getRect(update).top, greaterThan(intro.bottom));
+      expect(t.takeException(), isNull);
+      await t.pumpWidget(const SizedBox());
     });
   }
 }
