@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f9fbfa">
 <meta name="theme-color" content="#121a1c" media="(prefers-color-scheme: dark)">
-<title>Hoe ytsermon-prosessor-diensindeling werk</title>
+<title>Hoe ytsermon-prosessor werk</title>
 <style>
 :root{
   --papier: oklch(98.6% 0.004 165);
@@ -225,11 +225,11 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
 
 <main>
 <div class="leeswydte">
-  <h1>Hoe ytsermon-prosessor-diensindeling werk</h1>
+  <h1>Hoe ytsermon-prosessor werk</h1>
   <p class="inleiding">'n Selfstandige Windows-app (Flutter, installeerder-exe, geen Claude nodig) wat preke van @gereformeerdekerkoranjeriv5791 aflaai, tot die preek sny, Shorts maak, en met titels/beskrywings in snitlyste terug oplaai; ook klank vir WhatsApp uitvoer. Alles plaaslik: yt-dlp, ffmpeg, Ollama. Ontwikkel en toets op Linux, verskeep na die kerk-PC (Windows 11).</p>
 
   <nav class="brein" id="oorsig" style="--rye:2" aria-label="Oorsig">
-    <a class="kern" href="#vloei-diensindeling"><b>ytsermon-prosessor-diensindeling</b><span>'n Selfstandige Windows-app (Flutter, installeerder-exe, geen Claude nodig) wat preke van @gereformeerdekerkoranjeriv5791 aflaai, tot die preek sny, Shorts maak, en met titels/beskrywings in snitlyste terug oplaai; ook klank vir WhatsApp uitvoer.</span></a>
+    <a class="kern" href="#vloei-diensindeling"><b>ytsermon-prosessor</b><span>'n Selfstandige Windows-app (Flutter, installeerder-exe, geen Claude nodig) wat preke van @gereformeerdekerkoranjeriv5791 aflaai, tot die preek sny, Shorts maak, en met titels/beskrywings in snitlyste terug oplaai; ook klank vir WhatsApp uitvoer.</span></a>
     <div class="arm t1 bo"><a class="kop" href="#vloei-diensindeling">Werk wat jy aanvra</a><ul><li><a href="#vloei-diensindeling">Die hele diens verstaan</a></li><li><a href="#vloei-preekgrense">Preekgrense: van gebed tot gebed</a></li><li><a href="#vloei-v1">Verwerk nuutste diens</a></li><li><a href="#vloei-v2">'n Ou preek verwerk</a></li><li><a href="#vloei-v3">Voer opname in</a></li><li><a href="#vloei-v4">Die grense is onseker of verkeerd</a></li><li><a href="#vloei-v5">Hervat ná 'n onderbreking</a></li><li><a href="#vloei-v6">Eerste keer op die kerk-PC</a></li><li><a href="#vloei-v7">en 3 ander</a></li></ul></div>
     <div class="arm t2 bo"><a class="kop" href="#staat">Waar die geheue leef</a><ul><li><a href="#staat"><code>—</code></a></li><li><a href="#staat"><code>werkmap/&lt;id&gt;/ (info.json, onderskrifte, video.mp4)</code></a></li><li><a href="#staat"><code>out/&lt;jaar&gt;/&lt;diens&gt;/</code></a></li><li><a href="#staat"><code>&lt;werkmap&gt;/jobs.json</code></a></li><li><a href="#staat"><code>werkmap/&lt;id&gt;/plan.json, analysis.json</code></a></li><li><a href="#staat"><code>&lt;werkmap&gt;/settings.json</code></a></li><li><a href="#staat"><code>werkmap/opname-…/ (video.mp4, info.json, leë onderskrifte, plan.json, sermon.json)</code></a></li><li><a href="#staat"><code>&lt;app-support&gt;/work/&lt;id&gt;/plan.json</code></a></li><li><a href="#staat">en 4 ander</a></li></ul></div>
     <div class="arm t3 onder"><a class="kop" href="#dele">Die dele</a><ul><li><a href="#g-features">Skerms</a></li><li><a href="#g-app">App-raam</a></li><li><a href="#g-core">Kern</a></li></ul></div>
@@ -246,7 +246,7 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
   <ol class="vloei">
     <li><details><summary class="stap">Klank</summary>
       <p>een ffmpeg-proses lees die klank, Dart klassifiseer elke sekonde as stilte/musiek/spraak/geraas; die uitslag word in sound.json bewaar</p>
-      <span class="wie"><span class="pad">lib/core/sound.dart:252–253</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/sound.dart:254–255</span></span></details></li>
     <li><details><summary class="stap">Spraakblokke</summary>
       <p>die woorde word gesny by musiek, 'n pouse van 3 s en "Amen"; elke blok kry later 'n etiket</p>
       <span class="wie"><span class="pad">lib/core/captions.dart:181–184</span></span></details></li>
@@ -255,13 +255,13 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
       <span class="wie"><span class="pad">lib/core/service_info.dart:79–119</span></span></details></li>
     <li><details><summary class="stap">KI-etikette</summary>
       <p>een Ollama-oproep sonder onderskrifte kry die blokke, liedere en beskrywing en gee net nommers terug (gebed voor en ná die preek); die blokke tussen die twee gebede word preek; die KI kies nooit tye nie</p>
-      <span class="wie"><span class="pad">lib/core/planner.dart:365–478</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/planner.dart:361–484</span></span></details></li>
     <li><details><summary class="stap">Grense uit etikette</summary>
       <p>preek = langste loop <code>preek</code>-blokke (≥ 15 min); begin by die eerste blok van die gebed daarvoor (terug tot by musiek), einde by die Amen van die gebed daarna; twyfel gee 'n rede vir Hersien</p>
-      <span class="wie"><span class="pad">lib/core/bounds.dart:51–58</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/bounds.dart:52–59</span></span></details></li>
     <li><details><summary class="stap">Net die woord</summary>
       <p>alle spraak tussen die gebede (Skriflesing ingesluit), sonder gebede en sang, in een snit aanmekaar</p>
-      <span class="wie"><span class="pad">lib/core/bounds.dart:114–116</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/bounds.dart:117–119</span></span></details></li>
     <li><details><summary class="stap">Kies die uitvoere</summary>
       <p>drie merkblokkies (almal aan, onthou in Instellings), Oggend/Aand en die soort diens; die sny gebruik dit</p>
       <span class="wie"><span class="pad">lib/features/review/review_screen.dart:656–748</span></span></details></li>
@@ -273,10 +273,10 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
       <span class="wie"><span class="pad">lib/core/cutter.dart:354–355</span></span></details></li>
     <li><details><summary class="stap">Sny die uitvoere</summary>
       <p>Volle preek, Net die woord en Sang soos in Instellings gekies, in die diensgids; dan WhatsApp.txt en diens.json</p>
-      <span class="wie"><span class="pad">lib/core/jobs.dart:348–350</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/jobs.dart:353–355</span></span></details></li>
     <li><details><summary class="stap">Kopieer WhatsApp-teks</summary>
       <p>die teks langs die uitvoere (WhatsApp.txt) op die knipbord, om saam met die klank te plak</p>
-      <span class="wie"><span class="pad">lib/features/work/work_screen.dart:225–233</span></span></details></li>
+      <span class="wie"><span class="pad">lib/features/work/work_screen.dart:227–237</span></span></details></li>
     <li><details><summary class="stap">Preke-aansig</summary>
       <p>per jaar, nuutste eerste; Speel, Wys in gids en Kopieer WhatsApp-teks per diens</p>
       <span class="wie"><span class="pad">lib/features/library/library_screen.dart:115–165</span></span></details></li>
@@ -293,7 +293,7 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
   <ol class="vloei">
     <li><details><summary class="stap">Stilte-snap</summary>
       <p>begin na die einde van die laaste stilte voor die eerste woord, einde by die begin van die eerste stilte ná "Amen" (ffmpeg silencedetect, ±3 s)</p>
-      <span class="wie"><span class="pad">lib/core/bounds.dart:177–180</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/bounds.dart:174–177</span></span></details></li>
     <li><details><summary class="stap">Herkodeer</summary>
       <p>libx264 presies op die grense (nie -c copy nie, wat net op 'n sleutelraam sny)</p>
       <span class="wie"><span class="pad">lib/core/cutter.dart:250–252</span></span></details></li>
@@ -312,17 +312,17 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
     <li><details><summary class="stap">Beplan</summary>
       <p>onderskrifte + video af; Ollama benoem die blokke, kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks</p>
       <ul class="tak"><li>Ollama af → "Ollama het nie geantwoord nie" met Probeer weer in Werkry</li></ul>
-      <span class="wie"><span class="pad">lib/core/jobs.dart:291–294</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/jobs.dart:296–299</span></span></details></li>
     <li><details><summary class="stap">Hersien</summary>
       <p>kyk die hakies by die gebede, die titel, Skriflesing en beskrywing</p>
       <span class="wie"><span class="pad">lib/features/review/review_screen.dart:196</span></span></details></li>
     <li><details><summary class="stap">Sny</summary>
       <p>herkodeer presies van die eerste woord tot ná die Amen (met intro/outro en uitgeknipte stukke saamgevoeg); uitset in die uitsetgids</p>
-      <span class="wie"><span class="pad">lib/core/jobs.dart:346</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/jobs.dart:351</span></span></details></li>
     <li><details><summary class="stap">Laai op</summary>
       <p>volle preek en Shorts na YouTube, in die regte snitlys</p>
       <ul class="tak"><li>kwota op → "probeer môre weer"; geen internet → Probeer weer</li></ul>
-      <span class="wie"><span class="pad">lib/core/jobs.dart:546–548</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/jobs.dart:553–555</span></span></details></li>
   </ol>
 </section>
 
@@ -357,7 +357,7 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
       <span class="wie"><span class="pad">lib/features/review/transcript.dart:31–96</span></span></details></li>
     <li><details><summary class="stap">Sny sonder YouTube</summary>
       <p>dieselfde snit; die opname het geen Shorts-onderskrifte nie</p>
-      <span class="wie"><span class="pad">lib/core/jobs.dart:347</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/jobs.dart:352</span></span></details></li>
   </ol>
 </section>
 
@@ -375,10 +375,10 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
       <span class="wie"><span class="pad">lib/features/review/transcript.dart:30</span></span></details></li>
     <li><details><summary class="stap">Skuif die hakie</summary>
       <p>sleep, ←/→ 1 s, Shift 0,1 s, of I/O by die speelkop</p>
-      <span class="wie"><span class="pad">lib/features/review/review_controller.dart:360–585</span></span></details></li>
+      <span class="wie"><span class="pad">lib/features/review/review_controller.dart:359–583</span></span></details></li>
     <li><details><summary class="stap">Ontdoen</summary>
       <p>Ctrl+Z draai die laaste skuif terug, Ctrl+Shift+Z herdoen</p>
-      <span class="wie"><span class="pad">lib/features/review/review_controller.dart:356–358</span></span></details></li>
+      <span class="wie"><span class="pad">lib/features/review/review_controller.dart:355–357</span></span></details></li>
     <li><details><summary class="stap">Beplan weer</summary>
       <p>loop die grense en die teks weer van voor af as die hele voorstel verkeerd is (bevestiging)</p>
       <span class="wie"><span class="pad">lib/features/review/review_screen.dart:79–194</span></span></details></li>
@@ -398,7 +398,7 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
       <span class="wie"><span class="pad">lib/core/channel.dart:131–133</span></span></details></li>
     <li><details><summary class="stap">Mislukte taak</summary>
       <p>rooi ikoon, die rede en Probeer weer</p>
-      <span class="wie"><span class="pad">lib/features/work/work_screen.dart:235</span></span></details></li>
+      <span class="wie"><span class="pad">lib/features/work/work_screen.dart:239</span></span></details></li>
   </ol>
 </section>
 
@@ -430,14 +430,14 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
   <ol class="vloei">
     <li><details><summary class="stap">WhatsApp-klank</summary>
       <p>by die gesnyde preek in Werkry; een klik</p>
-      <span class="wie"><span class="pad">lib/features/work/work_screen.dart:168</span></span></details></li>
+      <span class="wie"><span class="pad">lib/features/work/work_screen.dart:170</span></span></details></li>
     <li><details><summary class="stap">Klank uitvoer</summary>
       <p>mp3 van Net die woord (of Volle preek as dit nie gesny is nie), langs die gesnyde video</p>
       <ul class="tak"><li>preek nog nie gesny nie → "Sny eers die preek"</li></ul>
-      <span class="wie"><span class="pad">lib/core/jobs.dart:461–463</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/jobs.dart:468–470</span></span></details></li>
     <li><details><summary class="stap">Wys in gids</summary>
       <p>maak die gids met die mp3 oop om in WhatsApp te sleep</p>
-      <span class="wie"><span class="pad">lib/features/work/work_screen.dart:169–223</span></span></details></li>
+      <span class="wie"><span class="pad">lib/features/work/work_screen.dart:171–225</span></span></details></li>
   </ol>
 </section>
 
@@ -455,7 +455,7 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
       <span class="wie"><span class="pad">lib/features/review/review_screen.dart:750–807</span></span></details></li>
     <li><details><summary class="stap">Stuur na elke opgelaaide video</summary>
       <p>titel en beskrywing uit die plan, per mp4-uitset</p>
-      <span class="wie"><span class="pad">lib/core/jobs.dart:520–521</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/jobs.dart:527–528</span></span></details></li>
     <li><details><summary class="stap">YouTube PUT</summary>
       <p>haal die snippet, verander titel en beskrywing, stuur dit terug</p>
       <ul class="tak"><li>video weg → "Video … is nie meer op YouTube nie."</li></ul>
@@ -473,10 +473,10 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
       <span class="wie"><span class="pad">lib/core/jobs.dart:96–97</span></span></details></li>
     <li><details><summary class="stap">Werkry wys die rede</summary>
       <p>die sin uit friendlyError onder die taak, met Probeer weer</p>
-      <span class="wie"><span class="pad">lib/features/work/work_screen.dart:236–282</span></span></details></li>
+      <span class="wie"><span class="pad">lib/features/work/work_screen.dart:240–286</span></span></details></li>
     <li><details><summary class="stap">Probeer weer</summary>
       <p>die mislukte taak staan weer in die ry, die werk tot dusver bly</p>
-      <span class="wie"><span class="pad">lib/core/jobs.dart:271–289</span></span></details></li>
+      <span class="wie"><span class="pad">lib/core/jobs.dart:271–294</span></span></details></li>
   </ol>
 </section>
 
@@ -562,7 +562,7 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
       <p>kies die snit-grense met reëls uit die etikette van die spraakblokke (die KI kies nooit tye): preek = langste loop preek-blokke, begin by die gebed voor, einde by die Amen van die gebed ná die preek; snapBounds pas albei by die naaste stilte aan (ffmpeg silencedetect)</p>
       <dl class="meta"><div><dt>wanneer</dt><dd>ná die KI-etikette (Planner.analyse), in planJob (met die video af, vir die stilte-snap)</dd></div><div><dt>roep</dt><dd><a href="#d-cutter">cutter</a></dd></div><div><dt>vloei</dt><dd><a href="#vloei-diensindeling">Die hele diens verstaan</a>, <a href="#vloei-preekgrense">Preekgrense: van gebed tot gebed</a></dd></div></dl></article>
     <article class="deel" id="d-captions"><h4>captions <span class="pad">lib/core/captions.dart</span></h4>
-      <p>json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI, spraakblokke (pouse/Amen/musiek), SRT</p>
+      <p>json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI (uit blokke), spraakblokke (pouse/Amen/musiek), SRT</p>
       <dl class="meta"><div><dt>wanneer</dt><dd>ná fetchMeta</dd></div><div><dt>vloei</dt><dd><a href="#vloei-diensindeling">Die hele diens verstaan</a></dd></div></dl></article>
     <article class="deel" id="d-channel"><h4>channel <span class="pad">lib/core/channel.dart</span></h4>
       <p>lys die kanaal (flat), video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af</p>
@@ -577,7 +577,7 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
       <p>lees elke &lt;uitvoer&gt;/&lt;jaar&gt;/&lt;diens&gt;/diens.json in een lys diens (nuutste eerste) met hul liedere; die blaaier soek daarin</p>
       <dl class="meta"><div><dt>wanneer</dt><dd>as die Biblioteek-skerm oopmaak of herlaai</dd></div></dl></article>
     <article class="deel" id="d-models"><h4>models <span class="pad">lib/core/models.dart</span></h4>
-      <p>Word, Segment (met woordtye), TimeBlock, Bounds, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON</p>
+      <p>Word, Segment (met woordtye), TimeBlock, Block/BlockLabel (spraakblok met etiket), Song, Bounds, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON</p>
       <dl class="meta"><div><dt>wanneer</dt><dd>oral waar 'n plan gebruik word</dd></div></dl></article>
     <article class="deel" id="d-paths"><h4>paths <span class="pad">lib/core/paths.dart</span></h4>
       <p>werkmap, gebundelde lettertipe en verstek-uitsetgids</p>
@@ -614,7 +614,7 @@ figure.diagram figcaption{font:.9rem/1.5 var(--sans);color:var(--ink-2);margin-t
 </section>
 
 
-<footer>ytsermon-prosessor-diensindeling · gegenereer deur <code>kaart.py</code> uit die kode se kommentaar</footer>
+<footer>ytsermon-prosessor · gegenereer deur <code>kaart.py</code> uit die kode se kommentaar</footer>
 </main>
 </div>
 <a class="na-oorsig" href="#oorsig">Oorsig</a>
