@@ -306,7 +306,7 @@
   "setupIntro": "Vier dinge, een keer. Daarna begin die app by Preke.",
   "setupOllama": "Ollama (die KI op hierdie rekenaar) loop",
   "setupModel": "Die KI-model is afgelaai (5 GB)",
-  "setupChannel": "Die kerk se YouTube-kanaal is gekoppel",
+  "setupChannel": "Jou YouTube-rekening is gekoppel (om op te laai)",
   "setupFolder": "Gids vir gesnyde preke: {path}",
   "@setupFolder": {
     "placeholders": {

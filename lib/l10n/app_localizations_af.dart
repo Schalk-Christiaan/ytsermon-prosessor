@@ -449,7 +449,7 @@ class LAf extends L {
   String get setupModel => 'Die KI-model is afgelaai (5 GB)';
 
   @override
-  String get setupChannel => 'Die kerk se YouTube-kanaal is gekoppel';
+  String get setupChannel => 'Jou YouTube-rekening is gekoppel (om op te laai)';
 
   @override
   String setupFolder(String path) {

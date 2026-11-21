@@ -839,7 +839,7 @@ abstract class L {
   /// No description provided for @setupChannel.
   ///
   /// In af, this message translates to:
-  /// **'Die kerk se YouTube-kanaal is gekoppel'**
+  /// **'Jou YouTube-rekening is gekoppel (om op te laai)'**
   String get setupChannel;
 
   /// No description provided for @setupFolder.

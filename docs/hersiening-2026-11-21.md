@@ -18,3 +18,19 @@ Oorbou: geen duidelike nie; `service_timeline.dart` (765) en `sermons_screen.dar
 - Skerms roep geen prosesse direk nie; alles gaan deur `core/` (`runTool`, `JobQueue`). Naatlyn is skoon.
 - `ReviewController` (631 reëls) meng spelerbeheer, plan-wysiging en stoor. Voorstel: skei die speler-gedeelte (`playFrom`, `_skipCuts`, `previewCut`) in 'n eie klas. Dit is groot herstrukturering en die toetse dek dit; gaan na `## Vrae`, nie hierdie plan nie.
 - Geen veranderinge in stap 8 nie: geen voorstel behou gedrag EN verwyder kode sonder risiko nie.
+
+## Persona-kritiek
+Gebaseer op die bestaande toets-kiekies (`docs/kiekies/nagskof/voor/`), die kode en een kort looptyd van die Linux-app (Opstelling by 734 breed).
+- **Oom Koos:** Opstelling-stap 3 het gesê "Die kerk se YouTube-kanaal is gekoppel" met "kliënt-ID-lêer": verwarrend, en dit is nie sy kanaal wat gekoppel word nie, maar sy rekening vir oplaai. *Herstel: teks is nou "Jou YouTube-rekening is gekoppel (om op te laai)".* Verder: Ollama/yt-dlp-terme in Stelsel is vir Schalk, nie vir hom nie; die foute noem nie altyd wat om te doen nie.
+- **Ds. Marais:** Titel, Skriflesing en datum is in Hersien, maar die beskrywing-voorskou lê onder 'n oortjie. Aanvaar vir nou (kenmerk: voorskou by "Keur goed").
+- **Schalk:** sneltoetse i/o/Ctrl+Z bestaan in die redigeerder; geen sneltoets vir "Verwerk nuutste diens" nie. Log is sigbaar by Werk.
+- **Mev. Venter:** kyk net die uitset; klankgrootte en onderskrifte is gedek deur die bestaande `ffprobe`-bewys (E2E).
+- **Skriba van 'n ander gemeente:** die kanaalveld is nou eerste in Opstelling (gedoen). Ollama-installasie word genoem maar nie gekoppel nie; die album-etiket sê steeds "GK Oranjerivier" (sien Vrae in die plan).
+
+## Kenmerke
+Gebou: (1) kanaalveld in Opstelling/Instellings; (2) Tab/40 px-toets op alle skerms; (3) kopieerbare teks (`SelectionArea` om die skerm-inhoud); (4) Opstelling-teks sonder jargon.
+Vir Schalk (nie gebou): beskrywing-voorskou by "Keur goed"; kerknaam-instelling vir die album-etiket; ReviewController-splitsing; bondel-installeerder-gids vir Ollama.
+
+## Vloeie
+Nie in die regte app deurgeloop nie (geen muis/ydotool beskikbaar; blinde sleutelbord-bestuur het Hersien bereik maar die Opstelling-vloei nie betroubaar gewys nie). Gedek deur toetse: opstelling, preke, hersien, werk, biblioteek, instellings (widget-toetse met kiekies in `docs/kiekies/nagskof/voor/`), E2E vir die kern. Ongetoets: vloei a (regte app), c (nuwe kanaal, regte app) en die ná-kiekies.
+Kanaal-validasie met yt-dlp is wel met `https://www.youtube.com/@NASA/videos` bevestig (kanaalnaam "NASA").
