@@ -47,4 +47,15 @@ void main() {
     expect(AppSettings.load(d).channelUrl, 'https://www.youtube.com/@ander');
     d.deleteSync(recursive: true);
   });
+
+  test('a channelUrl that is not a channel never reaches yt-dlp', () {
+    final d = Directory.systemTemp.createTempSync('set');
+    File(p.join(d.path, 'settings.json'))
+        .writeAsStringSync('{"channelUrl": "--exec=x"}');
+    expect(AppSettings.load(d).channelUrl, kChannelUrl);
+    File(p.join(d.path, 'settings.json'))
+        .writeAsStringSync('{"channelUrl": "youtube.com/@ander/videos"}');
+    expect(AppSettings.load(d).channelUrl, 'https://www.youtube.com/@ander');
+    d.deleteSync(recursive: true);
+  });
 }

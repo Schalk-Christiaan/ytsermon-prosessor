@@ -10,7 +10,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-import 'channel.dart' show kChannelUrl;
+import 'channel.dart' show kChannelUrl, normalizeChannelUrl;
 import 'cutter.dart' show kWhatsappTemplate;
 import 'paths.dart';
 import 'store.dart';
@@ -28,7 +28,8 @@ class AppSettings {
     : clientFile =
           j['clientFile'] as String? ??
           p.join(p.dirname(_file.path), 'client_secret.json'),
-      channelUrl = j['channelUrl'] as String? ?? kChannelUrl,
+      channelUrl =
+          normalizeChannelUrl('${j['channelUrl'] ?? ''}') ?? kChannelUrl,
       privacy = j['privacy'] as String? ?? 'private',
       template = j['template'] as String? ?? kDefaultTemplate,
       outDir = j['outDir'] as String? ?? defaultOutDir(),
