@@ -1,0 +1,67 @@
+== yw
+ 0:00- 0:07  geraas      7s  YT-musiek   0%  woorde/s 0.0
+ 0:07- 0:54  stilte     47s  YT-musiek   0%  woorde/s 0.0
+ 0:54- 3:40  musiek    166s  YT-musiek  36%  woorde/s 0.0
+ 3:40- 3:58  geraas     18s  YT-musiek   0%  woorde/s 0.0
+ 3:58- 5:47  musiek    109s  YT-musiek  36%  woorde/s 0.0
+ 5:47- 6:44  stilte     57s  YT-musiek   0%  woorde/s 0.0
+ 6:44- 7:24  musiek     40s  YT-musiek  22%  woorde/s 0.0
+ 7:24- 8:33  geraas     69s  YT-musiek   0%  woorde/s 0.1
+ 8:33-10:02  spraak     89s  YT-musiek   0%  woorde/s 2.0
+10:02-10:26  geraas     24s  YT-musiek   0%  woorde/s 0.0
+10:26-11:40  spraak     74s  YT-musiek   0%  woorde/s 2.0
+11:40-14:44  musiek    184s  YT-musiek  55%  woorde/s 0.0
+14:44-22:10  spraak    446s  YT-musiek   0%  woorde/s 1.8
+22:10-23:30  musiek     80s  YT-musiek  36%  woorde/s 0.1
+23:30-56:34  spraak   1984s  YT-musiek   0%  woorde/s 1.9
+56:34-60:52  musiek    258s  YT-musiek  42%  woorde/s 0.3
+60:52-61:16  spraak     24s  YT-musiek   0%  woorde/s 1.7
+61:16-62:07  geraas     51s  YT-musiek   0%  woorde/s 0.0
+== 6s_FFatG0so
+ 0:00-10:23  musiek    623s  YT-musiek  44%  woorde/s 0.0
+10:23-13:24  spraak    181s  YT-musiek   0%  woorde/s 2.1
+13:24-13:57  geraas     33s  YT-musiek   0%  woorde/s 0.0
+13:57-14:52  spraak     55s  YT-musiek   0%  woorde/s 1.9
+14:52-17:29  musiek    157s  YT-musiek  41%  woorde/s 0.0
+17:29-23:05  spraak    336s  YT-musiek   0%  woorde/s 2.4
+23:05-25:49  musiek    164s  YT-musiek  38%  woorde/s 0.0
+25:49-34:54  spraak    545s  YT-musiek   0%  woorde/s 1.8
+34:54-36:54  musiek    120s  YT-musiek  42%  woorde/s 0.0
+36:54-69:18  spraak   1944s  YT-musiek   0%  woorde/s 2.1
+69:18-73:30  musiek    252s  YT-musiek  31%  woorde/s 0.1
+73:30-73:57  spraak     27s  YT-musiek   0%  woorde/s 1.2
+73:57-75:03  musiek     66s  YT-musiek  23%  woorde/s 0.0
+== lBMwRt3eIus
+ 0:00- 0:36  geraas     36s  YT-musiek   0%  woorde/s 0.0
+ 0:36- 8:38  musiek    482s  YT-musiek  36%  woorde/s 0.0
+ 8:38- 8:48  stilte     10s  YT-musiek   0%  woorde/s 0.0
+ 8:48-11:47  spraak    179s  YT-musiek   0%  woorde/s 1.8
+11:47-14:39  musiek    172s  YT-musiek  28%  woorde/s 0.5
+14:39-14:51  geraas     12s  YT-musiek   0%  woorde/s 0.0
+14:51-19:46  spraak    295s  YT-musiek   0%  woorde/s 2.0
+19:46-20:40  musiek     54s  YT-musiek  19%  woorde/s 0.4
+20:40-20:55  geraas     15s  YT-musiek   0%  woorde/s 0.0
+20:55-26:56  spraak    361s  YT-musiek   0%  woorde/s 1.6
+26:56-28:13  musiek     77s  YT-musiek  36%  woorde/s 0.4
+28:13-55:18  spraak   1625s  YT-musiek   0%  woorde/s 2.0
+55:18-60:23  musiek    305s  YT-musiek  34%  woorde/s 0.2
+60:23-60:45  spraak     22s  YT-musiek   0%  woorde/s 1.5
+60:45-61:50  musiek     65s  YT-musiek  23%  woorde/s 0.0
+== uub_CnO7bd0
+ 0:00- 0:23  geraas     23s  YT-musiek   0%  woorde/s 0.0
+ 0:23- 1:31  musiek     68s  YT-musiek   0%  woorde/s 0.0
+ 1:31- 1:58  geraas     27s  YT-musiek   0%  woorde/s 0.0
+ 1:58- 2:10  musiek     12s  YT-musiek   0%  woorde/s 0.0
+ 2:10- 2:25  geraas     15s  YT-musiek   0%  woorde/s 0.0
+ 2:25- 7:14  stilte    289s  YT-musiek   0%  woorde/s 0.0
+ 7:14- 8:56  spraak    102s  YT-musiek   0%  woorde/s 0.2
+ 8:56- 9:21  stilte     25s  YT-musiek   0%  woorde/s 0.0
+ 9:21-10:33  spraak     72s  YT-musiek   0%  woorde/s 0.2
+10:33-11:51  musiek     78s  YT-musiek  31%  woorde/s 0.1
+11:51-19:24  spraak    453s  YT-musiek   1%  woorde/s 0.2
+19:24-21:15  musiek    111s  YT-musiek  23%  woorde/s 0.1
+21:15-52:56  spraak   1901s  YT-musiek   0%  woorde/s 0.2
+52:56-56:35  musiek    219s  YT-musiek  23%  woorde/s 0.1
+56:35-56:58  spraak     23s  YT-musiek   0%  woorde/s 0.1
+56:58-57:08  geraas     10s  YT-musiek   0%  woorde/s 0.0
+57:08-57:35  musiek     27s  YT-musiek  22%  woorde/s 0.0
