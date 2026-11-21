@@ -145,4 +145,18 @@ void main() {
       }
     },
   );
+
+  for (final id in _ids) {
+    test(
+      '$id (stored answer): the closing blessing is seen, never gebed',
+      () async {
+        final a = await _analyse(id, _stored(id));
+        expect(
+          a.blocks.last.label,
+          BlockLabel.seen,
+          reason: a.blocks.last.text,
+        );
+      },
+    );
+  }
 }

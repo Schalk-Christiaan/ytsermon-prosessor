@@ -439,6 +439,10 @@ class Planner {
     }
     mark(voor, BlockLabel.gebed);
     mark(na, BlockLabel.gebed);
+    // The closing blessing has fixed words; the AI calls it gebed or ander too often.
+    for (final b in blocks.skip(na)) {
+      if (_blessing.hasMatch(b.text.toLowerCase())) b.label = BlockLabel.seen;
+    }
     final names = {
       for (final e in (j['songs'] as List? ?? const []))
         if (e is Map && e['nr'] is int) e['nr'] as int: '${e['name']}'.trim(),
@@ -460,6 +464,12 @@ class Planner {
     );
   }
 }
+
+/// The Aaronic or apostolic blessing ("Die Here seën u en behoed u", "Die genade van onse Here …"),
+/// also with caption slips like "seun" for "seën".
+final _blessing = RegExp(
+  r'seën u en behoed|u seën en u behoed|ontvang (nou )?(die|sy) se|genade van (onse|ons) here',
+);
 
 /// [name] as given by the AI, or null when empty or a psalm that the description's [psalms] do not list.
 String? _songName(String? name, List<int> psalms) {
