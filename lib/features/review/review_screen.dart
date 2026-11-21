@@ -25,13 +25,21 @@ import 'transport_bar.dart';
 
 /// Hersien, the sermon editor: video, transcript, timeline, cuts, Shorts and actions.
 class ReviewScreen extends StatefulWidget {
-  const ReviewScreen({super.key, required this.controller, this.onWork});
+  const ReviewScreen({
+    super.key,
+    required this.controller,
+    this.onWork,
+    this.settings,
+  });
 
   /// Owned by the shell, which opens a sermon in it from Preke.
   final ReviewController controller;
 
   /// Goes to Werk, where the cut runs and "Laai op" follows (V1: Oom Johan must not hunt for it).
   final VoidCallback? onWork;
+
+  /// The shell's one [AppSettings]; a second instance would overwrite the other screens' saves.
+  final AppSettings? settings;
 
   @override
   State<ReviewScreen> createState() => _ReviewScreenState();
@@ -41,7 +49,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   late final _c = widget.controller;
   double _zoom = 1;
   bool _propsOpen = false;
-  late final _settings = AppSettings.load(_c.store.root);
+  late final _settings = widget.settings ?? AppSettings.load(_c.store.root);
 
   Future<void> _cut(L l) async {
     final m = ScaffoldMessenger.of(context);

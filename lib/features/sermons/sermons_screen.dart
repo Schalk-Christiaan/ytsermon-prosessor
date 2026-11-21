@@ -53,6 +53,7 @@ class SermonsScreen extends StatefulWidget {
     this.list = listChannel,
     this.pickVideo = pickVideoFile,
     this.importFile,
+    this.settings,
   });
   final SermonStore store;
   final JobQueue jobs;
@@ -68,6 +69,9 @@ class SermonsScreen extends StatefulWidget {
   final Future<Sermon> Function(File f, String title, DateTime date)?
   importFile;
 
+  /// The shell's one [AppSettings]; a second instance would overwrite the other screens' saves.
+  final AppSettings? settings;
+
   @override
   State<SermonsScreen> createState() => _SermonsScreenState();
 }
@@ -75,7 +79,7 @@ class SermonsScreen extends StatefulWidget {
 class _SermonsScreenState extends State<SermonsScreen> {
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
-  late final _settings = AppSettings.load(widget.store.root);
+  late final _settings = widget.settings ?? AppSettings.load(widget.store.root);
   final _filter = <SermonState>{};
   bool _notUploaded = false;
   final _selected = <String>{};

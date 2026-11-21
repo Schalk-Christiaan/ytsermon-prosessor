@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:preekverwerker/app/shell.dart';
 import 'package:preekverwerker/app/theme.dart';
 import 'package:preekverwerker/core/settings.dart';
+import 'package:preekverwerker/features/review/review_screen.dart';
 
 import 'helpers.dart';
 import 'screen_kit.dart';
@@ -79,4 +80,34 @@ void main() {
       },
     );
   }
+
+  testWidgets('one AppSettings: Preke and Hersien share the shell instance', (
+    t,
+  ) async {
+    await loadFonts();
+    setView(t, 1280, 900);
+    final tc = testController(seed: false);
+    final s = AppSettings.load(tc.$2.root)..setupDone = true;
+    await t.pumpWidget(
+      appWrap(
+        Brightness.light,
+        Shell(store: tc.$2, jobs: tc.$3, list: () async => [], settings: s),
+      ),
+    );
+    await t.pump(const Duration(milliseconds: 10));
+    await t.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('ctl.preke.view')),
+        matching: find.text('Rooster'),
+      ),
+    );
+    await t.pump(const Duration(milliseconds: 10));
+    expect(s.sermonGrid, isTrue);
+    expect(
+      t
+          .widget<ReviewScreen>(find.byType(ReviewScreen, skipOffstage: false))
+          .settings,
+      same(s),
+    );
+  });
 }

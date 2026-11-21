@@ -154,6 +154,7 @@ class _ShellState extends State<Shell> {
                       store: widget.store,
                       jobs: widget.jobs,
                       list: widget.list,
+                      settings: _settings,
                       onOpen: (id) {
                         _review.open(id);
                         setState(() => _i = 1);
@@ -161,6 +162,7 @@ class _ShellState extends State<Shell> {
                     ),
                     ReviewScreen(
                       controller: _review,
+                      settings: _settings,
                       onWork: () => setState(() => _i = 2),
                     ),
                     WorkScreen(
