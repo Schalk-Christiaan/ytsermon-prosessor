@@ -33,6 +33,9 @@
 // vloei: v9 | Geen internet of vol skyf
 // inleiding: 'n Taak misluk; Werkry sê in gewone taal wat fout is en hoe om dit reg te stel.
 // hoekom: "SocketException" sê niks vir Oom Johan nie; die regstelling moet in die boodskap staan.
+// vloei: preekgrense | Preekgrense: van gebed tot gebed
+// inleiding: Die snit begin by die eerste woord van die gebed voor die preek en eindig ná die "Amen" van die eerste gebed daarna; kode kies dit, nie Ollama nie.
+// hoekom: Ollama het die grense soms verkeerd gekies (of 30 min gedink); reëls oor woordtye en stilte is herhaalbaar en binne 0,5 s.
 import 'dart:io';
 
 import 'package:flutter/material.dart';

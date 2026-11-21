@@ -19,6 +19,7 @@ const kMinSermon = 15 * 60.0;
 /// A second stretch this close to the longest one (fraction of it) makes the choice doubtful.
 const kSimilarStretch = 0.8;
 
+// stap: preekgrense 2 Preek en grense | preek = langste stuk sonder Amen of musiek; begin by die gebed daarvoor, einde by die Amen van die eerste gebed daarna; twyfel gee 'n rede vir Hersien
 /// Picks the cut from the captions and their candidate [prayers]: the sermon is the longest stretch
 /// without an "Amen" or music line (at least [kMinSermon]); the cut starts at the last prayer that
 /// begins before it and ends at the end of the first prayer that begins after it. The order of the
@@ -97,6 +98,7 @@ double snapStart(double t, List<(double, double)> silences) =>
 double snapEnd(double t, List<(double, double)> silences) =>
     silences.where((s) => s.$2 > t).firstOrNull?.$1 ?? t;
 
+// stap: preekgrense 3 Stilte-snap | begin na die einde van die laaste stilte voor die eerste woord, einde by die begin van die eerste stilte ná "Amen" (ffmpeg silencedetect, ±3 s)
 /// Snaps both cuts of [b] to the silence around them: one ffmpeg call over 6 s of sound per cut
 /// (see [silenceArgs]); where none is found the word time stays. [Bounds.reason] is kept.
 // skakel: → cutter.silenceArgs (die ffmpeg-oproep vir die stilte)

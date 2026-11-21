@@ -37,6 +37,24 @@ import 'helpers.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+  test('prayerMarks hold the prayers found in the captions', () {
+    final (c, _, _) = _ready((m, {onProgress}) async => File('v.mp4'), null);
+    c.debugReady(
+      FetchedMeta('x', Directory.systemTemp, {}),
+      const [
+        Segment(
+          0,
+          50,
+          'Onse Vader ons dank U vir hierdie dag en vir al u goedheid',
+        ),
+        Segment(50, 60, 'in Jesus se Naam. Amen.'),
+      ],
+      c.plan!,
+      100,
+    );
+    expect(c.prayerMarks.length, 1);
+    expect(c.prayerMarks.single.start, closeTo(0, 0.01));
+  });
   test('repeated downloads keep one position subscription', () async {
     var listens = 0;
     final positions = Stream<Duration>.multi((_) => listens++);

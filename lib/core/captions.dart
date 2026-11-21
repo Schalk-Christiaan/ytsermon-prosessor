@@ -202,6 +202,7 @@ bool _endsSentence(Word prev, Word w) =>
 /// Spoken length of "Amen", since a word ends where the next starts and the pause after it is not speech.
 const kAmenLength = 0.7;
 
+// stap: preekgrense 1 Gebede soek | woordtye uit die onderskrifte; 'n gebed loop van die merkwoord ("Kom ons bid", "Onse Vader") tot die "Amen"-woord
 /// Candidate prayers on word level: a prayer runs from the first word of its cue to the end of the
 /// "Amen" word; the captions are split at each "Amen". Music lines are skipped.
 List<Prayer> prayers(List<Segment> segs) {
@@ -212,22 +213,13 @@ List<Prayer> prayers(List<Segment> segs) {
   final out = <Prayer>[];
   int? from;
   for (var i = 0; i < w.length; i++) {
-    if (_amen.hasMatch(w[i].text)) {
+    if (isAmen(w[i].text)) {
       final a = from;
       final end = w[i].start + math.min(kAmenLength, w[i].end - w[i].start);
       if (a != null &&
           end - w[a].start >= kMinPrayer &&
           end - w[a].start <= kMaxPrayer) {
-        final text = [for (var k = a; k <= i; k++) w[k].text];
-        String take(Iterable<String> t) => t.join(' ');
-        out.add(
-          Prayer(
-            w[a].start,
-            end,
-            take(text.take(12)),
-            take(text.skip(text.length > 12 ? text.length - 12 : 0)),
-          ),
-        );
+        out.add(Prayer(w[a].start, end));
       }
       from = null;
     } else if (from == null &&

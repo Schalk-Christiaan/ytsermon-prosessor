@@ -42,15 +42,11 @@ class TimeBlock {
   final SegmentKind kind;
 }
 
-/// A candidate prayer in the service: from its first cue to the end of its "Amen" line.
+/// A candidate prayer in the service: from its first cue to the end of its "Amen" word.
 class Prayer {
-  const Prayer(this.start, this.end, this.first, this.last);
+  const Prayer(this.start, this.end);
   final double start;
   final double end;
-
-  /// Opening and closing words, shown to the LLM so it can tell the prayers apart.
-  final String first;
-  final String last;
 }
 
 /// Why [Bounds] is not sure; Hersien shows the matching ARB text above the timeline.

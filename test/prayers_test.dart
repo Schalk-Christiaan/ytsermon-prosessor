@@ -17,8 +17,6 @@ void main() {
     expect(p.length, 1);
     expect(p.single.start, closeTo(6.25, 0.01)); // "Kom" by length inside 5-10
     expect(p.single.end, closeTo(58.07, 0.01)); // Amen start + 0.7 s
-    expect(p.single.first, startsWith('Kom ons dank saam'));
-    expect(p.single.last, endsWith('Amen.'));
   });
 
   test('a short formula (seëngroet, geloofsbelydenis) is no candidate', () {

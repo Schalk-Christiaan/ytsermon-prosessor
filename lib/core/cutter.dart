@@ -14,6 +14,12 @@ import 'captions.dart';
 import 'models.dart';
 import 'tools.dart';
 
+/// ffmpeg flags that make progress readable on stdout (see `parseFfmpegProgress`).
+const _progress = ['-nostats', '-progress', 'pipe:1'];
+
+/// The video encoder settings of the sermon cut and the join.
+const _x264 = ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20'];
+
 String _sec(double s) => s.toStringAsFixed(3);
 
 String _clean(String s) => s.replaceAll(RegExp(r'[<>:"/\\|?*]'), '').trim();
@@ -32,21 +38,14 @@ List<String> sermonArgs(String video, double start, double end, String out) => [
   _sec(end),
   '-i',
   video,
-  '-c:v',
-  'libx264',
-  '-preset',
-  'veryfast',
-  '-crf',
-  '20',
+  ..._x264,
   '-pix_fmt',
   'yuv420p',
   '-c:a',
   'aac',
   '-movflags',
   '+faststart',
-  '-nostats',
-  '-progress',
-  'pipe:1',
+  ..._progress,
   out,
 ];
 
@@ -98,9 +97,7 @@ List<String> shortArgs(
   'aac',
   '-movflags',
   '+faststart',
-  '-nostats',
-  '-progress',
-  'pipe:1',
+  ..._progress,
   out,
 ];
 
@@ -120,9 +117,7 @@ List<String> audioArgs(String input, String out, String title) => [
   '3',
   '-metadata',
   'title=$title',
-  '-nostats',
-  '-progress',
-  'pipe:1',
+  ..._progress,
   out,
 ];
 
@@ -212,21 +207,14 @@ List<String> joinArgs(List<JoinPiece> pieces, MediaInfo target, String out) {
     '[v]',
     '-map',
     '[a]',
-    '-c:v',
-    'libx264',
-    '-preset',
-    'veryfast',
-    '-crf',
-    '20',
+    ..._x264,
     '-c:a',
     'aac',
     '-b:a',
     '160k',
     '-movflags',
     '+faststart',
-    '-nostats',
-    '-progress',
-    'pipe:1',
+    ..._progress,
     out,
   ];
 }
@@ -258,6 +246,7 @@ Future<void> _ffmpeg(
   },
 );
 
+// stap: preekgrense 4 Herkodeer | libx264 presies op die grense (nie -c copy nie, wat net op 'n sleutelraam sny)
 /// Cuts the sermon into [outDir]; returns the file. One part and no clips = one re-encode of just that part;
 /// cut-out pieces or an [intro]/[outro] re-encode everything into one file via [joinArgs].
 Future<File> cutSermon(

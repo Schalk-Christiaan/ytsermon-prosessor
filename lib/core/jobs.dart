@@ -299,9 +299,8 @@ JobRun planJob(SermonStore store) => (c) async {
     ..duration = m.info.durationSeconds;
   store.save(s);
   final segs = parseJson3(m.captions.readAsStringSync());
-  var bounds = const Bounds(0, 0);
+  var bounds = findBounds(segs, prayers(segs));
   if (!File(p.join(m.dir.path, kPlanFile)).existsSync()) {
-    bounds = findBounds(segs, prayers(segs));
     c.phase(JobPhase.download);
     c.progress(0);
     final video = await downloadVideo(
