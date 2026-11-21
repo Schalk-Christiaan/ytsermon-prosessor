@@ -74,7 +74,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     }
   }
 
-  // stap: v4 5 Beplan weer | laat Ollama weer kies as die hele voorstel verkeerd is (bevestiging)
+  // stap: v4 5 Beplan weer | loop die grense en die teks weer van voor af as die hele voorstel verkeerd is (bevestiging)
   Future<void> _replan(L l) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -192,7 +192,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   // stap: v1 3 Hersien | kyk die hakies by die gebede, die titel, Skriflesing en beskrywing
-  // stap: v4 1 Sien die fout | die hakie staan nie by 'n gebed nie; gebedsmerkers wys waar die gebede is
+  // stap: v4 1 Sien die fout | 'n banier wys waarom die kode onseker is en spring na die grens; gebedsmerkers wys waar die gebede is
+  // tak: kode onseker → banier met die rede (ARB) en "Gaan na die grens"
   Widget _ready(L l, ThemeData th) {
     final plan = _c.plan!;
     return Focus(
@@ -212,6 +213,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          if (plan.doubt != null) ...[
+            _doubt(l, th, plan.doubt!),
+            const SizedBox(height: 12),
+          ],
           ServiceTimeline(
             duration: _c.duration,
             blocks: _c.blocks,
@@ -328,6 +333,40 @@ class _ReviewScreenState extends State<ReviewScreen> {
         icon: const Icon(Icons.redo_rounded),
       ),
     ],
+  );
+
+  /// Why the code is unsure of the cut, with a jump to the boundary to check.
+  Widget _doubt(L l, ThemeData th, BoundsDoubt d) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    decoration: BoxDecoration(
+      color: th.colorScheme.tertiaryContainer,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      children: [
+        Icon(
+          Icons.warning_amber_rounded,
+          color: th.colorScheme.onTertiaryContainer,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(switch (d) {
+            BoundsDoubt.noSermon => l.doubtNoSermon,
+            BoundsDoubt.noPrayerBefore => l.doubtNoPrayerBefore,
+            BoundsDoubt.noPrayerAfter => l.doubtNoPrayerAfter,
+            BoundsDoubt.twoSermons => l.doubtTwoSermons,
+          }, style: TextStyle(color: th.colorScheme.onTertiaryContainer)),
+        ),
+        TextButton(
+          onPressed: () => _c.seek(
+            d == BoundsDoubt.noPrayerAfter
+                ? _c.plan!.sermonEnd
+                : _c.plan!.sermonStart,
+          ),
+          child: Text(l.goToBoundary),
+        ),
+      ],
+    ),
   );
 
   Widget _cuts(L l, ThemeData th, SermonPlan plan) => plan.cuts.isEmpty

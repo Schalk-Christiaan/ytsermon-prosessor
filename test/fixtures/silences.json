@@ -1,0 +1,92 @@
+{
+ "YWz5gf0onjk": {
+  "start": {
+   "from": 883.601,
+   "out": "silence_start: 0\nsilence_end: 3.042188\nsilence_start: 4.623438\nsilence_end: 5.230938\nsilence_start: 5.409187\nsilence_end: 6"
+  },
+  "end": {
+   "from": 3358.828,
+   "out": "silence_start: 0.161812\nsilence_end: 0.719375\nsilence_start: 1.265\nsilence_end: 2.32175\nsilence_start: 2.70175\nsilence_end: 5.000312\nsilence_start: 5.002813\nsilence_end: 6"
+  }
+ },
+ "6s_FFatG0so": {
+  "start": {
+   "from": 1547.107,
+   "out": "silence_start: 0\nsilence_end: 3.110625"
+  },
+  "end": {
+   "from": 4130.036,
+   "out": "silence_start: 1.568063\nsilence_end: 2.442375\nsilence_start: 2.829625\nsilence_end: 5.154313"
+  }
+ },
+ "pJzN-k-rVfQ": {
+  "start": {
+   "from": 1378.84,
+   "out": "silence_start: 0\nsilence_end: 2.567\nsilence_start: 2.567188\nsilence_end: 3.069438\nsilence_start: 4.421563\nsilence_end: 6"
+  },
+  "end": {
+   "from": 3463.059,
+   "out": "silence_start: 0\nsilence_end: 0.314812\nsilence_start: 1.3815\nsilence_end: 2.215438\nsilence_start: 2.52075\nsilence_end: 6"
+  }
+ },
+ "uub_CnO7bd0": {
+  "start": {
+   "from": 708.92,
+   "out": "silence_start: 5.5305\nsilence_end: 6"
+  },
+  "end": {
+   "from": 3140.9,
+   "out": "silence_start: 1.249375\nsilence_end: 2.329063\nsilence_start: 2.664062\nsilence_end: 5.089437\nsilence_start: 5.098688\nsilence_end: 5.988437"
+  }
+ },
+ "IdZO-xP3iB0": {
+  "start": {
+   "from": 1061.36,
+   "out": "silence_start: 0\nsilence_end: 2.262125\nsilence_start: 2.36175\nsilence_end: 2.984313\nsilence_start: 4.66025\nsilence_end: 5.877187"
+  },
+  "end": {
+   "from": 2861.399,
+   "out": "silence_start: 0.412\nsilence_end: 0.744812\nsilence_start: 0.744875\nsilence_end: 3.348187\nsilence_start: 3.370125\nsilence_end: 5.530563\nsilence_start: 5.531937\nsilence_end: 5.886813"
+  }
+ },
+ "2BwvqIxLERM": {
+  "start": {
+   "from": 781.04,
+   "out": "silence_start: 0\nsilence_end: 2.628062\nsilence_start: 4.293125\nsilence_end: 6"
+  },
+  "end": {
+   "from": 2950.38,
+   "out": "silence_start: 0.386313\nsilence_end: 1.137625\nsilence_start: 1.870875\nsilence_end: 2.258375\nsilence_start: 2.60425\nsilence_end: 5.566875"
+  }
+ },
+ "Dj_1f4HAPvY": {
+  "start": {
+   "from": 1649.559,
+   "out": "silence_start: 0\nsilence_end: 2.9225\nsilence_start: 4.5175\nsilence_end: 6"
+  },
+  "end": {
+   "from": 4312.74,
+   "out": "silence_start: 1.015188\nsilence_end: 2.1985\nsilence_start: 2.574937\nsilence_end: 5.266625\nsilence_start: 5.26725\nsilence_end: 6"
+  }
+ },
+ "XTfXVwYFc6A": {
+  "start": {
+   "from": 1170.72,
+   "out": "silence_start: 2.479313\nsilence_end: 3.146562\nsilence_start: 4.463312\nsilence_end: 6"
+  },
+  "end": {
+   "from": 3026.94,
+   "out": "silence_start: 1.318375\nsilence_end: 2.229688\nsilence_start: 2.860125\nsilence_end: 5.235313\nsilence_start: 5.335312\nsilence_end: 6"
+  }
+ },
+ "a1kwRShCDpE": {
+  "start": {
+   "from": 462.68,
+   "out": "silence_start: 0.088625\nsilence_end: 0.528\nsilence_start: 0.624\nsilence_end: 1.46875\nsilence_start: 1.469062\nsilence_end: 3.09275\nsilence_start: 3.980125\nsilence_end: 5.502\nsilence_start: 5.508563\nsilence_end: 6"
+  },
+  "end": {
+   "from": 2571.527,
+   "out": "silence_start: 0\nsilence_end: 0.688562\nsilence_start: 0.99825\nsilence_end: 2.235125\nsilence_start: 2.603938\nsilence_end: 3.004\nsilence_start: 5.202375\nsilence_end: 5.565938"
+  }
+ }
+}

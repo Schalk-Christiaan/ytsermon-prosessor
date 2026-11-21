@@ -3,7 +3,7 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: <app-support>/work/<id>/plan.json | die plan; elke wysiging stoor dadelik
-//   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
+//   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit prayers(), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
 //   status: bou
 import 'dart:async';
 import 'dart:convert';
@@ -110,6 +110,10 @@ class ReviewController extends ChangeNotifier {
   /// Candidate prayers in the captions, marked on the timeline and in the transcript.
   List<Span> prayerMarks = [];
 
+  static List<Span> _marks(List<Segment> segs) => [
+    for (final pr in prayers(segs)) Span(pr.start, pr.end),
+  ];
+
   /// Bumped by undo/redo, so the text fields reload from the plan.
   int edits = 0;
 
@@ -147,6 +151,7 @@ class ReviewController extends ChangeNotifier {
       duration = j.durationSeconds;
       segments = parseJson3(m.captions.readAsStringSync());
       blocks = timeline(segments);
+      prayerMarks = _marks(segments);
     }
     final pf = File(p.join(dir.path, kPlanFile));
     if (meta != null && pf.existsSync()) {
@@ -496,6 +501,7 @@ class ReviewController extends ChangeNotifier {
 
   /// Marks the sermon `goedgekeur` and queues the cut job (it downloads the video itself).
   void approveAndCut() {
+    plan!.doubt = null; // approving is the human check the doubt asked for
     _save();
     store.save(sermon!..state = SermonState.goedgekeur);
     jobs.enqueue(id!, JobKind.cut);
@@ -509,6 +515,7 @@ class ReviewController extends ChangeNotifier {
     meta = m;
     segments = segs;
     blocks = timeline(segs);
+    prayerMarks = _marks(segs);
     plan = p;
     duration = dur;
     state = ReviewState.ready;

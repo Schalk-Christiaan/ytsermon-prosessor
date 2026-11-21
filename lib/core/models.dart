@@ -3,10 +3,18 @@
 //   wanneer: oral waar 'n plan gebruik word
 //   groep: core | Kern
 //   skryf: —
-//   doel: Segment, TimeBlock, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
+//   doel: Word, Segment (met woordtye), TimeBlock, Prayer, Bounds, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
 //   status: bou
 /// Whether a stretch of the service is speech or music.
 enum SegmentKind { speech, music }
+
+/// One spoken word; a word ends where the next one starts (the last one where its line ends).
+class Word {
+  const Word(this.start, this.end, this.text);
+  final double start;
+  final double end;
+  final String text;
+}
 
 /// One caption line (or music marker); times in seconds from video start.
 class Segment {
@@ -15,11 +23,15 @@ class Segment {
     this.end,
     this.text, {
     this.kind = SegmentKind.speech,
+    this.words = const [],
   });
   final double start;
   final double end;
   final String text;
   final SegmentKind kind;
+
+  /// Per-word times from the captions' `tOffsetMs`; empty for hand-made segments.
+  final List<Word> words;
 }
 
 /// A contiguous speech or music stretch for the service timeline.
@@ -28,6 +40,26 @@ class TimeBlock {
   final double start;
   final double end;
   final SegmentKind kind;
+}
+
+/// A candidate prayer in the service: from its first cue to the end of its "Amen" word.
+class Prayer {
+  const Prayer(this.start, this.end);
+  final double start;
+  final double end;
+}
+
+/// Why [Bounds] is not sure; Hersien shows the matching ARB text above the timeline.
+enum BoundsDoubt { noSermon, noPrayerBefore, noPrayerAfter, twoSermons }
+
+/// The cut chosen by code (`findBounds`): first word of the prayer before the sermon to the end of the
+/// first prayer after it. When [sure] is false [reason] says why and [start]/[end] are a best guess.
+class Bounds {
+  const Bounds(this.start, this.end, {this.reason});
+  final double start;
+  final double end;
+  final BoundsDoubt? reason;
+  bool get sure => reason == null;
 }
 
 /// A vertical clip [start, end) in seconds with its title.
@@ -65,6 +97,7 @@ class SermonPlan {
     required this.description,
     required this.shorts,
     List<Span>? cuts,
+    this.doubt,
   }) : cuts = cuts ?? [];
   double sermonStart;
   double sermonEnd;
@@ -74,6 +107,9 @@ class SermonPlan {
 
   /// Middle pieces cut out of the sermon (an announcement, a baptism); see [parts].
   List<Span> cuts;
+
+  /// Why the code is unsure of [sermonStart]/[sermonEnd] (see [Bounds]); Hersien shows it until the cut is approved.
+  BoundsDoubt? doubt;
 
   /// The kept segments in order: [sermonStart, sermonEnd] minus [cuts]; the cutter joins these.
   List<Span> parts() {
@@ -98,6 +134,7 @@ class SermonPlan {
     'description': description,
     'shorts': [for (final s in shorts) s.toJson()],
     'cuts': [for (final c in cuts) c.toJson()],
+    if (doubt != null) 'doubt': doubt!.name,
   };
 
   factory SermonPlan.fromJson(Map<String, dynamic> j) => SermonPlan(
@@ -113,5 +150,6 @@ class SermonPlan {
       for (final c in (j['cuts'] as List? ?? const []))
         Span.fromJson(c as Map<String, dynamic>),
     ],
+    doubt: BoundsDoubt.values.asNameMap()[j['doubt']],
   );
 }

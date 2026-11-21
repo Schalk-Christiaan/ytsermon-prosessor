@@ -3,7 +3,7 @@
 //   wanneer: "Verwerk volgende", "Keur goed en sny", "Beplan weer", "Klank vir WhatsApp", "Laai op" en by begin (hervat)
 //   groep: core | Kern
 //   skryf: <werkmap>/jobs.json | die ry; sermon.json van die preek wat verwerk word
-//   doel: een taak op 'n slag (plan, sny, klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
+//   doel: een taak op 'n slag (plan met grense en stilte-snap, sny, klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
 //   status: bou
 import 'dart:async';
 import 'dart:convert';
@@ -12,6 +12,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
+import 'bounds.dart';
 import 'captions.dart';
 import 'channel.dart';
 import 'cutter.dart';
@@ -285,9 +286,10 @@ class JobQueue extends ChangeNotifier {
   }
 }
 
-// stap: v1 2 Beplan | onderskrifte + video af, Ollama kies die gebede; die preek loop van gebed tot gebed
+// stap: v1 2 Beplan | onderskrifte + video af; kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks
 // tak: Ollama af → "Ollama het nie geantwoord nie" met Probeer weer in Werkry
-/// Fetches meta and captions, asks Ollama for a plan; fills the sermon's date.
+/// Fetches meta, captions and video (the silence snap needs the sound), lets `findBounds` pick the cut
+/// and asks Ollama for the text; fills the sermon's date. An existing plan.json is kept as it is.
 JobRun planJob(SermonStore store) => (c) async {
   c.phase(JobPhase.meta);
   final m = await fetchMeta(c.id, store.root, cancel: c.cancel, log: c.log);
@@ -296,13 +298,27 @@ JobRun planJob(SermonStore store) => (c) async {
     ..scripture = scriptureFrom(m.info.descriptionText)
     ..duration = m.info.durationSeconds;
   store.save(s);
-  c.phase(JobPhase.plan);
   final segs = parseJson3(m.captions.readAsStringSync());
+  var bounds = findBounds(segs, prayers(segs));
+  if (!File(p.join(m.dir.path, kPlanFile)).existsSync()) {
+    c.phase(JobPhase.download);
+    c.progress(0);
+    final video = await downloadVideo(
+      m,
+      onProgress: (v) => c.progress(v / 100),
+      cancel: c.cancel,
+      log: c.log,
+    );
+    c.progress(null);
+    bounds = await snapBounds(video, bounds, cancel: c.cancel);
+  }
+  c.phase(JobPhase.plan);
   // Ollama's HTTP call is not killable: cancelling abandons it.
   await Future.any([
     Planner().loadOrPlan(
       m.dir,
       compactText: compact(segs),
+      bounds: bounds,
       duration: s.duration,
       originalDescription: m.info.descriptionText,
       cancel: c.cancel,
@@ -311,7 +327,7 @@ JobRun planJob(SermonStore store) => (c) async {
   ]);
 };
 
-// stap: v1 4 Sny | stroomkopie, of herkodeer met intro/outro en uitgeknipte stukke; uitset in die uitsetgids
+// stap: v1 4 Sny | herkodeer presies van die eerste woord tot ná die Amen (met intro/outro en uitgeknipte stukke saamgevoeg); uitset in die uitsetgids
 // stap: v3 4 Sny sonder YouTube | dieselfde snit; die opname het geen Shorts-onderskrifte nie
 /// Downloads the video and cuts the sermon and its Shorts from the saved plan.
 JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {

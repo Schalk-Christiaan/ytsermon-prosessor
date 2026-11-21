@@ -15,20 +15,36 @@ void main() {
     );
   });
 
-  test('sermonArgs is a stream copy of [start, end]', () {
-    expect(sermonArgs('v.mp4', 1384.0, 3210.0, 'out/s.mp4'), [
-      '-y',
-      '-ss',
-      '1384.000',
-      '-to',
-      '3210.000',
-      '-i',
-      'v.mp4',
-      '-c',
-      'copy',
-      'out/s.mp4',
-    ]);
-  });
+  test(
+    'sermonArgs re-encodes exactly [start, end] (x264 + aac, progress pipe)',
+    () {
+      expect(sermonArgs('v.mp4', 1384.0, 3210.0, 'out/s.mp4'), [
+        '-y',
+        '-ss',
+        '1384.000',
+        '-to',
+        '3210.000',
+        '-i',
+        'v.mp4',
+        '-c:v',
+        'libx264',
+        '-preset',
+        'veryfast',
+        '-crf',
+        '20',
+        '-pix_fmt',
+        'yuv420p',
+        '-c:a',
+        'aac',
+        '-movflags',
+        '+faststart',
+        '-nostats',
+        '-progress',
+        'pipe:1',
+        'out/s.mp4',
+      ]);
+    },
+  );
 
   test('shortArgs: 9:16 crop, relative srt, fontsdir, x264 + aac, progress pipe', () {
     final a = shortArgs(

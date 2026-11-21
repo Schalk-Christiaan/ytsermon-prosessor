@@ -15,6 +15,9 @@ SermonPlan okPlan() => SermonPlan(
   shorts: [Short(start: 1500, end: 1560, title: 'a')],
 );
 
+/// The cut `findBounds` found: 23:00–52:00.
+const bounds = Bounds(23 * 60, 52 * 60);
+
 void main() {
   const duration = 3728.0;
 
@@ -67,8 +70,6 @@ void main() {
           return {
             'message': {
               'content': jsonEncode({
-                'sermonStart': '23:00',
-                'sermonEnd': '52:00',
                 'title': 'T',
                 'description': 'D',
                 'shorts': [
@@ -81,17 +82,33 @@ void main() {
       );
       final p = await planner.plan(
         compactText: '[23:00] hallo',
+        bounds: bounds,
         duration: duration,
         originalDescription: 'Psalm 1',
       );
-      expect(p.sermonStart, 1380);
       expect(p.shorts.single.end, 1560);
       expect(seen!['model'], 'qwen3:8b');
       expect(seen!['stream'], false);
       expect(seen!['think'], true);
       expect(seen!['options']['num_ctx'], 16384);
+      // Qwen3 loops forever in thinking mode with greedy decoding; seed keeps it reproducible.
+      expect(seen!['options']['temperature'], 0.6);
+      expect(seen!['options']['seed'], 1);
+      expect(seen!['options']['num_predict'], lessThanOrEqualTo(8192));
       expect(seen!['format'], isA<Map>());
       expect(jsonEncode(seen!['messages']), contains('Psalm 1'));
+      expect(
+        seen!['messages'][1]['content'],
+        contains('Die snit: 23:00 tot 52:00'),
+      );
+      expect(jsonEncode(seen!['format']), isNot(contains('Prayer')));
+      expect(
+        p.sermonStart,
+        23 * 60,
+        reason: 'the cut is the code\'s, not Ollama\'s',
+      );
+      expect(p.sermonEnd, 52 * 60);
+      expect(p.doubt, isNull);
     },
   );
 
@@ -102,8 +119,6 @@ void main() {
         chat: (_) async => {
           'message': {
             'content': jsonEncode({
-              'sermonStart': '23:00',
-              'sermonEnd': '52:00',
               'title': 'T',
               'description': 'D',
               'shorts': [
@@ -115,6 +130,7 @@ void main() {
       );
       final p = await planner.plan(
         compactText: 'x',
+        bounds: bounds,
         duration: 3728,
         originalDescription: '',
       );
@@ -128,8 +144,6 @@ void main() {
       chat: (_) async => {
         'message': {
           'content': jsonEncode({
-            'sermonStart': '00:10',
-            'sermonEnd': '03:10',
             'title': 'T',
             'description': 'D',
             'shorts': <dynamic>[],
@@ -140,11 +154,35 @@ void main() {
     expect(
       planner.plan(
         compactText: 'x',
+        bounds: const Bounds(0, 100),
         duration: duration,
         originalDescription: '',
       ),
       throwsA(isA<PlanException>()),
     );
+  });
+
+  test('plan() keeps the doubt of unsure bounds', () async {
+    final planner = Planner(
+      chat: (_) async => {
+        'message': {
+          'content': jsonEncode({
+            'title': 'T',
+            'description': 'D',
+            'shorts': <dynamic>[],
+          }),
+        },
+      },
+    );
+    final p = await planner.plan(
+      compactText: 'x',
+      bounds: const Bounds(23 * 60, 52 * 60, reason: BoundsDoubt.noPrayerAfter),
+      duration: duration,
+      originalDescription: '',
+    );
+    expect(p.doubt, BoundsDoubt.noPrayerAfter);
+    expect(SermonPlan.fromJson(p.toJson()).doubt, BoundsDoubt.noPrayerAfter);
+    expect(okPlan().toJson().containsKey('doubt'), isFalse);
   });
 
   test(
@@ -159,6 +197,7 @@ void main() {
       final p = await planner.loadOrPlan(
         dir,
         compactText: 'x',
+        bounds: bounds,
         duration: duration,
         originalDescription: '',
       );
@@ -178,8 +217,6 @@ void main() {
           return {
             'message': {
               'content': jsonEncode({
-                'sermonStart': '00:10',
-                'sermonEnd': '30:00',
                 'title': 'T',
                 'description': 'D',
                 'shorts': <dynamic>[],
@@ -191,6 +228,7 @@ void main() {
       final f = planner.loadOrPlan(
         dir,
         compactText: 'x',
+        bounds: bounds,
         duration: duration,
         originalDescription: '',
         cancel: cancel.future,

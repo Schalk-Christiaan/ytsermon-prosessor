@@ -3,13 +3,14 @@
 //   wanneer: ná captions, een Ollama-oproep per preek
 //   groep: core | Kern
 //   skryf: werkmap/<id>/plan.json
-//   doel: vra qwen3:8b vir preekgrense, Shorts, titel en beskrywing; validate() toets die plan, shortFault() elke Short apart; berg plan.json op
+//   doel: laat qwen3:8b net teks skryf (Shorts, titel, beskrywing) binne die snit wat findBounds reeds bepaal het (geen grense van die KI nie); validate() toets die plan, shortFault() elke Short apart; berg plan.json op
 //   status: bou
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'captions.dart';
 import 'models.dart';
 import 'tools.dart';
 
@@ -35,13 +36,12 @@ typedef ChatFn = Future<Map<String, dynamic>> Function(
 
 const _systemPrompt =
     '''Jy help 'n Gereformeerde kerk om opnames van sy kerkdienste te verwerk.
-Jy kry die onderskrifte van die hele diens as reëls "[mm:ss] teks" (hoogstens elke 30 sekondes 'n reël; "[musiek]" is sang of musiek).
+Jy kry die onderskrifte van die hele diens as reëls "[mm:ss] teks" (hoogstens elke 30 sekondes 'n reël; "[musiek]" is sang of musiek), en die tye waar die snit van die preek begin en eindig. Die snit is reeds bepaal en sluit die gebede voor en ná die preek in; jy verander dit nie.
 
 Doen die volgende:
-1. Vind die PREEK: dit begin wanneer die prediker die tema en/of teks aankondig en eindig by die amen waarmee die prediker sy preek self afsluit, net VOOR die dankgebed ("Kom ons dank saam"). Die Skriflesing, voorafgaande sang, gebede en die dankgebed ná die preek is nie deel van die preek nie.
-2. Kies 1 tot 3 SHORTS binne die preek, elk 'n volledige gedagte. Elke Short moet tussen 30 en 80 sekondes lank wees (eindtyd minus begintyd): gebruik die begin van een reël as begintyd en die begin van die volgende of oor-volgende reël as eindtyd (60 sekondes is 'n goeie lengte).
-3. Skryf 'n TITEL (die tema van die preek, hoogstens 100 karakters).
-4. Skryf 'n BESKRYWING in Afrikaans met reëls "Tema: …", "Skriflesing: …", "Fokusgedeelte: …", dan 3 tot 4 sinne opsomming, en laastens die psalms uit die oorspronklike beskrywing (as dit daar is). Hou die beskrywing onder 1500 karakters.
+1. Kies 1 tot 3 SHORTS binne die snit, elk 'n volledige gedagte. Elke Short moet tussen 30 en 80 sekondes lank wees (eindtyd minus begintyd): gebruik die begin van een reël as begintyd en die begin van die volgende of oor-volgende reël as eindtyd (60 sekondes is 'n goeie lengte).
+2. Skryf 'n TITEL (die tema van die preek, hoogstens 100 karakters).
+3. Skryf 'n BESKRYWING in Afrikaans met reëls "Tema: …", "Skriflesing: …", "Fokusgedeelte: …", dan 3 tot 4 sinne opsomming, en laastens die psalms uit die oorspronklike beskrywing (as dit daar is). Hou die beskrywing onder 1500 karakters.
 
 Gee tye as "mm:ss" soos in die onderskrifte. Antwoord net met JSON volgens die skema.''';
 
@@ -50,8 +50,6 @@ Map<String, dynamic> get _schema {
   return {
     'type': 'object',
     'properties': {
-      'sermonStart': t,
-      'sermonEnd': t,
       'title': t,
       'description': t,
       'shorts': {
@@ -63,7 +61,7 @@ Map<String, dynamic> get _schema {
         },
       },
     },
-    'required': ['sermonStart', 'sermonEnd', 'title', 'description', 'shorts'],
+    'required': ['title', 'description', 'shorts'],
   };
 }
 
@@ -85,9 +83,9 @@ List<String> validate(SermonPlan plan, double duration) {
       plan.sermonEnd > duration ||
       plan.sermonStart >= plan.sermonEnd) {
     e.add('Die preek se grense lê buite die video.');
-  } else if (len < 15 * 60 || len > 75 * 60) {
+  } else if (len < 15 * 60 || len > 90 * 60) {
     e.add(
-      'Die preek is ${(len / 60).round()} min; dit moet tussen 15 en 75 min wees.',
+      'Die preek is ${(len / 60).round()} min; dit moet tussen 15 en 90 min wees.',
     );
   }
   if (plan.title.isEmpty || plan.title.length > 100)
@@ -131,7 +129,7 @@ Future<Map<String, dynamic>> _ollamaChat(Map<String, dynamic> body) async {
   }
 }
 
-/// Asks Ollama for one [SermonPlan] per sermon (a single call, no retries).
+/// Asks Ollama for the text of one [SermonPlan] per sermon (a single call, no retries); the cut itself is the given [bounds].
 class Planner {
   Planner({ChatFn? chat, this.think = true}) : _chat = chat ?? _ollamaChat;
   final ChatFn _chat;
@@ -139,6 +137,7 @@ class Planner {
 
   Future<SermonPlan> plan({
     required String compactText,
+    required Bounds bounds,
     required double duration,
     required String originalDescription,
   }) async {
@@ -147,13 +146,22 @@ class Planner {
       'stream': false,
       'think': think,
       'format': _schema,
-      'options': {'num_ctx': 16384, 'temperature': 0, 'seed': 1},
+      // Qwen3's thinking-mode sampling: greedy decoding (temperature 0) can think in circles for
+      // half an hour. num_predict caps a runaway at a few minutes; the seed keeps runs reproducible.
+      'options': {
+        'num_ctx': 16384,
+        'temperature': 0.6,
+        'top_p': 0.95,
+        'top_k': 20,
+        'num_predict': 8192,
+        'seed': 1,
+      },
       'messages': [
         {'role': 'system', 'content': _systemPrompt},
         {
           'role': 'user',
           'content':
-              'Duur van die video: ${duration.round()} s.\n\nOorspronklike beskrywing:\n$originalDescription\n\nOnderskrifte:\n$compactText',
+              'Duur van die video: ${duration.round()} s.\n\nOorspronklike beskrywing:\n$originalDescription\n\nDie snit: ${formatTime(bounds.start)} tot ${formatTime(bounds.end)}.\n\nOnderskrifte:\n$compactText',
         },
       ],
     });
@@ -165,9 +173,6 @@ class Planner {
     } on Object {
       throw PlanException(['Die KI het nie geldige JSON gegee nie.']);
     }
-    final start = parseTime(j['sermonStart']), end = parseTime(j['sermonEnd']);
-    if (start == null || end == null)
-      throw PlanException(['Die KI het nie die preek se tye gegee nie.']);
     final shorts = <Short>[];
     for (final s in (j['shorts'] as List? ?? const [])) {
       final a = parseTime(s['start']), b = parseTime(s['end']);
@@ -175,11 +180,12 @@ class Planner {
         shorts.add(Short(start: a, end: b, title: '${s['title']}'));
     }
     final plan = SermonPlan(
-      sermonStart: start,
-      sermonEnd: end,
+      sermonStart: bounds.start,
+      sermonEnd: bounds.end,
       title: '${j['title'] ?? ''}'.trim(),
       description: '${j['description'] ?? ''}'.trim(),
       shorts: shorts,
+      doubt: bounds.reason,
     );
     final errors = validate(plan, duration);
     if (errors.isNotEmpty) throw PlanException(errors, plan: plan);
@@ -190,6 +196,7 @@ class Planner {
   Future<SermonPlan> loadOrPlan(
     Directory dir, {
     required String compactText,
+    required Bounds bounds,
     required double duration,
     required String originalDescription,
     Future<void>? cancel,
@@ -204,6 +211,7 @@ class Planner {
     cancel?.then((_) => cancelled = true);
     final plan = await this.plan(
       compactText: compactText,
+      bounds: bounds,
       duration: duration,
       originalDescription: originalDescription,
     );

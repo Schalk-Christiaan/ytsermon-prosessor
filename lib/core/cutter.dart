@@ -3,7 +3,7 @@
 //   wanneer: by 'Keur goed en sny' en 'Klank vir WhatsApp'
 //   groep: core | Kern
 //   skryf: out/
-//   doel: sny die preek (stroomkopie, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif) en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg
+//   doel: sny die preek (herkodeer net die preekstuk, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif) en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg
 //   status: bou
 import 'dart:convert';
 import 'dart:io';
@@ -14,6 +14,12 @@ import 'captions.dart';
 import 'models.dart';
 import 'tools.dart';
 
+/// ffmpeg flags that make progress readable on stdout (see `parseFfmpegProgress`).
+const _progress = ['-nostats', '-progress', 'pipe:1'];
+
+/// The video encoder settings of the sermon cut and the join.
+const _x264 = ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20'];
+
 String _sec(double s) => s.toStringAsFixed(3);
 
 String _clean(String s) => s.replaceAll(RegExp(r'[<>:"/\\|?*]'), '').trim();
@@ -22,7 +28,8 @@ String _clean(String s) => s.replaceAll(RegExp(r'[<>:"/\\|?*]'), '').trim();
 String sermonFileName(String date, String title, {String ext = 'mp4'}) =>
     '$date ${_clean(title)}.$ext';
 
-/// ffmpeg arguments for a keyframe-accurate-enough stream copy of [start, end].
+/// ffmpeg arguments that re-encode exactly [start, end] (a stream copy can only start at a keyframe,
+/// up to seconds off the prayer); `-ss` before `-i` seeks fast and stays frame-accurate when re-encoding.
 List<String> sermonArgs(String video, double start, double end, String out) => [
   '-y',
   '-ss',
@@ -31,9 +38,34 @@ List<String> sermonArgs(String video, double start, double end, String out) => [
   _sec(end),
   '-i',
   video,
-  '-c',
-  'copy',
+  ..._x264,
+  '-pix_fmt',
+  'yuv420p',
+  '-c:a',
+  'aac',
+  '-movflags',
+  '+faststart',
+  ..._progress,
   out,
+];
+
+/// ffmpeg arguments that print the silences (below -35 dB for 0.3 s) of the window [from, to] of [video] on stderr;
+/// times are relative to [from] (see `parseSilences`).
+List<String> silenceArgs(String video, double from, double to) => [
+  '-hide_banner',
+  '-nostats',
+  '-ss',
+  _sec(from),
+  '-t',
+  _sec(to - from),
+  '-i',
+  video,
+  '-vn',
+  '-af',
+  'silencedetect=noise=-35dB:d=0.3',
+  '-f',
+  'null',
+  '-',
 ];
 
 /// ffmpeg arguments for a 1080x1920 Short with burned-in subtitles.
@@ -65,9 +97,7 @@ List<String> shortArgs(
   'aac',
   '-movflags',
   '+faststart',
-  '-nostats',
-  '-progress',
-  'pipe:1',
+  ..._progress,
   out,
 ];
 
@@ -87,9 +117,7 @@ List<String> audioArgs(String input, String out, String title) => [
   '3',
   '-metadata',
   'title=$title',
-  '-nostats',
-  '-progress',
-  'pipe:1',
+  ..._progress,
   out,
 ];
 
@@ -179,21 +207,14 @@ List<String> joinArgs(List<JoinPiece> pieces, MediaInfo target, String out) {
     '[v]',
     '-map',
     '[a]',
-    '-c:v',
-    'libx264',
-    '-preset',
-    'veryfast',
-    '-crf',
-    '20',
+    ..._x264,
     '-c:a',
     'aac',
     '-b:a',
     '160k',
     '-movflags',
     '+faststart',
-    '-nostats',
-    '-progress',
-    'pipe:1',
+    ..._progress,
     out,
   ];
 }
@@ -225,7 +246,8 @@ Future<void> _ffmpeg(
   },
 );
 
-/// Cuts the sermon into [outDir]; returns the file. One part and no clips = stream copy (seconds);
+// stap: preekgrense 4 Herkodeer | libx264 presies op die grense (nie -c copy nie, wat net op 'n sleutelraam sny)
+/// Cuts the sermon into [outDir]; returns the file. One part and no clips = one re-encode of just that part;
 /// cut-out pieces or an [intro]/[outro] re-encode everything into one file via [joinArgs].
 Future<File> cutSermon(
   File video,
@@ -244,6 +266,8 @@ Future<File> cutSermon(
   if (parts.length == 1 && intro == null && outro == null) {
     await _ffmpeg(
       sermonArgs(video.path, parts.single.start, parts.single.end, out),
+      duration: parts.single.end - parts.single.start,
+      onProgress: onProgress,
       cancel: cancel,
       log: log,
     );

@@ -249,6 +249,25 @@ class LAf extends L {
   String get replan => 'Beplan weer';
 
   @override
+  String get doubtNoSermon =>
+      'Geen preek van 15 minute of langer gevind nie; die hele diens is gekies. Stel die grense self.';
+
+  @override
+  String get doubtNoPrayerBefore =>
+      'Geen gebed voor die preek gevind nie; die snit begin by die preek self. Kontroleer die begin.';
+
+  @override
+  String get doubtNoPrayerAfter =>
+      'Geen gebed ná die preek gevind nie; die snit eindig by die preek self. Kontroleer die einde.';
+
+  @override
+  String get doubtTwoSermons =>
+      'Twee lang stukke sonder \"Amen\"; dalk twee preke. Kontroleer albei grense.';
+
+  @override
+  String get goToBoundary => 'Gaan na die grens';
+
+  @override
   String get skip => 'Slaan oor';
 
   @override
