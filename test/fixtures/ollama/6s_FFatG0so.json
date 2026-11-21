@@ -4,24 +4,11 @@
   "preek_tot": 49,
   "gebed_na": 52,
   "gebede": [2, 6, 7, 8, 9, 10],
-  "skriflesing": [
-    15,
-    16
-  ],
-  "geloofsbelydenis": [
-    4
-  ],
-  "aankondigings": [
-    1,
-    3,
-    53
-  ],
-  "kollekte": [
-    11
-  ],
-  "seen": [
-    49
-  ],
+  "skriflesing": [15],
+  "geloofsbelydenis": [4],
+  "aankondigings": [1, 3, 53],
+  "kollekte": [],
+  "seen": [54],
   "songs": [
     {
       "nr": 1,

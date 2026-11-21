@@ -3,10 +3,10 @@
   "preek_van": 10,
   "preek_tot": 12,
   "gebed_na": 14,
-  "gebede": [2, 3, 6, 14, 16],
+  "gebede": [3, 6, 14, 16],
   "skriflesing": [8, 11],
   "geloofsbelydenis": [],
-  "aankondigings": [1, 4, 7, 15, 15],
+  "aankondigings": [2],
   "kollekte": [],
   "seen": [],
   "songs": [
@@ -29,10 +29,6 @@
     {
       "nr": 5,
       "name": "Psalm 9:1-5"
-    },
-    {
-      "nr": 6,
-      "name": ""
     }
   ],
   "service": "nagmaal"

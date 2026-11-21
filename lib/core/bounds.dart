@@ -1,9 +1,9 @@
 // @stelsel bounds
 //   soort: module
-//   wanneer: ná parseJson3 en prayers, in planJob (met die video af, vir die stilte-snap)
+//   wanneer: ná die KI-etikette (Planner.analyse), in planJob (met die video af, vir die stilte-snap)
 //   groep: core | Kern
 //   skryf: —
-//   doel: kies die snit-grense met reëls (geen KI): preek = langste stuk sonder Amen of musiek, begin by die gebed voor, einde by die Amen van die eerste gebed ná die preek; snapBounds pas albei by die naaste stilte aan (ffmpeg silencedetect)
+//   doel: kies die snit-grense met reëls uit die etikette van die spraakblokke (die KI kies nooit tye): preek = langste loop preek-blokke, begin by die gebed voor, einde by die Amen van die gebed ná die preek; snapBounds pas albei by die naaste stilte aan (ffmpeg silencedetect)
 //   status: bou
 import 'dart:io';
 import 'dart:math' as math;
@@ -33,55 +33,77 @@ List<List<Block>> sermonRuns(List<Block> blocks) {
   return runs;
 }
 
-/// A second stretch this close to the longest one (fraction of it) makes the choice doubtful.
+/// A second sermon run this close to the longest one (fraction of it) makes the choice doubtful.
 const kSimilarStretch = 0.8;
 
-// stap: preekgrense 2 Preek en grense | preek = langste stuk sonder Amen of musiek; begin by die gebed daarvoor, einde by die Amen van die eerste gebed daarna; twyfel gee 'n rede vir Hersien
-/// Picks the cut from the captions and their candidate [prayers]: the sermon is the longest stretch
-/// without an "Amen" or music line (at least [kMinSermon]); the cut starts at the last prayer that
-/// begins before it and ends at the end of the first prayer that begins after it. The order of the
-/// service is not fixed, so nothing else is assumed. Doubt (and its [BoundsDoubt]) when there is no
-/// full sermon, no prayer on one side, or a second stretch, opened by a prayer, nearly as long as the first.
-Bounds findBounds(List<Segment> segs, List<Prayer> prayers) {
-  final stretches = <(double, double)>[];
-  var from = 0.0;
-  void cut(double to, double next) {
-    stretches.add((from, to));
-    from = next;
+/// Labels that end a prayer when walking back from it: what is read, announced or said in the
+/// service is no part of the prayer; mislabelled prayer blocks (`ander`, `kollekte`) are.
+const _notPrayer = {
+  BlockLabel.preek,
+  BlockLabel.aankondiging,
+  BlockLabel.skriflesing,
+  BlockLabel.geloofsbelydenis,
+  BlockLabel.seengroet,
+  BlockLabel.wet,
+  BlockLabel.seen,
+};
+
+// stap: diensindeling 6 Grense uit etikette | preek = langste loop `preek`-blokke (≥ 15 min); begin by die eerste blok van die gebed daarvoor (terug tot by musiek), einde by die Amen van die gebed daarna; twyfel gee 'n rede vir Hersien
+/// Picks the cut from the labelled [blocks]: the sermon is the longest run of `preek` blocks (at least
+/// [kMinSermon]). The cut starts at the prayer before it: the last `gebed` block before the run, back to
+/// the first block of the same stretch without music in between (a long prayer is several blocks and the
+/// AI mislabels some of them). It ends where the `gebed` after the run ends in "Amen" (a short lead-in
+/// like "Kom ons dank" is followed through to the block with the Amen). Doubt (and its [BoundsDoubt])
+/// when there is no full sermon, no prayer on one side, or a second run, opened by a prayer, nearly as
+/// long as the first. [sound] tells where the music is.
+Bounds findBounds(List<Block> blocks, List<TimeBlock> sound) {
+  final total = blocks.isEmpty ? 0.0 : blocks.last.end;
+  double len(List<Block> r) => r.last.end - r.first.start;
+  final runs = sermonRuns(blocks)..sort((a, b) => len(b).compareTo(len(a)));
+  if (runs.isEmpty || len(runs.first) < kMinSermon) {
+    return Bounds(0, total, reason: BoundsDoubt.noSermon);
+  }
+  bool musicBetween(Block a, Block b) => sound.any(
+    (t) => t.kind == SegmentKind.music && t.end > a.end && t.start < b.start,
+  );
+  // Index of the first block of the prayer that ends right before block [i], or -1.
+  int prayerBefore(int i) {
+    var k = i - 1;
+    while (k >= 0 && blocks[k].label != BlockLabel.gebed) {
+      if (_notPrayer.contains(blocks[k].label)) return -1;
+      k--;
+    }
+    if (k < 0) return -1;
+    while (k > 0 &&
+        !_notPrayer.contains(blocks[k - 1].label) &&
+        !musicBetween(blocks[k - 1], blocks[k])) {
+      k--;
+    }
+    return k;
   }
 
-  for (final s in segs) {
-    if (s.kind == SegmentKind.music) {
-      cut(s.start, s.end);
-      continue;
-    }
-    for (final w in wordsOf(s)) {
-      if (isAmen(w.text)) cut(w.start, w.end);
-    }
+  final main = runs.first;
+  final i = blocks.indexOf(main.first), j = blocks.indexOf(main.last);
+  final first = prayerBefore(i);
+  Block? after;
+  for (var k = j + 1; k < blocks.length; k++) {
+    if (blocks[k].label != BlockLabel.gebed) break;
+    after = blocks[k];
+    if (isAmen(after.words.last.text)) break;
   }
-  final total = segs.isEmpty ? 0.0 : segs.last.end;
-  cut(total, total);
-  stretches.sort((a, b) => (b.$2 - b.$1).compareTo(a.$2 - a.$1));
-  final main = stretches.first;
-  final len = main.$2 - main.$1;
-  if (len < kMinSermon) return Bounds(0, total, reason: BoundsDoubt.noSermon);
-
-  final before = prayers.where((p) => p.end <= main.$1 + 1).lastOrNull;
-  final after = prayers.where((p) => p.start >= main.$2 - 1).firstOrNull;
-  // A rival only counts when a prayer opens it too: what follows the benediction is no second sermon.
-  final rival = stretches
+  final rival = runs
       .skip(1)
       .any(
-        (x) =>
-            x.$2 - x.$1 >= len * kSimilarStretch &&
-            prayers.any((p) => p.end <= x.$1 + 1 && p.end > x.$1 - 120),
+        (r) =>
+            len(r) >= len(main) * kSimilarStretch &&
+            prayerBefore(blocks.indexOf(r.first)) >= 0,
       );
   return Bounds(
-    before?.start ?? main.$1,
-    after?.end ?? main.$2,
+    first >= 0 ? blocks[first].start : main.first.start,
+    after?.end ?? main.last.end,
     reason: rival
         ? BoundsDoubt.twoSermons
-        : before == null
+        : first < 0
         ? BoundsDoubt.noPrayerBefore
         : after == null
         ? BoundsDoubt.noPrayerAfter

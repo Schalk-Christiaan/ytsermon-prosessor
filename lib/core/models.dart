@@ -3,7 +3,7 @@
 //   wanneer: oral waar 'n plan gebruik word
 //   groep: core | Kern
 //   skryf: —
-//   doel: Word, Segment (met woordtye), TimeBlock, Prayer, Bounds, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
+//   doel: Word, Segment (met woordtye), TimeBlock, Bounds, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
 //   status: bou
 /// What a stretch of the service sounds like (`silence` and `noise` come from the sound classification).
 enum SegmentKind { speech, music, silence, noise }
@@ -92,18 +92,11 @@ class Song {
   );
 }
 
-/// A candidate prayer in the service: from its first cue to the end of its "Amen" word.
-class Prayer {
-  const Prayer(this.start, this.end);
-  final double start;
-  final double end;
-}
-
 /// Why [Bounds] is not sure; Hersien shows the matching ARB text above the timeline.
 enum BoundsDoubt { noSermon, noPrayerBefore, noPrayerAfter, twoSermons }
 
 /// The cut chosen by code (`findBounds`): first word of the prayer before the sermon to the end of the
-/// first prayer after it. When [sure] is false [reason] says why and [start]/[end] are a best guess.
+/// prayer after it. When [sure] is false [reason] says why and [start]/[end] are a best guess.
 class Bounds {
   const Bounds(this.start, this.end, {this.reason});
   final double start;

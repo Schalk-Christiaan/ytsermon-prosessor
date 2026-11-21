@@ -3,7 +3,7 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: <app-support>/work/<id>/plan.json | die plan; elke wysiging stoor dadelik
-//   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit prayers(), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
+//   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit die etikette (analysis.json), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
 //   status: bou
 import 'dart:async';
 import 'dart:convert';
@@ -108,11 +108,12 @@ class ReviewController extends ChangeNotifier {
   SermonPlan? plan;
   double duration = 0;
 
-  /// Candidate prayers in the captions, marked on the timeline and in the transcript.
+  /// Blocks the AI labelled as prayer, marked on the timeline and in the transcript.
   List<Span> prayerMarks = [];
 
-  static List<Span> _marks(List<Segment> segs) => [
-    for (final pr in prayers(segs)) Span(pr.start, pr.end),
+  static List<Span> _marks(Directory dir) => [
+    for (final l in loadLabels(dir))
+      if (l.label == BlockLabel.gebed) Span(l.start, l.end),
   ];
 
   /// Bumped by undo/redo, so the text fields reload from the plan.
@@ -152,7 +153,7 @@ class ReviewController extends ChangeNotifier {
       duration = j.durationSeconds;
       segments = parseJson3(m.captions.readAsStringSync());
       blocks = loadSound(dir);
-      prayerMarks = _marks(segments);
+      prayerMarks = _marks(dir);
     }
     final pf = File(p.join(dir.path, kPlanFile));
     if (meta != null && pf.existsSync()) {
@@ -528,7 +529,7 @@ class ReviewController extends ChangeNotifier {
     meta = m;
     segments = segs;
     blocks = const [];
-    prayerMarks = _marks(segs);
+    prayerMarks = _marks(m.dir);
     plan = p;
     duration = dur;
     state = ReviewState.ready;

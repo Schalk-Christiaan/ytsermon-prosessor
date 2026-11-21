@@ -133,7 +133,7 @@ Future<Map<String, dynamic>> ollamaChat(Map<String, dynamic> body) async {
 const _analysisPrompt = '''Jy help 'n Gereformeerde kerk om opnames van sy kerkdienste te verwerk. Jy kry (1) die oorspronklike beskrywing, die spraakblokke van die diens in volgorde ("#nr [begintyd · duur] eerste woorde … laaste woorde"), (2) die musiekstukke (sang) met die woorde net daarvoor.
 
 Doen die volgende:
-1. Benoem die spraakblokke met hul nommers (#nr). Orde van 'n diens: gebed, aankondiging, seengroet, sang, gebed, skriflesing, preek, gebed, kollekte, sang, seën. Gee: gebed_voor (nommer van die gebed direk voor die preek; die predikant bid, begin gewoonlik met "Kom ons bid" of "Onse Vader" en eindig op Amen), preek_van en preek_tot (eerste en laaste blok van die preek self, ook sy inleiding en slot; gewoonlik 20 tot 50 minute), gebed_na (nommer van die blok wat die gebed direk ná die preek met "Amen" afsluit; 'n kort "Kom ons dank saam" of "Laat ons bid" is net die aanloop, die gebed self is die volgende blok wat op Amen eindig); en lyste nommers: gebede (alle ander gebede), skriflesing (voorlees uit die Bybel), geloofsbelydenis (die Apostoliese geloofsbelydenis "Ek glo in God die Vader, die Almagtige … Amen" is NOOIT 'n gebed nie), aankondigings (verwelkoming, kerknuus, lied aankondig), kollekte, seen (die seën aan die einde). Gebruik 0 as iets nie in die diens voorkom nie.
+1. Benoem die spraakblokke met hul nommers (#nr). Orde van 'n diens: gebed, aankondiging, seengroet, sang, gebed, skriflesing, preek, gebed, kollekte, sang, seën. Gee: gebed_voor (nommer van die laaste blok van die gebed direk voor die preek; die predikant bid, begin gewoonlik met "Kom ons bid" of "Onse Vader" en eindig op Amen), preek_van en preek_tot (eerste en laaste blok van die preek self, ook sy inleiding en slot; gewoonlik 20 tot 50 minute), gebed_na (nommer van die blok wat die gebed direk ná die preek met "Amen" afsluit; 'n kort "Kom ons dank saam" of "Laat ons bid" is net die aanloop, die gebed self is die volgende blok wat op Amen eindig); en lyste nommers: gebede (alle ander gebede), skriflesing (voorlees uit die Bybel), geloofsbelydenis (die Apostoliese geloofsbelydenis "Ek glo in God die Vader, die Almagtige … Amen" is NOOIT 'n gebed nie), aankondigings (verwelkoming, kerknuus, lied aankondig), kollekte, seen (die seën aan die einde). Gebruik 0 as iets nie in die diens voorkom nie.
 2. Vir elke musiekstuk: die naam van die lied soos dit net daarvoor aangekondig word (bv. "Psalm 33"); as dit nie genoem word nie, 'n leë string.
 3. diens: nagmaal, doop, kategismus, belydenis, feesdag, of "geen" as dit 'n gewone diens is.
 
@@ -204,6 +204,37 @@ class Analysis {
   final List<Block> blocks;
   final List<Song> songs;
   final String? service;
+}
+
+/// Work-folder file with the labelled blocks (start, end, label), the songs and the service label.
+const kAnalysisFile = 'analysis.json';
+
+/// Saves [a] to `<dir>/analysis.json`: what Hersien needs to mark prayers and songs on the timeline.
+void saveAnalysis(Directory dir, Analysis a) =>
+    File(p.join(dir.path, kAnalysisFile)).writeAsStringSync(
+      jsonEncode({
+        'blocks': [
+          for (final b in a.blocks)
+            {'start': b.start, 'end': b.end, 'label': b.label?.name},
+        ],
+        'songs': [for (final x in a.songs) x.toJson()],
+        'service': a.service,
+      }),
+    );
+
+/// The saved labelled spans of the work folder [dir]; empty when the service was never analysed.
+List<({double start, double end, BlockLabel label})> loadLabels(Directory dir) {
+  final f = File(p.join(dir.path, kAnalysisFile));
+  if (!f.existsSync()) return [];
+  final j = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
+  return [
+    for (final b in j['blocks'] as List)
+      (
+        start: (b['start'] as num).toDouble(),
+        end: (b['end'] as num).toDouble(),
+        label: BlockLabel.values.asNameMap()[b['label']] ?? BlockLabel.ander,
+      ),
+  ];
 }
 
 String _excerpt(List<Word> w, int head, int tail) {
@@ -391,11 +422,14 @@ class Planner {
     }
     // Everything between the two framing prayers belongs to the sermon (reading,
     // creed and the like inside it stay preek: "volle preek" runs prayer to prayer).
-    for (var i = nr(j['gebed_voor']) + 1; i < nr(j['gebed_na']); i++) {
-      if (nr(j['gebed_voor']) > 0) mark(i, BlockLabel.preek);
+    final voor = nr(j['gebed_voor']), na = nr(j['gebed_na']);
+    if (voor > 0) {
+      for (var i = voor + 1; i < na; i++) {
+        mark(i, BlockLabel.preek);
+      }
     }
-    mark(nr(j['gebed_voor']), BlockLabel.gebed);
-    mark(nr(j['gebed_na']), BlockLabel.gebed);
+    mark(voor, BlockLabel.gebed);
+    mark(na, BlockLabel.gebed);
     final names = {
       for (final e in (j['songs'] as List? ?? const []))
         if (e is Map && e['nr'] is int) e['nr'] as int: '${e['name']}'.trim(),

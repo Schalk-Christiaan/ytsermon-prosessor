@@ -19,6 +19,7 @@ import 'cutter.dart';
 import 'models.dart';
 import 'paths.dart';
 import 'planner.dart';
+import 'service_info.dart';
 import 'playlists.dart';
 import 'settings.dart';
 import 'sound.dart';
@@ -287,10 +288,10 @@ class JobQueue extends ChangeNotifier {
   }
 }
 
-// stap: v1 2 Beplan | onderskrifte + video af; kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks
+// stap: v1 2 Beplan | onderskrifte + video af; Ollama benoem die blokke, kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks
 // tak: Ollama af → "Ollama het nie geantwoord nie" met Probeer weer in Werkry
-/// Fetches meta, captions and video (the silence snap needs the sound), lets `findBounds` pick the cut
-/// and asks Ollama for the text; fills the sermon's date. An existing plan.json is kept as it is.
+/// Fetches meta, captions and video (the sound is needed for the blocks and the silence snap), has Ollama
+/// label the blocks, lets `findBounds` pick the cut from the labels and asks Ollama for the text; fills the sermon's date. An existing plan.json is kept as it is.
 JobRun planJob(SermonStore store) => (c) async {
   c.phase(JobPhase.meta);
   final m = await fetchMeta(c.id, store.root, cancel: c.cancel, log: c.log);
@@ -299,23 +300,36 @@ JobRun planJob(SermonStore store) => (c) async {
     ..scripture = scriptureFrom(m.info.descriptionText)
     ..duration = m.info.durationSeconds;
   store.save(s);
+  if (File(p.join(m.dir.path, kPlanFile)).existsSync()) return;
   final segs = parseJson3(m.captions.readAsStringSync());
-  var bounds = findBounds(segs, prayers(segs));
-  if (!File(p.join(m.dir.path, kPlanFile)).existsSync()) {
-    c.phase(JobPhase.download);
-    c.progress(0);
-    final video = await downloadVideo(
-      m,
-      onProgress: (v) => c.progress(v / 100),
-      cancel: c.cancel,
-      log: c.log,
-    );
-    c.progress(null);
-    bounds = await snapBounds(video, bounds, cancel: c.cancel);
-    await soundBlocks(m.dir, video, cancel: c.cancel);
-  }
+  c.phase(JobPhase.download);
+  c.progress(0);
+  final video = await downloadVideo(
+    m,
+    onProgress: (v) => c.progress(v / 100),
+    cancel: c.cancel,
+    log: c.log,
+  );
+  c.progress(null);
+  final sound = await soundBlocks(m.dir, video, cancel: c.cancel);
   c.phase(JobPhase.plan);
   // Ollama's HTTP call is not killable: cancelling abandons it.
+  final a = await Future.any([
+    Planner().analyse(
+      blocks: blocks(segs, sound),
+      sound: sound,
+      duration: s.duration,
+      originalDescription: m.info.descriptionText,
+      psalms: ServiceInfo.fromInfo(m.info).psalms,
+    ),
+    c.cancel.then<Analysis>((_) => throw JobCancelled()),
+  ]);
+  saveAnalysis(m.dir, a);
+  final bounds = await snapBounds(
+    video,
+    findBounds(a.blocks, sound),
+    cancel: c.cancel,
+  );
   await Future.any([
     Planner().loadOrPlan(
       m.dir,
