@@ -3,7 +3,7 @@
 //   wanneer: Hersien (rail)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: die preekredigeerder: preek uit Preke → plan → hakies, I/O, uitknip, transkripsie, Shorts, ontdoen (kortpaaie) → keur goed en sny
+//   doel: die preekredigeerder: preek uit Preke → plan → hakies, I/O, uitknip, transkripsie, Shorts, ontdoen (kortpaaie) → kies uitvoere, Oggend/Aand en soort diens (liedname op die tydlyn) → keur goed en sny
 //   status: bou
 
 import 'package:flutter/material.dart';
@@ -14,6 +14,7 @@ import '../../core/captions.dart';
 import '../../core/jobs.dart';
 import '../../core/models.dart';
 import '../../core/planner.dart';
+import '../../core/settings.dart';
 import '../../core/store.dart';
 import '../../l10n/app_localizations.dart';
 import 'review_controller.dart';
@@ -40,6 +41,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   final _desc = TextEditingController();
   (int, int)? _synced;
   int _tab = 1;
+  late final _settings = AppSettings.load(_c.store.root);
 
   @override
   void dispose() {
@@ -219,12 +221,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
           ],
           ServiceTimeline(
             duration: _c.duration,
-            blocks: _c.blocks,
+            blocks: _c.sound,
             sermonStart: plan.sermonStart,
             sermonEnd: plan.sermonEnd,
             shorts: plan.shorts,
             cuts: plan.cuts,
             prayers: _c.prayerMarks,
+            songs: _c.songs,
             faulty: {
               for (final s in plan.shorts)
                 if (shortFault(s, plan) != null) s,
@@ -282,10 +285,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
             ],
           ),
           SizedBox(
-            height: 96,
+            height: 72,
             child: _tab == 0 ? _cuts(l, th, plan) : _shorts(l, th, plan),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
+          _outputs(l, th),
           _actions(l, th),
         ],
       ),
@@ -648,6 +652,59 @@ class _ReviewScreenState extends State<ReviewScreen> {
             );
           },
         );
+
+  // stap: diensindeling 7 Kies die uitvoere | drie merkblokkies (almal aan, onthou in Instellings), Oggend/Aand en die soort diens; die sny gebruik dit
+  /// The outputs the cut makes and the service's day part and kind.
+  Widget _outputs(L l, ThemeData th) {
+    final names = {'full': l.outFull, 'word': l.outWord, 'songs': l.outSongs};
+    final kinds = {
+      null: l.serviceKindNone,
+      'nagmaal': l.serviceKindNagmaal,
+      'doop': l.serviceKindDoop,
+      'kategismus': l.serviceKindKategismus,
+      'belydenis': l.serviceKindBelydenis,
+      'feesdag': l.serviceKindFeesdag,
+    };
+    return Wrap(
+      spacing: 8,
+      runSpacing: 0,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(l.outputsLabel, style: th.textTheme.labelLarge),
+        for (final e in names.entries)
+          FilterChip(
+            label: Text(e.value),
+            selected: _settings.exports.contains(e.key),
+            onSelected: (on) => setState(() {
+              on
+                  ? _settings.exports.add(e.key)
+                  : _settings.exports.remove(e.key);
+              _settings.save();
+            }),
+          ),
+        const SizedBox(width: 16),
+        Text(l.serviceDayLabel, style: th.textTheme.labelLarge),
+        SegmentedButton<bool>(
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment(value: false, label: Text(l.serviceMorning)),
+            ButtonSegment(value: true, label: Text(l.serviceEvening)),
+          ],
+          selected: {_c.service.evening},
+          onSelectionChanged: (v) => _c.setEvening(v.single),
+        ),
+        DropdownButton<String?>(
+          value: kinds.containsKey(_c.service.label) ? _c.service.label : null,
+          items: [
+            for (final e in kinds.entries)
+              DropdownMenuItem(value: e.key, child: Text(e.value)),
+          ],
+          onChanged: _c.setServiceKind,
+          hint: Text(l.serviceKind),
+        ),
+      ],
+    );
+  }
 
   Widget _actions(L l, ThemeData th) => Row(
     mainAxisAlignment: MainAxisAlignment.end,

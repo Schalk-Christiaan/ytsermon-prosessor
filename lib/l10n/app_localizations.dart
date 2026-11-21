@@ -1123,6 +1123,169 @@ abstract class L {
   /// In af, this message translates to:
   /// **'{n, plural, =1{1 video op YouTube bygewerk} other{{n} video\'s op YouTube bygewerk}}'**
   String updatedOnYouTube(int n);
+
+  /// No description provided for @outputsLabel.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitvoere'**
+  String get outputsLabel;
+
+  /// No description provided for @outFull.
+  ///
+  /// In af, this message translates to:
+  /// **'Volle preek'**
+  String get outFull;
+
+  /// No description provided for @outWord.
+  ///
+  /// In af, this message translates to:
+  /// **'Net die woord'**
+  String get outWord;
+
+  /// No description provided for @outSongs.
+  ///
+  /// In af, this message translates to:
+  /// **'Sang'**
+  String get outSongs;
+
+  /// No description provided for @serviceDayLabel.
+  ///
+  /// In af, this message translates to:
+  /// **'Diens'**
+  String get serviceDayLabel;
+
+  /// No description provided for @serviceMorning.
+  ///
+  /// In af, this message translates to:
+  /// **'Oggend'**
+  String get serviceMorning;
+
+  /// No description provided for @serviceEvening.
+  ///
+  /// In af, this message translates to:
+  /// **'Aand'**
+  String get serviceEvening;
+
+  /// No description provided for @serviceKind.
+  ///
+  /// In af, this message translates to:
+  /// **'Soort diens'**
+  String get serviceKind;
+
+  /// No description provided for @serviceKindNone.
+  ///
+  /// In af, this message translates to:
+  /// **'Gewone diens'**
+  String get serviceKindNone;
+
+  /// No description provided for @serviceKindNagmaal.
+  ///
+  /// In af, this message translates to:
+  /// **'Nagmaal'**
+  String get serviceKindNagmaal;
+
+  /// No description provided for @serviceKindDoop.
+  ///
+  /// In af, this message translates to:
+  /// **'Doop'**
+  String get serviceKindDoop;
+
+  /// No description provided for @serviceKindKategismus.
+  ///
+  /// In af, this message translates to:
+  /// **'Kategismus'**
+  String get serviceKindKategismus;
+
+  /// No description provided for @serviceKindBelydenis.
+  ///
+  /// In af, this message translates to:
+  /// **'Belydenis'**
+  String get serviceKindBelydenis;
+
+  /// No description provided for @serviceKindFeesdag.
+  ///
+  /// In af, this message translates to:
+  /// **'Feesdag'**
+  String get serviceKindFeesdag;
+
+  /// No description provided for @copyWhatsappText.
+  ///
+  /// In af, this message translates to:
+  /// **'Kopieer WhatsApp-teks'**
+  String get copyWhatsappText;
+
+  /// No description provided for @whatsappTextCopied.
+  ///
+  /// In af, this message translates to:
+  /// **'WhatsApp-teks gekopieer'**
+  String get whatsappTextCopied;
+
+  /// No description provided for @whatsappTemplate.
+  ///
+  /// In af, this message translates to:
+  /// **'WhatsApp-teks'**
+  String get whatsappTemplate;
+
+  /// Arguments are the literal tokens {diens} etc.
+  ///
+  /// In af, this message translates to:
+  /// **'{diens}, {datum}, {tema}, {skriflesing}, {fokus} en {belydenis} word ingevul; \'n reël sonder inhoud val weg.'**
+  String whatsappTemplateHelp(
+    String diens,
+    String datum,
+    String tema,
+    String skriflesing,
+    String fokus,
+    String belydenis,
+  );
+
+  /// No description provided for @navBiblioteek.
+  ///
+  /// In af, this message translates to:
+  /// **'Biblioteek'**
+  String get navBiblioteek;
+
+  /// No description provided for @libraryPreke.
+  ///
+  /// In af, this message translates to:
+  /// **'Preke'**
+  String get libraryPreke;
+
+  /// No description provided for @librarySang.
+  ///
+  /// In af, this message translates to:
+  /// **'Sang'**
+  String get librarySang;
+
+  /// No description provided for @searchLibrary.
+  ///
+  /// In af, this message translates to:
+  /// **'Soek tema, skriflesing of lied'**
+  String get searchLibrary;
+
+  /// No description provided for @reload.
+  ///
+  /// In af, this message translates to:
+  /// **'Herlaai'**
+  String get reload;
+
+  /// No description provided for @libraryEmpty.
+  ///
+  /// In af, this message translates to:
+  /// **'Nog geen dienste in {folder}. Sny \'n preek in Hersien, dan verskyn dit hier.'**
+  String libraryEmpty(String folder);
+
+  /// No description provided for @libraryNoMatch.
+  ///
+  /// In af, this message translates to:
+  /// **'Niks pas by die soektog nie.'**
+  String get libraryNoMatch;
+
+  /// No description provided for @songUnnamed.
+  ///
+  /// In af, this message translates to:
+  /// **'Lied {n}'**
+  String songUnnamed(int n);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

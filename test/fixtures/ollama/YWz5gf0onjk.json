@@ -1,0 +1,27 @@
+{
+  "gebed_voor": 5,
+  "preek_van": 8,
+  "preek_tot": 34,
+  "gebed_na": 35,
+  "gebede": [3, 6, 36],
+  "skriflesing": [8],
+  "geloofsbelydenis": [],
+  "aankondigings": [2, 7, 37],
+  "kollekte": [],
+  "seen": [38],
+  "songs": [
+    {
+      "nr": 1,
+      "name": "Psalm 33"
+    },
+    {
+      "nr": 2,
+      "name": "Psalm 42"
+    },
+    {
+      "nr": 3,
+      "name": "Psalm 46"
+    }
+  ],
+  "service": "geen"
+}

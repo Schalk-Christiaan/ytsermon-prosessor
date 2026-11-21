@@ -50,7 +50,7 @@ void main() {
     expect(m.info.uploadDate, '2026-12-25');
     final plan = await Planner().loadOrPlan(
       m.dir,
-      compactText: '',
+      blocks: <Block>[],
       bounds: const Bounds(0, 4),
       duration: s.duration,
       originalDescription: '',

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -37,23 +38,23 @@ import 'helpers.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  test('prayerMarks hold the prayers found in the captions', () {
-    final (c, _, _) = _ready((m, {onProgress}) async => File('v.mp4'), null);
-    c.debugReady(
-      FetchedMeta('x', Directory.systemTemp, {}),
-      const [
-        Segment(
-          0,
-          50,
-          'Onse Vader ons dank U vir hierdie dag en vir al u goedheid',
-        ),
-        Segment(50, 60, 'in Jesus se Naam. Amen.'),
-      ],
-      c.plan!,
-      100,
+  test('prayerMarks hold the blocks the AI labelled as prayer', () {
+    final dir = Directory.systemTemp.createTempSync('marks');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    File('${dir.path}/$kAnalysisFile').writeAsStringSync(
+      jsonEncode({
+        'blocks': [
+          {'start': 0, 'end': 60, 'label': 'gebed'},
+          {'start': 70, 'end': 900, 'label': 'preek'},
+        ],
+        'songs': [],
+        'service': null,
+      }),
     );
+    final (c, _, _) = _ready((m, {onProgress}) async => File('v.mp4'), null);
+    c.debugReady(FetchedMeta('x', dir, {}), const [], c.plan!, 100);
     expect(c.prayerMarks.length, 1);
-    expect(c.prayerMarks.single.start, closeTo(0, 0.01));
+    expect(c.prayerMarks.single.end, 60);
   });
   test('repeated downloads keep one position subscription', () async {
     var listens = 0;

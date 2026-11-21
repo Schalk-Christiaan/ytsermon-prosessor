@@ -3,66 +3,108 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preekverwerker/core/bounds.dart';
-import 'package:preekverwerker/core/captions.dart';
 import 'package:preekverwerker/core/models.dart';
 
 import 'fixture_sermons.dart';
 
-void main() {
-  // Older recordings (no word times) only know the caption line, so their bounds are good to ~3 s.
-  const lineLevel = {'IdZO-xP3iB0', 'a1kwRShCDpE'};
+/// A block of one word from [a] to [b] (the last word "Amen" when [amen]).
+Block _b(double a, double b, BlockLabel l, {bool amen = false}) =>
+    Block([Word(a, b, amen ? 'Amen.' : 'woord')], b, label: l);
 
-  for (final f in fixtureSermons()) {
-    test('${f.id}: findBounds picks both prayers', () {
-      final tol = lineLevel.contains(f.id) ? 3.0 : 1.5;
-      final b = findBounds(f.segs, prayers(f.segs));
+void main() {
+  // The hand marks of `sermons.json` for the services that also have labels.
+  final hand = [
+    for (final f in fixtureSermons())
+      if (labelledIds.contains(f.id)) f,
+  ];
+
+  for (final f in hand) {
+    test('${f.id}: findBounds on the labels picks both prayers', () async {
+      final b = findBounds(
+        (await fixtureAnalysis(f.id)).blocks,
+        fixtureSound(f.id),
+      );
       expect(b.sure, isTrue, reason: '${b.reason}');
-      expect(b.start, closeTo(f.start, tol));
-      expect(b.end, closeTo(f.end, tol));
+      expect(b.start, closeTo(f.start, 1.5));
+      expect(b.end, closeTo(f.end, 1.5));
     });
   }
 
   test('a service cut short has no full sermon: not sure, no false cut', () {
-    final f = fixtureSermons().firstWhere((f) => f.id == 'a1kwRShCDpE');
-    final segs = f.segs.where((s) => s.start < 20 * 60).toList();
-    final b = findBounds(segs, prayers(segs));
+    final b = findBounds([
+      _b(0, 60, BlockLabel.gebed, amen: true),
+      _b(100, 800, BlockLabel.preek),
+    ], const []);
     expect(b.sure, isFalse);
     expect(b.reason, BoundsDoubt.noSermon);
   });
 
-  test('two long stretches of similar length: not sure', () {
-    Segment s(double a, double b, String t) => Segment(a, b, t);
-    final segs = [
-      s(0, 60, 'Kom ons bid. Onse Vader ons dank U vir hierdie dag. Amen.'),
-      s(100, 1100, 'woorde van die eerste preek'),
-      s(1100, 1110, 'dis die einde. Amen.'),
-      s(1110, 1200, 'Kom ons dank. Onse Vader ons dank U vir die woord. Amen.'),
-      s(1300, 2200, 'woorde van die tweede preek'),
-      s(2200, 2210, 'dis die einde. Amen.'),
-      s(2210, 2300, 'Kom ons dank. Onse Vader ons dank U. Amen.'),
-    ];
-    final b = findBounds(segs, prayers(segs));
-    expect(b.sure, isFalse);
-    expect(b.reason, BoundsDoubt.twoSermons);
+  test(
+    'two long runs of similar length, both opened by a prayer: not sure',
+    () {
+      final b = findBounds([
+        _b(0, 60, BlockLabel.gebed, amen: true),
+        _b(100, 1100, BlockLabel.preek),
+        _b(1110, 1200, BlockLabel.gebed, amen: true),
+        _b(1300, 2200, BlockLabel.preek),
+        _b(2210, 2300, BlockLabel.gebed, amen: true),
+      ], const []);
+      expect(b.sure, isFalse);
+      expect(b.reason, BoundsDoubt.twoSermons);
+    },
+  );
+
+  test('a lead-in block before the Amen is followed to the prayer\'s end', () {
+    final b = findBounds([
+      _b(0, 60, BlockLabel.gebed, amen: true),
+      _b(100, 1100, BlockLabel.preek),
+      _b(1110, 1112, BlockLabel.gebed),
+      _b(1120, 1200, BlockLabel.gebed, amen: true),
+    ], const []);
+    expect(b.sure, isTrue);
+    expect(b.start, 0);
+    expect(b.end, 1200);
   });
 
-  test('silence snap lands within 0.5 s of the hand marks', () {
+  test('a prayer of several blocks: the cut starts at the first', () {
+    final b = findBounds([
+      _b(0, 60, BlockLabel.gebed),
+      _b(70, 120, BlockLabel.gebed, amen: true),
+      _b(130, 1130, BlockLabel.preek),
+      _b(1140, 1200, BlockLabel.gebed, amen: true),
+    ], const []);
+    expect(b.sure, isTrue);
+    expect(b.start, 0);
+  });
+
+  test('no prayer before: not sure, cut starts at the sermon', () {
+    final b = findBounds([
+      _b(100, 1100, BlockLabel.preek),
+      _b(1110, 1200, BlockLabel.gebed, amen: true),
+    ], const []);
+    expect(b.reason, BoundsDoubt.noPrayerBefore);
+    expect(b.start, 100);
+  });
+
+  test('silence snap lands within 0.5 s of the hand marks', () async {
     final sil = jsonDecode(
       File('test/fixtures/silences.json').readAsStringSync(),
     ) as Map<String, dynamic>;
-    for (final f in fixtureSermons()) {
+    for (final f in hand) {
       List<(double, double)> at(String k) => parseSilences(
         sil[f.id][k]['out'] as String,
         (sil[f.id][k]['from'] as num).toDouble(),
       );
-      final b = findBounds(f.segs, prayers(f.segs));
-      final tol = lineLevel.contains(f.id) ? 2.0 : 0.5;
+      final b = findBounds(
+        (await fixtureAnalysis(f.id)).blocks,
+        fixtureSound(f.id),
+      );
       expect(
         snapStart(b.start, at('start')),
-        closeTo(f.start, tol),
+        closeTo(f.start, 0.5),
         reason: f.id,
       );
-      expect(snapEnd(b.end, at('end')), closeTo(f.end, tol), reason: f.id);
+      expect(snapEnd(b.end, at('end')), closeTo(f.end, 0.5), reason: f.id);
     }
   });
 

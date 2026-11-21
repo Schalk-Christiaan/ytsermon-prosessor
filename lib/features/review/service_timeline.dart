@@ -30,6 +30,7 @@ class ServiceTimeline extends StatefulWidget {
     required this.shorts,
     this.cuts = const [],
     this.prayers = const [],
+    this.songs = const [],
     this.faulty = const {},
     required this.position,
     required this.animateKey,
@@ -48,6 +49,9 @@ class ServiceTimeline extends StatefulWidget {
 
   /// Cut-out pieces (hatched) and candidate prayers (a line above the track).
   final List<Span> cuts, prayers;
+
+  /// The songs; a music piece that starts one shows its name (else "Sang").
+  final List<Song> songs;
 
   /// Invalid Shorts, drawn in the error colour with an outline (not colour alone).
   final Set<Short> faulty;
@@ -189,6 +193,7 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                               ink: th.colorScheme.onSurface,
                               surface: th.colorScheme.surface,
                               musicLabel: l.music,
+                              songs: widget.songs,
                               labelStyle: th.textTheme.labelSmall!.copyWith(
                                 color: th.colorScheme.onSurface,
                               ),
@@ -353,6 +358,7 @@ class _TimelinePainter extends CustomPainter {
     required this.ink,
     required this.surface,
     required this.musicLabel,
+    required this.songs,
     required this.labelStyle,
   }) : super(repaint: position);
 
@@ -366,6 +372,7 @@ class _TimelinePainter extends CustomPainter {
   final ValueListenable<double> position;
   final Color speech, music, sermon, wood, ink, surface;
   final String musicLabel;
+  final List<Song> songs;
   final TextStyle labelStyle;
 
   @override
@@ -382,6 +389,7 @@ class _TimelinePainter extends CustomPainter {
       Paint()..color = ink.withValues(alpha: 0.06),
     );
     for (final b in blocks) {
+      if (b.kind != SegmentKind.music && b.kind != SegmentKind.speech) continue;
       final r = Rect.fromLTRB(
         x(b.start),
         8,
@@ -396,8 +404,13 @@ class _TimelinePainter extends CustomPainter {
           ),
       );
       if (b.kind == SegmentKind.music && r.width > 44) {
+        final song = songs
+            .where((s) => (s.start - b.start).abs() < 2)
+            .firstOrNull;
         final tp = TextPainter(
-          text: TextSpan(text: musicLabel, style: labelStyle),
+          text: TextSpan(text: song?.name ?? musicLabel, style: labelStyle),
+          maxLines: 1,
+          ellipsis: '…',
           textDirection: TextDirection.ltr,
         )..layout(maxWidth: r.width);
         tp.paint(canvas, Offset(r.left + 4, r.center.dy - tp.height / 2));

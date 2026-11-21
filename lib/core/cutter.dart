@@ -2,8 +2,8 @@
 //   soort: module
 //   wanneer: by 'Keur goed en sny' en 'Klank vir WhatsApp'
 //   groep: core | Kern
-//   skryf: out/
-//   doel: sny die preek (herkodeer net die preekstuk, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif) en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg
+//   skryf: out/<jaar>/<diens>/ | Volle preek.mp4, Net die woord.mp4, Sang/*.mp3, Shorts
+//   doel: gids per diens (serviceDir), sny Volle preek en Net die woord (herkodeer net die stuk, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif), elke lied as mp3 en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg; skryf die WhatsApp-teks
 //   status: bou
 import 'dart:convert';
 import 'dart:io';
@@ -12,6 +12,7 @@ import 'package:path/path.dart' as p;
 
 import 'captions.dart';
 import 'models.dart';
+import 'service_info.dart';
 import 'tools.dart';
 
 /// ffmpeg flags that make progress readable on stdout (see `parseFfmpegProgress`).
@@ -246,32 +247,29 @@ Future<void> _ffmpeg(
   },
 );
 
-// stap: preekgrense 4 Herkodeer | libx264 presies op die grense (nie -c copy nie, wat net op 'n sleutelraam sny)
-/// Cuts the sermon into [outDir]; returns the file. One part and no clips = one re-encode of just that part;
-/// cut-out pieces or an [intro]/[outro] re-encode everything into one file via [joinArgs].
-Future<File> cutSermon(
+// stap: preekgrense 2 Herkodeer | libx264 presies op die grense (nie -c copy nie, wat net op 'n sleutelraam sny)
+/// Cuts [parts] of [video] into [out] (its folder is made); returns it. One part and no clips = one re-encode
+/// of just that part; several parts or an [intro]/[outro] re-encode everything into one file via [joinArgs].
+Future<File> cutParts(
   File video,
-  SermonPlan plan,
-  String date,
-  Directory outDir, {
+  List<Span> parts,
+  File out, {
   File? intro,
   File? outro,
   void Function(double frac)? onProgress,
   Future<void>? cancel,
   void Function(String line)? log,
 }) async {
-  outDir.createSync(recursive: true);
-  final out = p.join(outDir.path, sermonFileName(date, plan.title));
-  final parts = plan.parts();
+  out.parent.createSync(recursive: true);
   if (parts.length == 1 && intro == null && outro == null) {
     await _ffmpeg(
-      sermonArgs(video.path, parts.single.start, parts.single.end, out),
+      sermonArgs(video.path, parts.single.start, parts.single.end, out.path),
       duration: parts.single.end - parts.single.start,
       onProgress: onProgress,
       cancel: cancel,
       log: log,
     );
-    return File(out);
+    return out;
   }
   final main = await probeMedia(video);
   Future<JoinPiece> clip(File f) async =>
@@ -282,7 +280,7 @@ Future<File> cutSermon(
     if (outro != null) await clip(outro),
   ];
   await _ffmpeg(
-    joinArgs(pieces, main, out),
+    joinArgs(pieces, main, out.path),
     duration: pieces.fold<double>(
       0,
       (a, pc) =>
@@ -293,7 +291,7 @@ Future<File> cutSermon(
     cancel: cancel,
     log: log,
   );
-  return File(out);
+  return out;
 }
 
 /// Cuts Short number [n] (1-based) with subtitles from [segs]; [fontFile] is copied next to the video
@@ -332,25 +330,161 @@ Future<File> cutShort(
   return File(out);
 }
 
-/// Exports [sermon] (the cut mp4) as `JJJJ-MM-DD Tema.mp3` in [outDir] for WhatsApp.
+/// Exports [video] (a cut mp4) as the mono mp3 [out] with [title] in the ID3 tag, for WhatsApp.
 Future<File> cutAudio(
-  File sermon,
+  File video,
   String title,
-  String date,
-  Directory outDir, {
+  File out, {
   double? duration,
   void Function(double frac)? onProgress,
   Future<void>? cancel,
   void Function(String line)? log,
 }) async {
-  outDir.createSync(recursive: true);
-  final out = p.join(outDir.path, sermonFileName(date, title, ext: 'mp3'));
+  out.parent.createSync(recursive: true);
   await _ffmpeg(
-    audioArgs(sermon.path, out, title),
+    audioArgs(video.path, out.path, title),
     duration: duration,
     onProgress: onProgress,
     cancel: cancel,
     log: log,
   );
-  return File(out);
+  return out;
+}
+
+// stap: diensindeling 9 Uitvoere | `<uitgids>/<jaar>/<datum> <Oggend|Aand> - <tema>/` kry Volle preek.mp4, Net die woord.mp4, Sang/NN <lied>.mp3, WhatsApp.txt en diens.json
+/// The folder of one service: `<outDir>/<year>/<date> <Oggend|Aand> - <theme>` (no theme: no ` - …`).
+String serviceDir(String outDir, ServiceInfo info) => p.join(
+  outDir,
+  info.date.substring(0, 4),
+  '${info.date} ${info.evening ? 'Aand' : 'Oggend'}'
+  '${info.theme == null || _clean(info.theme!).isEmpty ? '' : ' - ${_clean(info.theme!)}'}',
+);
+
+/// File names inside a [serviceDir] (without extension).
+const kFullName = 'Volle preek', kWordName = 'Net die woord';
+
+/// The text and the data file written beside the outputs of a service.
+const kWhatsappFile = 'WhatsApp.txt', kIndexFile = 'diens.json';
+
+/// ffmpeg arguments for one song: the part [s] of [video] as a stereo 128 kbps mp3 with ID3 title, album and track.
+List<String> songArgs(
+  String video,
+  Span s,
+  String out, {
+  required String title,
+  required String album,
+  required int track,
+}) => [
+  '-y',
+  '-ss',
+  _sec(s.start),
+  '-to',
+  _sec(s.end),
+  '-i',
+  video,
+  '-vn',
+  '-c:a',
+  'libmp3lame',
+  '-b:a',
+  '128k',
+  '-id3v2_version',
+  '3',
+  '-metadata',
+  'title=$title',
+  '-metadata',
+  'album=$album',
+  '-metadata',
+  'track=$track',
+  ..._progress,
+  out,
+];
+
+/// Cuts [song] into `<dir>/Sang/NN <name>.mp3` (unnamed: `Lied N`); returns the file.
+Future<File> cutSong(
+  File video,
+  Song song,
+  ServiceInfo info,
+  Directory dir, {
+  Future<void>? cancel,
+  void Function(String line)? log,
+}) async {
+  final name = song.name ?? 'Lied ${song.n}';
+  final out = File(
+    p.join(
+      dir.path,
+      'Sang',
+      '${song.n.toString().padLeft(2, '0')} ${_clean(name)}.mp3',
+    ),
+  )..parent.createSync(recursive: true);
+  await _ffmpeg(
+    songArgs(
+      video.path,
+      Span(song.start, song.end),
+      out.path,
+      title: name,
+      album: '$kChurch ${info.date} ${_dienst(info)}',
+      track: song.n,
+    ),
+    cancel: cancel,
+    log: log,
+  );
+  return out;
+}
+
+/// The church in the mp3 album tag; output text (like the upload template), not UI, so not in the ARB.
+const kChurch = 'GK Oranjerivier';
+
+String _dienst(ServiceInfo i) => i.evening ? 'Aanddiens' : 'Oggenddiens';
+
+/// The default WhatsApp text; `{diens}`, `{datum}`, `{tema}`, `{skriflesing}`, `{fokus}`, `{belydenis}`.
+const kWhatsappTemplate =
+    '*{diens} · {datum}*\nTema: {tema}\nSkriflesing: {skriflesing}\n'
+    'Fokus: {fokus}\n{belydenis}';
+
+const _days = [
+  'Maandag',
+  'Dinsdag',
+  'Woensdag',
+  'Donderdag',
+  'Vrydag',
+  'Saterdag',
+  'Sondag',
+];
+const _months = [
+  'Januarie',
+  'Februarie',
+  'Maart',
+  'April',
+  'Mei',
+  'Junie',
+  'Julie',
+  'Augustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
+];
+
+/// `2026-11-15` as `Sondag 15 November 2026`.
+String longDate(String iso) {
+  final d = DateTime.parse(iso);
+  return '${_days[d.weekday - 1]} ${d.day} ${_months[d.month - 1]} ${d.year}';
+}
+
+/// [template] with the service's facts filled in; a line whose placeholder is empty is left out.
+String whatsappText(String template, ServiceInfo info) {
+  final v = {
+    'diens': _dienst(info),
+    'datum': longDate(info.date),
+    'tema': info.theme ?? '',
+    'skriflesing': info.scripture ?? '',
+    'fokus': info.focus ?? '',
+    'belydenis': info.creed ?? '',
+  };
+  final ph = RegExp(r'\{(\w+)\}');
+  return [
+    for (final line in template.split('\n'))
+      if (ph.allMatches(line).every((m) => (v[m.group(1)] ?? '').isNotEmpty))
+        line.replaceAllMapped(ph, (m) => v[m.group(1)]!),
+  ].join('\n');
 }

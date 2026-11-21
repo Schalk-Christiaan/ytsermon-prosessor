@@ -3,7 +3,7 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: <app-support>/work/<id>/plan.json | die plan; elke wysiging stoor dadelik
-//   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit prayers(), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
+//   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit die etikette (analysis.json), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
 //   status: bou
 import 'dart:async';
 import 'dart:convert';
@@ -19,6 +19,8 @@ import '../../core/channel.dart';
 import '../../core/jobs.dart';
 import '../../core/models.dart';
 import '../../core/planner.dart';
+import '../../core/service_info.dart';
+import '../../core/sound.dart';
 import '../../core/store.dart';
 
 /// What Hersien shows: nothing chosen, loading, an error, no plan yet or the editor.
@@ -103,16 +105,49 @@ class ReviewController extends ChangeNotifier {
 
   FetchedMeta? meta;
   List<Segment> segments = [];
-  List<TimeBlock> blocks = [];
+  List<TimeBlock> sound = [];
   SermonPlan? plan;
   double duration = 0;
 
-  /// Candidate prayers in the captions, marked on the timeline and in the transcript.
+  /// Blocks the AI labelled as prayer, marked on the timeline and in the transcript.
   List<Span> prayerMarks = [];
 
-  static List<Span> _marks(List<Segment> segs) => [
-    for (final pr in prayers(segs)) Span(pr.start, pr.end),
-  ];
+  /// The songs the AI named (their names go on the timeline's music pieces).
+  List<Song> songs = [];
+
+  /// The service's day part and kind as the cut will use them; Schalk may change both.
+  ServiceInfo service = ServiceInfo(date: '');
+
+  /// Oggend (false) or Aand (true), remembered for the cut.
+  void setEvening(bool v) {
+    service.evening = v;
+    _saveService();
+  }
+
+  /// The service kind (`nagmaal` …) or null for an ordinary service, remembered for the cut.
+  void setServiceKind(String? v) {
+    service.label = v;
+    _saveService();
+  }
+
+  void _saveService() {
+    saveChoices(meta!.dir, service);
+    notifyListeners();
+  }
+
+  /// Reads the prayers, songs and service facts of [m] from its work folder (analysis.json, read once).
+  void _loadService(FetchedMeta m) {
+    final a = loadAnalysis(m.dir);
+    prayerMarks = [
+      for (final l in a.labels)
+        if (l.label == BlockLabel.gebed) Span(l.start, l.end),
+    ];
+    songs = a.songs;
+    service = applyChoices(
+      ServiceInfo.fromInfo(m.info)..label = a.service,
+      m.dir,
+    );
+  }
 
   /// Bumped by undo/redo, so the text fields reload from the plan.
   int edits = 0;
@@ -150,8 +185,8 @@ class ReviewController extends ChangeNotifier {
       meta = FetchedMeta(id!, dir, j);
       duration = j.durationSeconds;
       segments = parseJson3(m.captions.readAsStringSync());
-      blocks = timeline(segments);
-      prayerMarks = _marks(segments);
+      sound = loadSound(dir);
+      _loadService(meta!);
     }
     final pf = File(p.join(dir.path, kPlanFile));
     if (meta != null && pf.existsSync()) {
@@ -211,6 +246,18 @@ class ReviewController extends ChangeNotifier {
         videoReady = true;
         notifyListeners();
         c.complete(f);
+        // Older plans have no sound.json yet: analyse the video once (one ffmpeg run) for the timeline.
+        if (sound.isEmpty) {
+          try {
+            final b = await soundBlocks(m.dir, f);
+            if (!stale()) {
+              sound = b;
+              notifyListeners();
+            }
+          } on Object {
+            // no sound analysis: the timeline just stays empty
+          }
+        }
       },
       onError: (Object e) {
         if (stale()) return;
@@ -514,8 +561,8 @@ class ReviewController extends ChangeNotifier {
     id = m.id;
     meta = m;
     segments = segs;
-    blocks = timeline(segs);
-    prayerMarks = _marks(segs);
+    sound = const [];
+    _loadService(m);
     plan = p;
     duration = dur;
     state = ReviewState.ready;

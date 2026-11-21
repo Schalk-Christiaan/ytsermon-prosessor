@@ -3,19 +3,23 @@
 //   wanneer: by begin gelaai; gestoor as Instellings of Snitlyste verander
 //   groep: core | Kern
 //   skryf: <werkmap>/settings.json | atomies
-//   doel: Schalk se keuses: kliënt-ID-lêer, oplaai-privaatheid, beskrywingsjabloon, snitlysreëls, uitsetgids, of Opstelling klaar is
+//   doel: Schalk se keuses: kliënt-ID-lêer, oplaai-privaatheid, beskrywingsjabloon, snitlysreëls, uitsetgids, watter uitvoere 'n sny maak, WhatsApp-sjabloon, of Opstelling klaar is
 //   status: bou
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'cutter.dart' show kWhatsappTemplate;
 import 'paths.dart';
 import 'store.dart';
 
 const kDefaultTemplate =
     '{beskrywing}\n\nSkriflesing: {skriflesing}\n'
     'Diens van {datum}, Gereformeerde Kerk Oranjerivier.';
+
+/// The outputs of a service: `full` (Volle preek), `word` (Net die woord), `songs` (Sang).
+const kExports = ['full', 'word', 'songs'];
 
 /// App settings in `<work>/settings.json`; missing keys fall back to defaults.
 class AppSettings {
@@ -29,6 +33,8 @@ class AppSettings {
       setupDone = j['setupDone'] as bool? ?? false,
       intro = j['intro'] as String?,
       outro = j['outro'] as String?,
+      exports = {...((j['exports'] as List?)?.cast<String>() ?? kExports)},
+      whatsappTemplate = j['whatsappTemplate'] as String? ?? kWhatsappTemplate,
       rules = [...?(j['rules'] as List?)?.cast<String>()] {
     if (!j.containsKey('rules')) rules = ['book', 'year'];
   }
@@ -62,6 +68,12 @@ class AppSettings {
   /// The Opstelling list was completed once; the app then starts on Preke.
   bool setupDone;
 
+  /// Which outputs a cut makes (see [kExports]); all by default.
+  Set<String> exports;
+
+  /// The WhatsApp text template (see `whatsappText`).
+  String whatsappTemplate;
+
   /// Video clips joined before and after every full sermon (not Shorts); null = none.
   String? intro, outro;
 
@@ -74,5 +86,10 @@ class AppSettings {
     'setupDone': setupDone,
     'intro': intro,
     'outro': outro,
+    'exports': [
+      for (final e in kExports)
+        if (exports.contains(e)) e,
+    ],
+    'whatsappTemplate': whatsappTemplate,
   });
 }

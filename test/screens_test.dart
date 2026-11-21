@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -15,8 +16,10 @@ import 'package:preekverwerker/core/cutter.dart';
 import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/store.dart';
+import 'package:preekverwerker/core/service_info.dart';
 import 'package:preekverwerker/core/settings.dart';
 import 'package:preekverwerker/core/youtube.dart';
+import 'package:preekverwerker/features/library/library_screen.dart';
 import 'package:preekverwerker/features/playlists/playlists_screen.dart';
 import 'package:preekverwerker/features/settings/settings_screen.dart';
 import 'package:preekverwerker/features/setup/setup_screen.dart';
@@ -26,6 +29,7 @@ import 'package:preekverwerker/features/work/work_screen.dart';
 import 'package:preekverwerker/features/review/review_controller.dart';
 
 import 'helpers.dart';
+import 'library_test.dart' show twoServices;
 
 import 'package:preekverwerker/features/review/review_screen.dart';
 import 'package:preekverwerker/l10n/app_localizations.dart';
@@ -85,13 +89,13 @@ Widget _app(Brightness b, Widget home) => MaterialApp(
 void main() {
   final shots = Directory('out/shots')..createSync(recursive: true);
 
-  ReviewController ready() {
+  ReviewController ready([Directory? dir]) {
     final segs = parseJson3(
       File('test/fixtures/sample.af-orig.json3').readAsStringSync(),
     );
     final c = testController().$1;
     c.debugReady(
-      FetchedMeta('x', Directory.systemTemp, {'title': 'Preek'}),
+      FetchedMeta('x', dir ?? Directory.systemTemp, {'title': 'Preek'}),
       segs,
       SermonPlan(
         sermonStart: 1384,
@@ -1208,6 +1212,192 @@ void main() {
         await _shot(t, key, 'opstelling-${b.name}-${w.toInt()}');
         await t.pumpWidget(const SizedBox());
       });
+    }
+  }
+
+  testWidgets('hersien: output chips and Aand are remembered', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1280, 800);
+    t.view.devicePixelRatio = 1;
+    final d = Directory.systemTemp.createTempSync('hers');
+    addTearDown(() => d.deleteSync(recursive: true));
+    final c = ready(d);
+    await t.pumpWidget(
+      _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
+    );
+    await t.pump(const Duration(seconds: 1));
+    expect(AppSettings.load(c.store.root).exports, {'full', 'word', 'songs'});
+    await t.tap(find.widgetWithText(FilterChip, 'Net die woord'));
+    await t.pump();
+    expect(AppSettings.load(c.store.root).exports, {'full', 'songs'});
+    await t.tap(find.text('Aand'));
+    await t.pump();
+    expect(c.service.evening, isTrue);
+    expect(
+      File('${c.meta!.dir.path}/service.json').readAsStringSync(),
+      contains('"evening":true'),
+    );
+    await t.pumpWidget(const SizedBox());
+    await t.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('snitlyste: WhatsApp template shows a preview', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 1400);
+    t.view.devicePixelRatio = 1;
+    final st = playlistStore();
+    final set = AppSettings.load(st.root);
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: PlaylistsScreen(store: st, settings: set),
+        ),
+      ),
+    );
+    await t.pump();
+    final field = find.byKey(const ValueKey('whatsappTemplate'));
+    await t.ensureVisible(field);
+    await t.enterText(field, 'Tema: {tema}\nFokus: {fokus}');
+    await t.pump();
+    expect(AppSettings.load(st.root).whatsappTemplate, contains('{fokus}'));
+    final shown = t.widget<Text>(find.byKey(const ValueKey('whatsappPreview')));
+    expect(shown.data, startsWith('Tema: Preek '));
+    expect(shown.data, isNot(contains('Fokus')));
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets(
+    'werk: "Kopieer WhatsApp-teks" puts WhatsApp.txt on the clipboard',
+    (t) async {
+      await _fonts();
+      t.view.physicalSize = const Size(1100, 720);
+      t.view.devicePixelRatio = 1;
+      final d = Directory.systemTemp.createTempSync('wa');
+      addTearDown(() => d.deleteSync(recursive: true));
+      File('${d.path}/WhatsApp.txt').writeAsStringSync('*Aanddiens*\nTema: X');
+      File('${d.path}/diens.json').writeAsStringSync(
+        jsonEncode({'info': ServiceInfo(date: '2026-11-15').toJson()}),
+      );
+      final tc = testController(seed: false);
+      final st = tc.$2
+        ..merge([const ChannelItem('ccccccccccc', 'Preek c', 100)]);
+      st.byId('ccccccccccc')!.outputs = ['${d.path}/Volle preek.mp4'];
+      final q = tc.$3;
+      q.jobs.add(Job('ccccccccccc', JobKind.cut, status: JobStatus.klaar));
+      String? copied;
+      t.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => t.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await t.pumpWidget(
+        _app(
+          Brightness.light,
+          Scaffold(
+            body: WorkScreen(store: st, jobs: q, onBack: () {}),
+          ),
+        ),
+      );
+      await t.pump();
+      await t.tap(find.text('Kopieer WhatsApp-teks'));
+      await t.pump();
+      expect(copied, '*Aanddiens*\nTema: X');
+      expect(find.text('WhatsApp-teks gekopieer'), findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+      await t.pump(const Duration(seconds: 5));
+    },
+  );
+
+  testWidgets('biblioteek: search "Psalm 42" shows only the song', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final out = twoServices();
+    addTearDown(() => out.deleteSync(recursive: true));
+    final set = AppSettings.load(Directory.systemTemp.createTempSync('lset'))
+      ..outDir = out.path;
+    final opened = <(String, bool)>[];
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: LibraryScreen(
+            settings: set,
+            open: (path, {select = false}) async => opened.add((path, select)),
+          ),
+        ),
+      ),
+    );
+    await t.pump();
+    expect(find.text('Uit die oorvloed van die hart'), findsOneWidget);
+    expect(find.text('Genade'), findsOneWidget);
+    await t.tap(find.text('Sang'));
+    await t.pump();
+    expect(find.text('Psalm 33'), findsOneWidget);
+    await t.enterText(find.byKey(const ValueKey('librarySearch')), 'Psalm 42');
+    await t.pump();
+    expect(find.widgetWithText(ListTile, 'Psalm 42'), findsOneWidget);
+    expect(find.text('Psalm 33'), findsNothing);
+    await t.tap(find.text('Speel'));
+    expect(opened.single.$1, endsWith('Sang/02 Psalm 42.mp3'));
+    await t.tap(find.text('Preke'));
+    await t.pump();
+    expect(find.text('Genade'), findsNothing);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  for (final b in Brightness.values) {
+    for (final sang in [false, true]) {
+      testWidgets(
+        'biblioteek skermkiekie ${b.name} ${sang ? 'sang' : 'preke'}',
+        (t) async {
+          await _fonts();
+          t.view.physicalSize = const Size(1100, 720);
+          t.view.devicePixelRatio = 1;
+          final out = twoServices();
+          addTearDown(() => out.deleteSync(recursive: true));
+          final set = AppSettings.load(
+            Directory.systemTemp.createTempSync('ls'),
+          )..outDir = out.path;
+          final key = GlobalKey();
+          await t.pumpWidget(
+            _app(
+              b,
+              RepaintBoundary(
+                key: key,
+                child: Scaffold(body: LibraryScreen(settings: set)),
+              ),
+            ),
+          );
+          if (sang) await t.tap(find.text('Sang'));
+          await t.pump();
+          expect(t.takeException(), isNull);
+          await t.runAsync(() async {
+            final r =
+                key.currentContext!.findRenderObject() as RenderRepaintBoundary;
+            final img = await r.toImage();
+            final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
+            File(
+              p.join(
+                shots.path,
+                'biblioteek-${sang ? 'sang' : 'preke'}-${b.name}.png',
+              ),
+            ).writeAsBytesSync(bytes!.buffer.asUint8List());
+          });
+          await t.pumpWidget(const SizedBox());
+        },
+      );
     }
   }
 }

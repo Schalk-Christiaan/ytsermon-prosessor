@@ -13,13 +13,11 @@ import 'package:path/path.dart' as p;
 
 import 'channel.dart';
 import 'planner.dart';
+import 'service_info.dart';
 
-/// The reading from a `Skriflesing: Mattheus 12:22-37` line in [description]; null if absent.
-String? scriptureFrom(String description) => RegExp(
-  r'^Skriflesing:\s*(.+)$',
-  multiLine: true,
-  caseSensitive: false,
-).firstMatch(description)?.group(1)?.trim();
+/// The reading from the `Skriflesing:` (or `Skrifgedeelte`) line in [description]; null if absent.
+String? scriptureFrom(String description) =>
+    ServiceInfo.fromDescription(description).scripture;
 
 /// Writes [json] to [f] atomically (`.tmp`, then rename), creating the folder.
 void writeJson(File f, Object? json) {

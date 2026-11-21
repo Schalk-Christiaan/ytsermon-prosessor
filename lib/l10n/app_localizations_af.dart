@@ -618,4 +618,95 @@ class LAf extends L {
     );
     return '$_temp0';
   }
+
+  @override
+  String get outputsLabel => 'Uitvoere';
+
+  @override
+  String get outFull => 'Volle preek';
+
+  @override
+  String get outWord => 'Net die woord';
+
+  @override
+  String get outSongs => 'Sang';
+
+  @override
+  String get serviceDayLabel => 'Diens';
+
+  @override
+  String get serviceMorning => 'Oggend';
+
+  @override
+  String get serviceEvening => 'Aand';
+
+  @override
+  String get serviceKind => 'Soort diens';
+
+  @override
+  String get serviceKindNone => 'Gewone diens';
+
+  @override
+  String get serviceKindNagmaal => 'Nagmaal';
+
+  @override
+  String get serviceKindDoop => 'Doop';
+
+  @override
+  String get serviceKindKategismus => 'Kategismus';
+
+  @override
+  String get serviceKindBelydenis => 'Belydenis';
+
+  @override
+  String get serviceKindFeesdag => 'Feesdag';
+
+  @override
+  String get copyWhatsappText => 'Kopieer WhatsApp-teks';
+
+  @override
+  String get whatsappTextCopied => 'WhatsApp-teks gekopieer';
+
+  @override
+  String get whatsappTemplate => 'WhatsApp-teks';
+
+  @override
+  String whatsappTemplateHelp(
+    String diens,
+    String datum,
+    String tema,
+    String skriflesing,
+    String fokus,
+    String belydenis,
+  ) {
+    return '$diens, $datum, $tema, $skriflesing, $fokus en $belydenis word ingevul; \'n reël sonder inhoud val weg.';
+  }
+
+  @override
+  String get navBiblioteek => 'Biblioteek';
+
+  @override
+  String get libraryPreke => 'Preke';
+
+  @override
+  String get librarySang => 'Sang';
+
+  @override
+  String get searchLibrary => 'Soek tema, skriflesing of lied';
+
+  @override
+  String get reload => 'Herlaai';
+
+  @override
+  String libraryEmpty(String folder) {
+    return 'Nog geen dienste in $folder. Sny \'n preek in Hersien, dan verskyn dit hier.';
+  }
+
+  @override
+  String get libraryNoMatch => 'Niks pas by die soektog nie.';
+
+  @override
+  String songUnnamed(int n) {
+    return 'Lied $n';
+  }
 }

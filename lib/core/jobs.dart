@@ -3,7 +3,7 @@
 //   wanneer: "Verwerk volgende", "Keur goed en sny", "Beplan weer", "Klank vir WhatsApp", "Laai op" en by begin (hervat)
 //   groep: core | Kern
 //   skryf: <werkmap>/jobs.json | die ry; sermon.json van die preek wat verwerk word
-//   doel: een taak op 'n slag (plan met grense en stilte-snap, sny, klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
+//   doel: een taak op 'n slag (plan: klank → blokke → etikette → grense → stilte-snap; sny: die gekose uitvoere in die diensgids met WhatsApp.txt en diens.json; klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
 //   status: bou
 import 'dart:async';
 import 'dart:convert';
@@ -19,8 +19,10 @@ import 'cutter.dart';
 import 'models.dart';
 import 'paths.dart';
 import 'planner.dart';
+import 'service_info.dart';
 import 'playlists.dart';
 import 'settings.dart';
+import 'sound.dart';
 import 'store.dart';
 import 'tools.dart';
 import 'youtube.dart';
@@ -286,10 +288,15 @@ class JobQueue extends ChangeNotifier {
   }
 }
 
-// stap: v1 2 Beplan | onderskrifte + video af; kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks
+/// Awaits [work], or throws [JobCancelled] as soon as [cancel] fires: Ollama's HTTP call is not killable, so
+/// cancelling abandons it.
+Future<T> _abandonable<T>(Future<T> work, Future<void> cancel) =>
+    Future.any([work, cancel.then<T>((_) => throw JobCancelled())]);
+
+// stap: v1 2 Beplan | onderskrifte + video af; Ollama benoem die blokke, kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks
 // tak: Ollama af → "Ollama het nie geantwoord nie" met Probeer weer in Werkry
-/// Fetches meta, captions and video (the silence snap needs the sound), lets `findBounds` pick the cut
-/// and asks Ollama for the text; fills the sermon's date. An existing plan.json is kept as it is.
+/// Fetches meta, captions and video (the sound is needed for the blocks and the silence snap), has Ollama
+/// label the blocks, lets `findBounds` pick the cut from the labels and asks Ollama for the text; fills the sermon's date. An existing plan.json is kept as it is.
 JobRun planJob(SermonStore store) => (c) async {
   c.phase(JobPhase.meta);
   final m = await fetchMeta(c.id, store.root, cancel: c.cancel, log: c.log);
@@ -298,38 +305,54 @@ JobRun planJob(SermonStore store) => (c) async {
     ..scripture = scriptureFrom(m.info.descriptionText)
     ..duration = m.info.durationSeconds;
   store.save(s);
+  if (File(p.join(m.dir.path, kPlanFile)).existsSync()) return;
   final segs = parseJson3(m.captions.readAsStringSync());
-  var bounds = findBounds(segs, prayers(segs));
-  if (!File(p.join(m.dir.path, kPlanFile)).existsSync()) {
-    c.phase(JobPhase.download);
-    c.progress(0);
-    final video = await downloadVideo(
-      m,
-      onProgress: (v) => c.progress(v / 100),
-      cancel: c.cancel,
-      log: c.log,
-    );
-    c.progress(null);
-    bounds = await snapBounds(video, bounds, cancel: c.cancel);
-  }
+  c.phase(JobPhase.download);
+  c.progress(0);
+  final video = await downloadVideo(
+    m,
+    onProgress: (v) => c.progress(v / 100),
+    cancel: c.cancel,
+    log: c.log,
+  );
+  c.progress(null);
+  final sound = await soundBlocks(m.dir, video, cancel: c.cancel);
   c.phase(JobPhase.plan);
-  // Ollama's HTTP call is not killable: cancelling abandons it.
-  await Future.any([
+  final speech = blocks(segs, sound);
+  final a = await _abandonable(
+    Planner().analyse(
+      blocks: speech,
+      sound: sound,
+      duration: s.duration,
+      originalDescription: m.info.descriptionText,
+      psalms: ServiceInfo.fromInfo(m.info).psalms,
+    ),
+    c.cancel,
+  );
+  saveAnalysis(m.dir, a);
+  final bounds = await snapBounds(
+    video,
+    findBounds(a.blocks, sound),
+    cancel: c.cancel,
+  );
+  await _abandonable(
     Planner().loadOrPlan(
       m.dir,
-      compactText: compact(segs),
+      blocks: speech,
       bounds: bounds,
       duration: s.duration,
       originalDescription: m.info.descriptionText,
       cancel: c.cancel,
     ),
-    c.cancel.then<SermonPlan>((_) => throw JobCancelled()),
-  ]);
+    c.cancel,
+  );
 };
 
 // stap: v1 4 Sny | herkodeer presies van die eerste woord tot ná die Amen (met intro/outro en uitgeknipte stukke saamgevoeg); uitset in die uitsetgids
 // stap: v3 4 Sny sonder YouTube | dieselfde snit; die opname het geen Shorts-onderskrifte nie
-/// Downloads the video and cuts the sermon and its Shorts from the saved plan.
+// stap: diensindeling 10 Sny die uitvoere | Volle preek, Net die woord en Sang soos in Instellings gekies, in die diensgids; dan WhatsApp.txt en diens.json
+/// Downloads the video and makes the chosen outputs (Instellings `exports`) of the service in its [serviceDir]:
+/// the sermon with the Shorts, "Net die woord", each song as mp3; then writes `WhatsApp.txt` and `diens.json`.
 JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   c.phase(JobPhase.meta);
   final m = await fetchMeta(c.id, store.root, cancel: c.cancel, log: c.log);
@@ -344,53 +367,113 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   final plan = _plan(store, c.id);
   final segs = parseJson3(m.captions.readAsStringSync());
   final settings = AppSettings.load(store.root);
-  final dest = out ?? Directory(settings.outDir);
+  final saved = loadAnalysis(m.dir);
+  final info = ServiceInfo.fromInfo(m.info)
+    ..theme ??= plan.title
+    ..label = saved.service;
+  applyChoices(info, m.dir);
+  final dest = Directory(serviceDir(out?.path ?? settings.outDir, info))
+    ..createSync(recursive: true);
   File? clip(String? path) => path == null ? null : File(path);
-  final date = m.info.uploadDate;
-  c.phase(JobPhase.cut);
-  c.progress(null);
-  final files = [
-    await cutSermon(
-      video,
-      plan,
-      date,
-      dest,
-      intro: clip(settings.intro),
-      outro: clip(settings.outro),
-      onProgress: c.progress,
-      cancel: c.cancel,
-      log: c.log,
-    ),
-  ];
+  final intro = clip(settings.intro), outro = clip(settings.outro);
+  final word = wordParts(saved.labels, loadSound(m.dir), plan.parts());
+  final songs = saved.songs;
+  final files = <File>[];
   void saveOutputs() =>
       store.save(store.byId(c.id)!..outputs = [for (final f in files) f.path]);
-  saveOutputs();
-  for (var i = 0; i < plan.shorts.length; i++) {
-    c.progress(i / plan.shorts.length);
+  c.phase(JobPhase.cut);
+  c.progress(null);
+  if (settings.exports.contains('full')) {
     files.add(
-      await cutShort(
+      await cutParts(
         video,
-        i + 1,
-        plan.shorts[i],
-        segs,
-        font ?? bundledFont(),
-        date,
-        dest,
-        onProgress: (f) => c.progress((i + f) / plan.shorts.length),
+        plan.parts(),
+        File(p.join(dest.path, '$kFullName.mp4')),
+        intro: intro,
+        outro: outro,
+        onProgress: c.progress,
+        cancel: c.cancel,
+        log: c.log,
+      ),
+    );
+    saveOutputs();
+    for (var i = 0; i < plan.shorts.length; i++) {
+      c.progress(i / plan.shorts.length);
+      files.add(
+        await cutShort(
+          video,
+          i + 1,
+          plan.shorts[i],
+          segs,
+          font ?? bundledFont(),
+          info.date,
+          dest,
+          onProgress: (f) => c.progress((i + f) / plan.shorts.length),
+          cancel: c.cancel,
+          log: c.log,
+        ),
+      );
+      saveOutputs();
+    }
+  }
+  if (settings.exports.contains('word') && word.isNotEmpty) {
+    c.progress(null);
+    files.add(
+      await cutParts(
+        video,
+        word,
+        File(p.join(dest.path, '$kWordName.mp4')),
+        intro: intro,
+        outro: outro,
+        onProgress: c.progress,
         cancel: c.cancel,
         log: c.log,
       ),
     );
     saveOutputs();
   }
+  final songFiles = <int, File>{};
+  if (settings.exports.contains('songs')) {
+    for (final (i, s) in songs.indexed) {
+      c.progress(i / songs.length);
+      songFiles[s.n] = await cutSong(
+        video,
+        s,
+        info,
+        dest,
+        cancel: c.cancel,
+        log: c.log,
+      );
+    }
+  }
+  File(p.join(dest.path, kWhatsappFile))
+      .writeAsStringSync(whatsappText(settings.whatsappTemplate, info));
+  File(p.join(dest.path, kIndexFile)).writeAsStringSync(
+    jsonEncode({
+      'info': info.toJson(),
+      'title': plan.title,
+      'files': [for (final f in files) p.basename(f.path)],
+      'songs': [
+        for (final s in songs)
+          {
+            ...s.toJson(),
+            if (songFiles[s.n] != null)
+              'file': p.join('Sang', p.basename(songFiles[s.n]!.path)),
+          },
+      ],
+    }),
+  );
 };
 
-// stap: v7 2 Klank uitvoer | mp3 `JJJJ-MM-DD Tema.mp3` langs die gesnyde preek
+// stap: v7 2 Klank uitvoer | mp3 van Net die woord (of Volle preek as dit nie gesny is nie), langs die gesnyde video
 // tak: preek nog nie gesny nie → "Sny eers die preek"
-/// Exports the cut sermon as `JJJJ-MM-DD Tema.mp3` next to it and adds the file to the sermon's outputs.
+/// Exports "Net die woord" (else the full sermon) as an mp3 next to its mp4 and adds the file to the sermon's outputs.
 JobRun audioJob(SermonStore store) => (c) async {
   final s = store.byId(c.id)!;
-  final video = s.outputs.where((o) => o.endsWith('.mp4')).firstOrNull;
+  final mp4s = s.outputs.where((o) => o.endsWith('.mp4'));
+  final video =
+      mp4s.where((o) => p.basename(o) == '$kWordName.mp4').firstOrNull ??
+      mp4s.firstOrNull;
   if (video == null || !File(video).existsSync()) {
     throw StateError('Sny eers die preek.');
   }
@@ -400,8 +483,7 @@ JobRun audioJob(SermonStore store) => (c) async {
   final out = await cutAudio(
     File(video),
     plan.title,
-    s.date ?? p.basename(video).substring(0, 10),
-    File(video).parent,
+    File(p.setExtension(video, '.mp3')),
     duration: plan.sermonEnd - plan.sermonStart,
     onProgress: c.progress,
     cancel: c.cancel,
@@ -412,6 +494,12 @@ JobRun audioJob(SermonStore store) => (c) async {
     store.save(latest..outputs = [...latest.outputs, out.path]);
   }
 };
+
+/// The mp4 outputs that go to YouTube: the sermon and its Shorts, not "Net die woord".
+List<String> _uploadable(Sermon s) => [
+  for (final o in s.outputs)
+    if (o.endsWith('.mp4') && p.basename(o) != '$kWordName.mp4') o,
+];
 
 SermonPlan _plan(SermonStore store, String id) => SermonPlan.fromJson(
   jsonDecode(File(p.join(store.root.path, id, kPlanFile)).readAsStringSync())
@@ -447,7 +535,7 @@ Future<int> updateOnYouTube(
   final s = store.byId(id)!;
   final plan = _plan(store, id);
   final description = _description(s, plan, settings);
-  final videos = s.outputs.where((o) => o.endsWith('.mp4')).toList();
+  final videos = _uploadable(s);
   var n = 0;
   for (var i = 0; i < videos.length; i++) {
     final vid = s.uploads[videos[i]];
@@ -472,7 +560,7 @@ JobRun uploadJob(
   required UploadQuota quota,
 }) => (c) async {
   final s = store.byId(c.id)!;
-  final videos = s.outputs.where((o) => o.endsWith('.mp4')).toList();
+  final videos = _uploadable(s);
   if (videos.isEmpty) throw StateError('Sny eers die preek.');
   final plan = _plan(store, c.id);
   final description = _description(s, plan, settings);
