@@ -3,10 +3,18 @@
 //   wanneer: oral waar 'n plan gebruik word
 //   groep: core | Kern
 //   skryf: —
-//   doel: Segment, TimeBlock, Prayer, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
+//   doel: Word, Segment (met woordtye), TimeBlock, Prayer, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
 //   status: bou
 /// Whether a stretch of the service is speech or music.
 enum SegmentKind { speech, music }
+
+/// One spoken word; a word ends where the next one starts (the last one where its line ends).
+class Word {
+  const Word(this.start, this.end, this.text);
+  final double start;
+  final double end;
+  final String text;
+}
 
 /// One caption line (or music marker); times in seconds from video start.
 class Segment {
@@ -15,11 +23,15 @@ class Segment {
     this.end,
     this.text, {
     this.kind = SegmentKind.speech,
+    this.words = const [],
   });
   final double start;
   final double end;
   final String text;
   final SegmentKind kind;
+
+  /// Per-word times from the captions' `tOffsetMs`; empty for hand-made segments.
+  final List<Word> words;
 }
 
 /// A contiguous speech or music stretch for the service timeline.

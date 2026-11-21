@@ -3,7 +3,7 @@
 //   wanneer: ná fetchMeta
 //   groep: core | Kern
 //   skryf: —
-//   doel: json3-onderskrifte → segmente, kompakte teks vir die KI, kandidaat-gebede (preekgrense), SRT en dienstydlyn (spraak/musiek)
+//   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI, kandidaat-gebede (preekgrense), SRT en dienstydlyn (spraak/musiek)
 //   status: bou
 import 'dart:convert';
 
@@ -16,7 +16,7 @@ final _musicTag = RegExp(r'^(?:\[(?:musiek|sang)\])+$', caseSensitive: false);
 List<Segment> parseJson3(String raw) {
   final events = (jsonDecode(raw)['events'] as List)
       .cast<Map<String, dynamic>>();
-  final lines = <(double, double, String)>[];
+  final lines = <(double, double, String, List<(double, String)>)>[];
   for (final e in events) {
     final segs = e['segs'] as List?;
     if (segs == null) continue;
@@ -28,21 +28,51 @@ List<Segment> parseJson3(String raw) {
     if (text.isEmpty) continue;
     final start = (e['tStartMs'] as num) / 1000;
     final dur = ((e['dDurationMs'] ?? 0) as num) / 1000;
-    lines.add((start, start + dur, text));
+    final parts = [
+      for (final s in segs)
+        (start + ((s['tOffsetMs'] ?? 0) as num) / 1000, s['utf8'] as String),
+    ];
+    lines.add((start, start + dur, text, parts));
   }
   return [
     for (var i = 0; i < lines.length; i++)
-      Segment(
-        lines[i].$1,
-        i + 1 < lines.length && lines[i + 1].$1 < lines[i].$2
+      () {
+        final end = i + 1 < lines.length && lines[i + 1].$1 < lines[i].$2
             ? lines[i + 1].$1
-            : lines[i].$2,
-        lines[i].$3,
-        kind: _musicTag.hasMatch(lines[i].$3)
-            ? SegmentKind.music
-            : SegmentKind.speech,
-      ),
+            : lines[i].$2;
+        final music = _musicTag.hasMatch(lines[i].$3);
+        return Segment(
+          lines[i].$1,
+          end,
+          lines[i].$3,
+          kind: music ? SegmentKind.music : SegmentKind.speech,
+          words: music ? const [] : _words(lines[i].$4, end),
+        );
+      }(),
   ];
+}
+
+/// Words with their own times: each caption piece starts at its `tOffsetMs`; a piece that holds several
+/// words (older recordings have no word times) is spread over its span by length. The speaker-change
+/// marker `>>` is no word.
+List<Word> _words(List<(double, String)> parts, double lineEnd) {
+  final out = <Word>[];
+  for (var i = 0; i < parts.length; i++) {
+    final tokens = parts[i].$2
+        .split(RegExp(r'\s+'))
+        .where((t) => t.isNotEmpty && t != '>>')
+        .toList();
+    final from = parts[i].$1;
+    final to = i + 1 < parts.length ? parts[i + 1].$1 : lineEnd;
+    final total = tokens.join().length;
+    var done = 0;
+    for (final t in tokens) {
+      final a = from + (to - from) * done / total;
+      done += t.length;
+      out.add(Word(a, from + (to - from) * done / total, t));
+    }
+  }
+  return out;
 }
 
 /// `mm:ss` (minutes may exceed 59), the format of the captions and the timeline labels.
