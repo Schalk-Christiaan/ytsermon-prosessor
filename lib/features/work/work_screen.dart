@@ -5,8 +5,12 @@
 //   skryf: —
 //   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag-, klaar- en fout-lyste; klaar-items: Speel, Wys in gids, Klank vir WhatsApp, Laai op, Wys op YouTube; oplaai-teller
 //   status: bou
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'package:path/path.dart' as p;
 
 import '../../core/jobs.dart';
 import '../../core/store.dart';
@@ -196,6 +200,12 @@ class WorkScreen extends StatelessWidget {
             onPressed: () => open(file, select: true),
             child: Text(l.showInFolder),
           ),
+          Builder(
+            builder: (ctx) => TextButton(
+              onPressed: () => _copyWhatsapp(ctx, l, file),
+              child: Text(l.copyWhatsappText),
+            ),
+          ),
           if (j.kind == JobKind.cut) ...[
             TextButton(
               onPressed: () => jobs.enqueue(j.sermon, JobKind.audio),
@@ -210,6 +220,16 @@ class WorkScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // stap: diensindeling 11 Kopieer WhatsApp-teks | die teks langs die uitvoere (WhatsApp.txt) op die knipbord, om saam met die klank te plak
+  /// Puts the `WhatsApp.txt` next to [file] on the clipboard.
+  Future<void> _copyWhatsapp(BuildContext context, L l, String file) async {
+    final f = File(p.join(p.dirname(file), 'WhatsApp.txt'));
+    if (!f.existsSync()) return;
+    final m = ScaffoldMessenger.of(context);
+    await Clipboard.setData(ClipboardData(text: f.readAsStringSync()));
+    m.showSnackBar(SnackBar(content: Text(l.whatsappTextCopied)));
   }
 
   // stap: v5 3 Mislukte taak | rooi ikoon, die rede en Probeer weer

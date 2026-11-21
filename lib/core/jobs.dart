@@ -365,6 +365,7 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   final info = ServiceInfo.fromInfo(m.info)
     ..theme ??= plan.title
     ..label = loadService(m.dir);
+  applyChoices(info, m.dir);
   final dest = Directory(serviceDir(out?.path ?? settings.outDir, info))
     ..createSync(recursive: true);
   File? clip(String? path) => path == null ? null : File(path);

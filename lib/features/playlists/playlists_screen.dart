@@ -7,7 +7,9 @@
 //   status: bou
 import 'package:flutter/material.dart';
 
+import '../../core/cutter.dart';
 import '../../core/playlists.dart';
+import '../../core/service_info.dart';
 import '../../core/settings.dart';
 import '../../core/store.dart';
 import '../../l10n/app_localizations.dart';
@@ -33,10 +35,14 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
     ..._all.where((r) => !widget.settings.rules.contains(r)),
   ];
   late final _template = TextEditingController(text: widget.settings.template);
+  late final _whatsapp = TextEditingController(
+    text: widget.settings.whatsappTemplate,
+  );
 
   @override
   void dispose() {
     _template.dispose();
+    _whatsapp.dispose();
     super.dispose();
   }
 
@@ -144,6 +150,47 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
                       date: s.date,
                       description: '',
                     ).trim(),
+                    style: th.textTheme.bodyMedium,
+                  ),
+                ],
+                // stap: diensindeling 12 WhatsApp-sjabloon | die teks met plekhouers en 'n voorskou met die nuutste preek
+                _heading(th, l.whatsappTemplate),
+                TextField(
+                  key: const ValueKey('whatsappTemplate'),
+                  controller: _whatsapp,
+                  minLines: 4,
+                  maxLines: 8,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    helperText: l.whatsappTemplateHelp(
+                      '{diens}',
+                      '{datum}',
+                      '{tema}',
+                      '{skriflesing}',
+                      '{fokus}',
+                      '{belydenis}',
+                    ),
+                  ),
+                  onChanged: (v) => setState(
+                    () => widget.settings
+                      ..whatsappTemplate = v
+                      ..save(),
+                  ),
+                ),
+                if (widget.store.sorted.firstOrNull case final s?) ...[
+                  const SizedBox(height: 16),
+                  Text(l.templatePreview, style: th.textTheme.titleSmall),
+                  const SizedBox(height: 4),
+                  Text(
+                    whatsappText(
+                      widget.settings.whatsappTemplate,
+                      ServiceInfo(
+                        date: s.date ?? '2000-01-01',
+                        theme: s.title,
+                        scripture: s.scripture,
+                      ),
+                    ),
+                    key: const ValueKey('whatsappPreview'),
                     style: th.textTheme.bodyMedium,
                   ),
                 ],

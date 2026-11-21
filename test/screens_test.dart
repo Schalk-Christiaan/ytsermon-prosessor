@@ -1210,4 +1210,104 @@ void main() {
       });
     }
   }
+
+  testWidgets('hersien: output chips and Aand are remembered', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1280, 800);
+    t.view.devicePixelRatio = 1;
+    final c = ready();
+    c.meta!.dir.createSync(recursive: true);
+    await t.pumpWidget(
+      _app(Brightness.light, Scaffold(body: ReviewScreen(controller: c))),
+    );
+    await t.pump(const Duration(seconds: 1));
+    expect(AppSettings.load(c.store.root).exports, {'full', 'word', 'songs'});
+    await t.tap(find.widgetWithText(FilterChip, 'Net die woord'));
+    await t.pump();
+    expect(AppSettings.load(c.store.root).exports, {'full', 'songs'});
+    await t.tap(find.text('Aand'));
+    await t.pump();
+    expect(c.service.evening, isTrue);
+    expect(
+      File('${c.meta!.dir.path}/service.json').readAsStringSync(),
+      contains('"evening":true'),
+    );
+    await t.pumpWidget(const SizedBox());
+    await t.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('snitlyste: WhatsApp template shows a preview', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 1400);
+    t.view.devicePixelRatio = 1;
+    final st = playlistStore();
+    final set = AppSettings.load(st.root);
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        Scaffold(
+          body: PlaylistsScreen(store: st, settings: set),
+        ),
+      ),
+    );
+    await t.pump();
+    final field = find.byKey(const ValueKey('whatsappTemplate'));
+    await t.ensureVisible(field);
+    await t.enterText(field, 'Tema: {tema}\nFokus: {fokus}');
+    await t.pump();
+    expect(AppSettings.load(st.root).whatsappTemplate, contains('{fokus}'));
+    final shown = t.widget<Text>(find.byKey(const ValueKey('whatsappPreview')));
+    expect(shown.data, startsWith('Tema: Preek '));
+    expect(shown.data, isNot(contains('Fokus')));
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets(
+    'werk: "Kopieer WhatsApp-teks" puts WhatsApp.txt on the clipboard',
+    (t) async {
+      await _fonts();
+      t.view.physicalSize = const Size(1100, 720);
+      t.view.devicePixelRatio = 1;
+      final d = Directory.systemTemp.createTempSync('wa');
+      addTearDown(() => d.deleteSync(recursive: true));
+      File('${d.path}/WhatsApp.txt').writeAsStringSync('*Aanddiens*\nTema: X');
+      final tc = testController(seed: false);
+      final st = tc.$2
+        ..merge([const ChannelItem('ccccccccccc', 'Preek c', 100)]);
+      st.byId('ccccccccccc')!.outputs = ['${d.path}/Volle preek.mp4'];
+      final q = tc.$3;
+      q.jobs.add(Job('ccccccccccc', JobKind.cut, status: JobStatus.klaar));
+      String? copied;
+      t.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => t.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await t.pumpWidget(
+        _app(
+          Brightness.light,
+          Scaffold(
+            body: WorkScreen(store: st, jobs: q, onBack: () {}),
+          ),
+        ),
+      );
+      await t.pump();
+      await t.tap(find.text('Kopieer WhatsApp-teks'));
+      await t.pump();
+      expect(copied, '*Aanddiens*\nTema: X');
+      expect(find.text('WhatsApp-teks gekopieer'), findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+      await t.pump(const Duration(seconds: 5));
+    },
+  );
 }

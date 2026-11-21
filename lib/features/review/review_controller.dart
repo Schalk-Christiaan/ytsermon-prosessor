@@ -19,6 +19,7 @@ import '../../core/channel.dart';
 import '../../core/jobs.dart';
 import '../../core/models.dart';
 import '../../core/planner.dart';
+import '../../core/service_info.dart';
 import '../../core/sound.dart';
 import '../../core/store.dart';
 
@@ -116,6 +117,38 @@ class ReviewController extends ChangeNotifier {
       if (l.label == BlockLabel.gebed) Span(l.start, l.end),
   ];
 
+  /// The songs the AI named (their names go on the timeline's music pieces).
+  List<Song> songs = [];
+
+  /// The service's day part and kind as the cut will use them; Schalk may change both.
+  ServiceInfo service = ServiceInfo(date: '');
+
+  /// Oggend (false) or Aand (true), remembered for the cut.
+  void setEvening(bool v) {
+    service.evening = v;
+    _saveService();
+  }
+
+  /// The service kind (`nagmaal` …) or null for an ordinary service, remembered for the cut.
+  void setServiceKind(String? v) {
+    service.label = v;
+    _saveService();
+  }
+
+  void _saveService() {
+    saveChoices(meta!.dir, service);
+    notifyListeners();
+  }
+
+  /// Reads the songs and the service facts of [m] from its work folder.
+  void _loadService(FetchedMeta m) {
+    songs = loadSongs(m.dir);
+    service = applyChoices(
+      ServiceInfo.fromInfo(m.info)..label = loadService(m.dir),
+      m.dir,
+    );
+  }
+
   /// Bumped by undo/redo, so the text fields reload from the plan.
   int edits = 0;
 
@@ -154,6 +187,7 @@ class ReviewController extends ChangeNotifier {
       segments = parseJson3(m.captions.readAsStringSync());
       blocks = loadSound(dir);
       prayerMarks = _marks(dir);
+      _loadService(meta!);
     }
     final pf = File(p.join(dir.path, kPlanFile));
     if (meta != null && pf.existsSync()) {
@@ -530,6 +564,7 @@ class ReviewController extends ChangeNotifier {
     segments = segs;
     blocks = const [];
     prayerMarks = _marks(m.dir);
+    _loadService(m);
     plan = p;
     duration = dur;
     state = ReviewState.ready;

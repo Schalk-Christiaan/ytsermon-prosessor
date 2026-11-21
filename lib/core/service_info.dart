@@ -2,9 +2,14 @@
 //   soort: module
 //   wanneer: ná fetchMeta (info.json) en in cutJob
 //   groep: core | Kern
-//   skryf: —
-//   doel: diensdatum in plaaslike tyd (nie upload_date nie), Oggend/Aand en die velde uit die YouTube-beskrywing (tema, skriflesing, fokus, belydenis, psalms)
+//   skryf: <werkmap>/<id>/service.json | Oggend/Aand en diens-soort wat Schalk in Hersien kies
+//   doel: diensdatum in plaaslike tyd (nie upload_date nie), Oggend/Aand en die velde uit die YouTube-beskrywing (tema, skriflesing, fokus, belydenis, psalms); Schalk se keuses oor Oggend/Aand en diens-soort
 //   status: bou
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
+
 /// When the service began, as wall-clock time (a UTC-flagged [DateTime] holding the local clock reading):
 /// from `release_timestamp` (stream start), else `timestamp`; null without either. [offset] defaults to this
 /// machine's UTC offset. `upload_date` is no good: the upload comes a day later than the service.
@@ -106,3 +111,21 @@ class ServiceInfo {
     psalms: [for (final p in (j['psalms'] as List? ?? const [])) p as int],
   );
 }
+
+/// Work-folder file with what Schalk chose in Hersien: `evening` and `label` (null = ordinary service).
+const kServiceFile = 'service.json';
+
+/// Puts the choices of `<dir>/service.json` over [info] (Oggend/Aand and the service label).
+ServiceInfo applyChoices(ServiceInfo info, Directory dir) {
+  final f = File(p.join(dir.path, kServiceFile));
+  if (!f.existsSync()) return info;
+  final j = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
+  if (j['evening'] is bool) info.evening = j['evening'] as bool;
+  if (j.containsKey('label')) info.label = j['label'] as String?;
+  return info;
+}
+
+/// Saves [info]'s Oggend/Aand and label to `<dir>/service.json`.
+void saveChoices(Directory dir, ServiceInfo info) => File(
+  p.join(dir.path, kServiceFile),
+).writeAsStringSync(jsonEncode({'evening': info.evening, 'label': info.label}));

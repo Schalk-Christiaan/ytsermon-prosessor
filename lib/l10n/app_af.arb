@@ -412,5 +412,46 @@
         "type": "int"
       }
     }
+  },
+  "outputsLabel": "Uitvoere",
+  "outFull": "Volle preek",
+  "outWord": "Net die woord",
+  "outSongs": "Sang",
+  "serviceDayLabel": "Diens",
+  "serviceMorning": "Oggend",
+  "serviceEvening": "Aand",
+  "serviceKind": "Soort diens",
+  "serviceKindNone": "Gewone diens",
+  "serviceKindNagmaal": "Nagmaal",
+  "serviceKindDoop": "Doop",
+  "serviceKindKategismus": "Kategismus",
+  "serviceKindBelydenis": "Belydenis",
+  "serviceKindFeesdag": "Feesdag",
+  "copyWhatsappText": "Kopieer WhatsApp-teks",
+  "whatsappTextCopied": "WhatsApp-teks gekopieer",
+  "whatsappTemplate": "WhatsApp-teks",
+  "whatsappTemplateHelp": "{diens}, {datum}, {tema}, {skriflesing}, {fokus} en {belydenis} word ingevul; 'n reël sonder inhoud val weg.",
+  "@whatsappTemplateHelp": {
+    "description": "Arguments are the literal tokens {diens} etc.",
+    "placeholders": {
+      "diens": {
+        "type": "String"
+      },
+      "datum": {
+        "type": "String"
+      },
+      "tema": {
+        "type": "String"
+      },
+      "skriflesing": {
+        "type": "String"
+      },
+      "fokus": {
+        "type": "String"
+      },
+      "belydenis": {
+        "type": "String"
+      }
+    }
   }
 }
