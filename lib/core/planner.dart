@@ -3,9 +3,8 @@
 //   wanneer: ná captions, een Ollama-oproep per preek
 //   groep: core | Kern
 //   skryf: werkmap/<id>/plan.json, analysis.json | die plan; die etikette van die spraakblokke, die liedere en die diens-soort
-//   doel: laat qwen3:8b net teks skryf (Shorts, titel, beskrywing) binne die snit wat findBounds reeds bepaal het (geen grense van die KI nie); analyse() benoem die spraakblokke en liedere (nooit tye); validate() toets die plan, shortFault() elke Short apart; berg plan.json op
-//   status: klaar
-//   bewys: 7236634
+//   doel: laat qwen3:8b net teks skryf (Shorts, titel, beskrywing) binne die snit wat findBounds reeds bepaal het (geen grense van die KI nie); analyse() benoem die spraakblokke en liedere (nooit tye); validate() toets die plan, shortFault() elke Short apart; gebed ná die preek begin by die gebedsopening naby die KI se gebed_na; berg plan.json op
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;

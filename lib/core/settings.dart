@@ -3,9 +3,8 @@
 //   wanneer: by begin gelaai; gestoor as Instellings of Snitlyste verander
 //   groep: core | Kern
 //   skryf: <werkmap>/settings.json | atomies
-//   doel: Schalk se keuses: kliënt-ID-lêer, oplaai-privaatheid, beskrywingsjabloon, snitlysreëls, uitsetgids, watter uitvoere 'n sny maak, WhatsApp-sjabloon, of Opstelling klaar is
-//   status: klaar
-//   bewys: 7236634
+//   doel: Schalk se keuses: kanaal-URL, kliënt-ID-lêer, oplaai-privaatheid, beskrywingsjabloon, snitlysreëls, uitsetgids, watter uitvoere 'n sny maak, WhatsApp-sjabloon, of Opstelling klaar is
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 

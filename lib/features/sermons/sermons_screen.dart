@@ -3,9 +3,8 @@
 //   wanneer: Preke (rail, tuis)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: die hele kanaal as lys met toestand (titel bo, Skriflesing onder); filter (ook "Nie opgelaai nie"), soek; "Verwerk nuutste diens" → plan → Hersien; "Verwerk volgende" → werkry; "Voer opname in" (knoppie of insleep) → Hersien
-//   status: klaar
-//   bewys: 7236634
+//   doel: die hele kanaal (uit instellings) as lys met toestand (titel bo, Skriflesing onder); filter (ook "Nie opgelaai nie"), soek; "Verwerk nuutste diens" → plan → Hersien; "Verwerk volgende" → werkry; "Voer opname in" (knoppie of insleep) → Hersien
+//   status: bou
 import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';

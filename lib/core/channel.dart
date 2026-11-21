@@ -3,9 +3,8 @@
 //   wanneer: as 'n preek-URL gelaai word
 //   groep: core | Kern
 //   skryf: werkmap/<id>/ (info.json, onderskrifte, video.mp4)
-//   doel: lys die kanaal (flat), video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af
-//   status: klaar
-//   bewys: 7236634
+//   doel: lys die kanaal (flat; URL uit instellings, normaliseer), video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 

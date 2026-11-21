@@ -232,6 +232,7 @@ const kSoundFile = 'sound.json';
 /// Loudness per second (whole dB), kept next to [kSoundFile] so Hersien can draw the waveform without re-analysing.
 const kLevelFile = 'sound.level.json';
 
+/// Writes [db] to [kLevelFile] in [dir] so Hersien can draw the waveform.
 void saveLevels(Directory dir, List<double> db) =>
     File(p.join(dir.path, kLevelFile))
         .writeAsStringSync(jsonEncode([for (final v in db) v.round()]));

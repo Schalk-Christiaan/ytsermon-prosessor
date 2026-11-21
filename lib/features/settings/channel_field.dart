@@ -1,3 +1,11 @@
+// @stelsel channel_field
+//   soort: skerm
+//   wanneer: Opstelling en Instellings
+//   groep: features | Skerms
+//   skryf: <werkmap>/settings.json | channelUrl, eers ná validering
+//   doel: veld "Jou YouTube-kanaal": normaliseer die invoer, valideer met een yt-dlp-oproep op versoek, wys "Gevind: naam" of 'n vriendelike fout
+//   status: bou
+
 import 'package:flutter/material.dart';
 
 import '../../core/channel.dart';

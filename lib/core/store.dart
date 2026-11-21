@@ -3,9 +3,8 @@
 //   wanneer: by begin (laai almal) en by elke toestandsverandering van 'n preek
 //   groep: core | Kern
 //   skryf: <werkmap>/<id>/sermon.json | atomies (.tmp, dan hernoem)
-//   doel: elke diens as Sermon met toestand wat herbegin oorleef; voeg die kanaallys by
-//   status: klaar
-//   bewys: 7236634
+//   doel: elke diens as Sermon met toestand wat herbegin oorleef; voeg die kanaallys by en snoei ongeraakte preke van 'n vorige kanaal; 'n beskadigde sermon.json word oorgeslaan
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 
