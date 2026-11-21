@@ -313,10 +313,11 @@ JobRun planJob(SermonStore store) => (c) async {
   c.progress(null);
   final sound = await soundBlocks(m.dir, video, cancel: c.cancel);
   c.phase(JobPhase.plan);
+  final speech = blocks(segs, sound);
   // Ollama's HTTP call is not killable: cancelling abandons it.
   final a = await Future.any([
     Planner().analyse(
-      blocks: blocks(segs, sound),
+      blocks: speech,
       sound: sound,
       duration: s.duration,
       originalDescription: m.info.descriptionText,
@@ -333,7 +334,7 @@ JobRun planJob(SermonStore store) => (c) async {
   await Future.any([
     Planner().loadOrPlan(
       m.dir,
-      compactText: compact(segs),
+      blocks: speech,
       bounds: bounds,
       duration: s.duration,
       originalDescription: m.info.descriptionText,

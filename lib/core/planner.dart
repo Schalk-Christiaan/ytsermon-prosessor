@@ -36,7 +36,7 @@ typedef ChatFn = Future<Map<String, dynamic>> Function(
 
 const _systemPrompt =
     '''Jy help 'n Gereformeerde kerk om opnames van sy kerkdienste te verwerk.
-Jy kry die onderskrifte van die hele diens as reëls "[mm:ss] teks" (hoogstens elke 30 sekondes 'n reël; "[musiek]" is sang of musiek), en die tye waar die snit van die preek begin en eindig. Die snit is reeds bepaal en sluit die gebede voor en ná die preek in; jy verander dit nie.
+Jy kry die teks van die snit as reëls "[mm:ss] teks" (hoogstens elke 30 sekondes 'n reël), en die tye waar die snit van die preek begin en eindig. Die snit is reeds bepaal en sluit die gebede voor en ná die preek in; jy verander dit nie.
 
 Doen die volgende:
 1. Kies 1 tot 3 SHORTS binne die snit, elk 'n volledige gedagte. Elke Short moet tussen 30 en 80 sekondes lank wees (eindtyd minus begintyd): gebruik die begin van een reël as begintyd en die begin van die volgende of oor-volgende reël as eindtyd (60 sekondes is 'n goeie lengte).
@@ -269,12 +269,11 @@ List<TimeBlock> songStretches(List<Block> blocks, List<TimeBlock> sound) => [
 
 /// Asks Ollama for the text of one [SermonPlan] per sermon (a single call, no retries); the cut itself is the given [bounds].
 class Planner {
-  Planner({ChatFn? chat, this.think = true}) : _chat = chat ?? ollamaChat;
+  Planner({ChatFn? chat}) : _chat = chat ?? ollamaChat;
   final ChatFn _chat;
-  final bool think;
 
   Future<SermonPlan> plan({
-    required String compactText,
+    required List<Block> blocks,
     required Bounds bounds,
     required double duration,
     required String originalDescription,
@@ -282,16 +281,12 @@ class Planner {
     final res = await _chat({
       'model': kModel,
       'stream': false,
-      'think': think,
+      'think': false,
       'format': _schema,
-      // Qwen3's thinking-mode sampling: greedy decoding (temperature 0) can think in circles for
-      // half an hour. num_predict caps a runaway at a few minutes; the seed keeps runs reproducible.
       'options': {
         'num_ctx': 16384,
-        'temperature': 0.6,
-        'top_p': 0.95,
-        'top_k': 20,
-        'num_predict': 8192,
+        'temperature': 0,
+        'num_predict': 2048,
         'seed': 1,
       },
       'messages': [
@@ -299,7 +294,7 @@ class Planner {
         {
           'role': 'user',
           'content':
-              'Duur van die video: ${duration.round()} s.\n\nOorspronklike beskrywing:\n$originalDescription\n\nDie snit: ${formatTime(bounds.start)} tot ${formatTime(bounds.end)}.\n',
+              'Duur van die video: ${duration.round()} s.\n\nOorspronklike beskrywing:\n$originalDescription\n\nDie snit: ${formatTime(bounds.start)} tot ${formatTime(bounds.end)}.\n\nTeks van die snit:\n${compact(blocks, bounds.start, bounds.end)}\n',
         },
       ],
     });
@@ -333,7 +328,7 @@ class Planner {
   /// Loads `<dir>/plan.json` if present (never overwritten); otherwise plans and saves it.
   Future<SermonPlan> loadOrPlan(
     Directory dir, {
-    required String compactText,
+    required List<Block> blocks,
     required Bounds bounds,
     required double duration,
     required String originalDescription,
@@ -348,7 +343,7 @@ class Planner {
     var cancelled = false;
     cancel?.then((_) => cancelled = true);
     final plan = await this.plan(
-      compactText: compactText,
+      blocks: blocks,
       bounds: bounds,
       duration: duration,
       originalDescription: originalDescription,

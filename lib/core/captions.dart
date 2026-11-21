@@ -3,14 +3,15 @@
 //   wanneer: ná fetchMeta
 //   groep: core | Kern
 //   skryf: —
-//   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI, spraakblokke (pouse/Amen/musiek), SRT
+//   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI (uit blokke), spraakblokke (pouse/Amen/musiek), SRT
 //   status: bou
 import 'dart:convert';
 import 'dart:math' as math;
 
 import 'models.dart';
 
-final _musicTag = RegExp(r'^(?:\[(?:musiek|sang)\])+$', caseSensitive: false);
+// Lines that are only sound tags ([Musiek], [geproes]) say nothing about the speech; the music itself comes from the sound (sound.dart).
+final _tagOnly = RegExp(r'^(?:\[[^\]]*\]\s*)+$');
 
 /// Parses YouTube json3 captions into segments; `\n` separator events are dropped and a line
 /// ends where the next line starts (roll-up captions overlap).
@@ -26,7 +27,7 @@ List<Segment> parseJson3(String raw) {
         .join()
         .replaceAll('\n', ' ')
         .trim();
-    if (text.isEmpty) continue;
+    if (text.isEmpty || _tagOnly.hasMatch(text)) continue;
     final start = (e['tStartMs'] as num) / 1000;
     final dur = ((e['dDurationMs'] ?? 0) as num) / 1000;
     final parts = [
@@ -41,13 +42,11 @@ List<Segment> parseJson3(String raw) {
         final end = i + 1 < lines.length && lines[i + 1].$1 < lines[i].$2
             ? lines[i + 1].$1
             : lines[i].$2;
-        final music = _musicTag.hasMatch(lines[i].$3);
         return Segment(
           lines[i].$1,
           end,
           lines[i].$3,
-          kind: music ? SegmentKind.music : SegmentKind.speech,
-          words: music ? const [] : _words(lines[i].$4, end),
+          words: _words(lines[i].$4, end),
         );
       }(),
   ];
@@ -82,27 +81,28 @@ String formatTime(double s) {
   return '${(t ~/ 60).toString().padLeft(2, '0')}:${(t % 60).toString().padLeft(2, '0')}';
 }
 
-/// Groups captions per [window] seconds as `[mm:ss] text` lines for the LLM; a music run becomes one `[musiek]`.
-String compact(List<Segment> segs, {double window = 30}) {
+/// The words of the [blocks] inside [from, to] (the cut) as `[mm:ss] text` lines of [window] seconds for the LLM.
+String compact(
+  List<Block> blocks,
+  double from,
+  double to, {
+  double window = 30,
+}) {
   final out = StringBuffer();
   int? group;
-  var firstOnLine = true;
-  var prevMusic = false;
-  for (final s in segs) {
-    final g = s.start ~/ window;
-    if (g != group) {
-      if (group != null) out.write('\n');
-      out.write('[${formatTime(s.start)}]');
-      group = g;
-      prevMusic = false;
+  for (final b in blocks) {
+    for (final w in b.words) {
+      if (w.start < from || w.start >= to) continue;
+      final g = w.start ~/ window;
+      if (g != group) {
+        if (group != null) out.write('\n');
+        out.write('[${formatTime(w.start)}]');
+        group = g;
+      }
+      out.write(' ${w.text}');
     }
-    final music = s.kind == SegmentKind.music;
-    if (music && prevMusic) continue;
-    out.write(music ? ' [musiek]' : ' ${s.text}');
-    prevMusic = music;
-    firstOnLine = false;
   }
-  return firstOnLine ? '' : out.toString();
+  return out.toString();
 }
 
 List<String> _wrap(String text, int max) {
@@ -129,12 +129,12 @@ String _ts(double s) {
 }
 
 /// SRT for the clip [from, to] with times relative to [from]; blocks are <=2 lines of <=42 chars,
-/// splitting a caption's time by character count. Music markers are skipped.
+/// splitting a caption's time by character count.
 String toSrt(List<Segment> segs, double from, double to) {
   final out = StringBuffer();
   var n = 0;
   for (final s in segs) {
-    if (s.kind == SegmentKind.music || s.end <= from || s.start >= to) continue;
+    if (s.end <= from || s.start >= to) continue;
     final lines = _wrap(s.text, 42);
     final blocks = [
       for (var i = 0; i < lines.length; i += 2)
@@ -195,7 +195,6 @@ List<Block> blocks(List<Segment> segs, List<TimeBlock> sound) {
   }
 
   for (final s in segs) {
-    if (s.kind == SegmentKind.music) continue;
     var inTag = false;
     for (final w in wordsOf(s)) {
       if (w.text.startsWith('[')) inTag = true;

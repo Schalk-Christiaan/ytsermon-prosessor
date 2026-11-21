@@ -81,7 +81,9 @@ void main() {
         },
       );
       final p = await planner.plan(
-        compactText: '[23:00] hallo',
+        blocks: [
+          Block([const Word(1500, 1501, 'hallo')], 1501),
+        ],
         bounds: bounds,
         duration: duration,
         originalDescription: 'Psalm 1',
@@ -89,12 +91,16 @@ void main() {
       expect(p.shorts.single.end, 1560);
       expect(seen!['model'], 'qwen3:8b');
       expect(seen!['stream'], false);
-      expect(seen!['think'], true);
+      expect(seen!['think'], false);
       expect(seen!['options']['num_ctx'], 16384);
-      // Qwen3 loops forever in thinking mode with greedy decoding; seed keeps it reproducible.
-      expect(seen!['options']['temperature'], 0.6);
+      expect(seen!['options']['temperature'], 0);
       expect(seen!['options']['seed'], 1);
       expect(seen!['options']['num_predict'], lessThanOrEqualTo(8192));
+      expect(
+        seen!['messages'][1]['content'],
+        contains('[25:00] hallo'),
+        reason: 'the block text is in the message',
+      );
       expect(seen!['format'], isA<Map>());
       expect(jsonEncode(seen!['messages']), contains('Psalm 1'));
       expect(
@@ -129,7 +135,7 @@ void main() {
         },
       );
       final p = await planner.plan(
-        compactText: 'x',
+        blocks: <Block>[],
         bounds: bounds,
         duration: 3728,
         originalDescription: '',
@@ -153,7 +159,7 @@ void main() {
     );
     expect(
       planner.plan(
-        compactText: 'x',
+        blocks: <Block>[],
         bounds: const Bounds(0, 100),
         duration: duration,
         originalDescription: '',
@@ -175,7 +181,7 @@ void main() {
       },
     );
     final p = await planner.plan(
-      compactText: 'x',
+      blocks: <Block>[],
       bounds: const Bounds(23 * 60, 52 * 60, reason: BoundsDoubt.noPrayerAfter),
       duration: duration,
       originalDescription: '',
@@ -196,7 +202,7 @@ void main() {
       );
       final p = await planner.loadOrPlan(
         dir,
-        compactText: 'x',
+        blocks: <Block>[],
         bounds: bounds,
         duration: duration,
         originalDescription: '',
@@ -227,7 +233,7 @@ void main() {
       );
       final f = planner.loadOrPlan(
         dir,
-        compactText: 'x',
+        blocks: <Block>[],
         bounds: bounds,
         duration: duration,
         originalDescription: '',

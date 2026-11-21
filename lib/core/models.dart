@@ -16,19 +16,12 @@ class Word {
   final String text;
 }
 
-/// One caption line (or music marker); times in seconds from video start.
+/// One caption line; times in seconds from video start.
 class Segment {
-  const Segment(
-    this.start,
-    this.end,
-    this.text, {
-    this.kind = SegmentKind.speech,
-    this.words = const [],
-  });
+  const Segment(this.start, this.end, this.text, {this.words = const []});
   final double start;
   final double end;
   final String text;
-  final SegmentKind kind;
 
   /// Per-word times from the captions' `tOffsetMs`; empty for hand-made segments.
   final List<Word> words;
