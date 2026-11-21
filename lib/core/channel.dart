@@ -10,6 +10,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'service_info.dart';
 import 'tools.dart';
 
 /// The church channel (see CONTEXT.md, Name).
@@ -169,9 +170,6 @@ extension InfoFields on Map<String, dynamic> {
   String get titleText => '${this['title'] ?? ''}';
   String get descriptionText => '${this['description'] ?? ''}';
 
-  /// Upload date as `JJJJ-MM-DD`.
-  String get uploadDate {
-    final u = '${this['upload_date'] ?? '00000000'}';
-    return '${u.substring(0, 4)}-${u.substring(4, 6)}-${u.substring(6, 8)}';
-  }
+  /// The service day as `JJJJ-MM-DD` (local time of the stream start; `upload_date` is a day late).
+  String get uploadDate => ServiceInfo.fromInfo(this).date;
 }
