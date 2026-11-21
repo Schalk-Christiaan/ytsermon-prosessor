@@ -59,7 +59,12 @@ Future<void> runTool(
 }) async {
   final path = findExecutable(exe) ?? (p.isAbsolute(exe) ? exe : null);
   if (path == null) throw StateError('$exe ontbreek');
-  final proc = await Process.start(path, args, workingDirectory: cwd);
+  // yt-dlp needs a JS runtime for YouTube; Windows ships none, so the installer puts qjs (QuickJS) next to the exe.
+  final qjs = exe == 'yt-dlp' ? findExecutable('qjs') : null;
+  final proc = await Process.start(path, [
+    if (qjs != null) ...['--js-runtimes', 'quickjs:$qjs'],
+    ...args,
+  ], workingDirectory: cwd);
   var cancelled = false, finished = false;
   cancel?.then((_) {
     if (finished) return;
