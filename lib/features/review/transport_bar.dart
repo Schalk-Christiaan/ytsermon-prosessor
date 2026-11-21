@@ -87,9 +87,8 @@ class TransportBar extends StatelessWidget {
             format: (v) => v == v.roundToDouble()
                 ? v.round().toString()
                 : v.toStringAsFixed(1),
-            parse: (s) => double.tryParse(s.trim().replaceAll(',', '.')),
+            parse: parseClock,
             onChanged: onZoom,
-            onCommit: () {},
           ),
         ),
       ],

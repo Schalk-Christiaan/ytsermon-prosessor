@@ -205,16 +205,8 @@ class _ShellState extends State<Shell> {
     );
   }
 
-  /// A flat panel on the ground (DESIGN.md): panel fill, radius 16, content clipped to it.
-  Widget _panel(Widget child) => Material(
-    key: const ValueKey('shell.panel'),
-    color: Theme.of(context).extension<AppTokens>()!.panel,
-    clipBehavior: Clip.antiAlias,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(kPanelRadius),
-    ),
-    child: child,
-  );
+  Widget _panel(Widget child) =>
+      appPanel(context, child, key: const ValueKey('shell.panel'));
 
   Widget _dest(IconData icon, String label, int i) {
     final cs = Theme.of(context).colorScheme;

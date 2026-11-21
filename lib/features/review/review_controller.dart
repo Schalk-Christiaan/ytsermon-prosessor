@@ -623,6 +623,7 @@ class ReviewController extends ChangeNotifier {
     position.removeListener(_skipCuts);
     jobs.removeListener(_onJobs);
     _pos?.cancel();
+    volume.dispose();
     if (videoReady) player.dispose();
     super.dispose();
   }

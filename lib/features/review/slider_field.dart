@@ -21,7 +21,7 @@ class SliderField extends StatefulWidget {
     required this.format,
     required this.parse,
     required this.onChanged,
-    required this.onCommit,
+    this.onCommit,
     this.fieldWidth = 76,
     this.showLabel = true,
   });
@@ -37,8 +37,8 @@ class SliderField extends StatefulWidget {
   /// Called on every drag tick and when a typed value is accepted.
   final ValueChanged<double> onChanged;
 
-  /// Called when the drag ends or a typed value was accepted (the point to save).
-  final VoidCallback onCommit;
+  /// Called when the drag ends or a typed value was accepted (the point to save); none = nothing to save.
+  final VoidCallback? onCommit;
 
   @override
   State<SliderField> createState() => _SliderFieldState();
@@ -83,7 +83,7 @@ class _SliderFieldState extends State<SliderField> {
     final c = v.clamp(widget.min, widget.max).toDouble();
     if (c != widget.value) {
       widget.onChanged(c);
-      widget.onCommit();
+      widget.onCommit?.call();
     }
     _text.text = widget.format(c);
   }
@@ -109,7 +109,7 @@ class _SliderFieldState extends State<SliderField> {
                 max: widget.max > widget.min ? widget.max : widget.min + 1,
                 value: v,
                 onChanged: widget.onChanged,
-                onChangeEnd: (_) => widget.onCommit(),
+                onChangeEnd: (_) => widget.onCommit?.call(),
               ),
             ),
             const SizedBox(width: 8),

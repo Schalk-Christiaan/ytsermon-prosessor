@@ -10,6 +10,23 @@ import 'package:flutter/material.dart';
 /// Radius of every panel (DESIGN.md: flat panels on the ground, 12 dp apart).
 const kPanelRadius = 16.0;
 
+/// A flat panel on the ground (DESIGN.md): panel fill, radius 16, content clipped to it.
+Widget appPanel(
+  BuildContext context,
+  Widget child, {
+  Key? key,
+  double elevation = 0,
+}) => Material(
+  key: key,
+  color: Theme.of(context).extension<AppTokens>()!.panel,
+  elevation: elevation,
+  clipBehavior: Clip.antiAlias,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(kPanelRadius),
+  ),
+  child: child,
+);
+
 /// Gap between panels in the workspace.
 const kPanelGap = 12.0;
 

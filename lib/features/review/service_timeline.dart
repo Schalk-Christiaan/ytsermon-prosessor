@@ -95,7 +95,6 @@ class _ServiceTimelineState extends State<ServiceTimeline>
     curve: Curves.easeOutCubic,
   );
   final _scroll = ScrollController();
-  double _viewport = 0;
   Object? _barsKey;
   List<(double, Color)> _bars = const [];
 
@@ -143,13 +142,14 @@ class _ServiceTimelineState extends State<ServiceTimeline>
       // Keep the playhead in the middle of the view when the zoom changes.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_scroll.hasClients) return;
-        final w = _viewport * widget.zoom;
+        final vp = _scroll.position.viewportDimension;
+        final w = vp * widget.zoom;
         // At the very start (nothing played yet) the sermon bracket is what the user zooms to.
         final at = widget.position.value > 0
             ? widget.position.value
             : widget.sermonStart;
         _scroll.jumpTo(
-          (at / widget.duration * w - _viewport / 2).clamp(
+          (at / widget.duration * w - vp / 2).clamp(
             0,
             _scroll.position.maxScrollExtent,
           ),
@@ -218,7 +218,6 @@ class _ServiceTimelineState extends State<ServiceTimeline>
         Expanded(
           child: LayoutBuilder(
             builder: (context, c) {
-              _viewport = c.maxWidth;
               final w = c.maxWidth * widget.zoom;
               double x(double t) => t / widget.duration * w;
               return Scrollbar(

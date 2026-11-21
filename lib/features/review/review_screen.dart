@@ -200,25 +200,20 @@ class _ReviewScreenState extends State<ReviewScreen> {
   // tak: kode onseker → banier met die rede (ARB) en "Gaan na die grens"
   Widget _ready(L l, ThemeData th) {
     final plan = _c.plan!;
-    final tokens = th.extension<AppTokens>()!;
     final wide = MediaQuery.sizeOf(context).width >= 1280;
-    final props = Material(
+    final props = appPanel(
+      context,
       key: const ValueKey('review.properties'),
-      color: tokens.panel,
-      borderRadius: BorderRadius.circular(kPanelRadius),
-      clipBehavior: Clip.antiAlias,
       elevation: wide ? 0 : 8,
-      child: Padding(
+      Padding(
         padding: const EdgeInsets.all(16),
         child: PropertiesPanel(c: _c, settings: _settings),
       ),
     );
-    final stage = Material(
+    final stage = appPanel(
+      context,
       key: const ValueKey('review.stage'),
-      color: tokens.panel,
-      borderRadius: BorderRadius.circular(kPanelRadius),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
+      Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
