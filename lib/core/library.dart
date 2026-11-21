@@ -10,7 +10,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-import 'cutter.dart' show kFullName, whatsappText;
+import 'cutter.dart' show kFullName, kIndexFile, kWhatsappFile, whatsappText;
 import 'service_info.dart';
 
 /// One song file of a service.
@@ -40,7 +40,7 @@ class LibraryService {
       files.firstOrNull;
 
   /// The `WhatsApp.txt` of the folder.
-  File get whatsappFile => File(p.join(dir.path, 'WhatsApp.txt'));
+  File get whatsappFile => File(p.join(dir.path, kWhatsappFile));
 
   /// Whether [q] (lower case, trimmed) is in the theme, scripture, focus or a song name.
   bool matches(String q) =>
@@ -54,6 +54,34 @@ class LibraryService {
       ].any((t) => t != null && t.toLowerCase().contains(q));
 }
 
+/// The service of the output folder [dir] from its `diens.json`; null when the file is missing or broken.
+LibraryService? readService(Directory dir) {
+  try {
+    final j = jsonDecode(
+      File(p.join(dir.path, kIndexFile)).readAsStringSync(),
+    ) as Map<String, dynamic>;
+    return LibraryService(
+      dir,
+      ServiceInfo.fromJson(j['info'] as Map<String, dynamic>),
+      j['title'] as String?,
+      [
+        for (final n in (j['files'] as List? ?? const []))
+          if ('$n'.endsWith('.mp4')) p.join(dir.path, '$n'),
+      ],
+      [
+        for (final s in (j['songs'] as List? ?? const []))
+          LibrarySong(
+            (s as Map)['n'] as int,
+            s['name'] as String?,
+            s['file'] == null ? null : p.join(dir.path, s['file'] as String),
+          ),
+      ],
+    );
+  } on Object {
+    return null;
+  }
+}
+
 /// Reads every `<[outDir]>/<year>/<service>/diens.json`, newest date first, Oggend after Aand on one day;
 /// a folder whose file is broken is skipped. Loaded once per call: no watcher.
 List<LibraryService> loadLibrary(String outDir) {
@@ -61,34 +89,9 @@ List<LibraryService> loadLibrary(String outDir) {
   if (!root.existsSync()) return [];
   final all = <LibraryService>[];
   for (final f in root.listSync(recursive: true).whereType<File>()) {
-    if (p.basename(f.path) != 'diens.json') continue;
-    try {
-      final j = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
-      final dir = f.parent;
-      all.add(
-        LibraryService(
-          dir,
-          ServiceInfo.fromJson(j['info'] as Map<String, dynamic>),
-          j['title'] as String?,
-          [
-            for (final n in (j['files'] as List? ?? const []))
-              if ('$n'.endsWith('.mp4')) p.join(dir.path, '$n'),
-          ],
-          [
-            for (final s in (j['songs'] as List? ?? const []))
-              LibrarySong(
-                (s as Map)['n'] as int,
-                s['name'] as String?,
-                s['file'] == null
-                    ? null
-                    : p.join(dir.path, s['file'] as String),
-              ),
-          ],
-        ),
-      );
-    } on Object {
-      continue;
-    }
+    if (p.basename(f.path) != kIndexFile) continue;
+    final s = readService(f.parent);
+    if (s != null) all.add(s);
   }
   all.sort((a, b) {
     final d = b.info.date.compareTo(a.info.date);

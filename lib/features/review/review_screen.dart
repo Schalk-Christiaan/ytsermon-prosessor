@@ -221,7 +221,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           ],
           ServiceTimeline(
             duration: _c.duration,
-            blocks: _c.blocks,
+            blocks: _c.sound,
             sermonStart: plan.sermonStart,
             sermonEnd: plan.sermonEnd,
             shorts: plan.shorts,

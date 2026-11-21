@@ -222,32 +222,33 @@ void saveAnalysis(Directory dir, Analysis a) =>
       }),
     );
 
-Map<String, dynamic>? _analysis(Directory dir) {
+/// A labelled span of the saved analysis.
+typedef Labelled = ({double start, double end, BlockLabel label});
+
+/// The saved analysis of the work folder [dir] (read once): labelled spans, songs and service label;
+/// empty when the service was never analysed.
+({List<Labelled> labels, List<Song> songs, String? service}) loadAnalysis(
+  Directory dir,
+) {
   final f = File(p.join(dir.path, kAnalysisFile));
-  return f.existsSync()
+  final j = f.existsSync()
       ? jsonDecode(f.readAsStringSync()) as Map<String, dynamic>
-      : null;
-}
-
-/// The saved songs of the work folder [dir]; empty when the service was never analysed.
-List<Song> loadSongs(Directory dir) => [
-  for (final x in (_analysis(dir)?['songs'] as List? ?? const []))
-    Song.fromJson(x as Map<String, dynamic>),
-];
-
-/// The saved service label (`nagmaal`, `doop` …) of [dir], or null.
-String? loadService(Directory dir) => _analysis(dir)?['service'] as String?;
-
-/// The saved labelled spans of the work folder [dir]; empty when the service was never analysed.
-List<({double start, double end, BlockLabel label})> loadLabels(Directory dir) {
-  return [
-    for (final b in (_analysis(dir)?['blocks'] as List? ?? const []))
-      (
-        start: (b['start'] as num).toDouble(),
-        end: (b['end'] as num).toDouble(),
-        label: BlockLabel.values.asNameMap()[b['label']] ?? BlockLabel.ander,
-      ),
-  ];
+      : const <String, dynamic>{};
+  return (
+    labels: [
+      for (final b in (j['blocks'] as List? ?? const []))
+        (
+          start: (b['start'] as num).toDouble(),
+          end: (b['end'] as num).toDouble(),
+          label: BlockLabel.values.asNameMap()[b['label']] ?? BlockLabel.ander,
+        ),
+    ],
+    songs: [
+      for (final x in (j['songs'] as List? ?? const []))
+        Song.fromJson(x as Map<String, dynamic>),
+    ],
+    service: j['service'] as String?,
+  );
 }
 
 String _excerpt(List<Word> w, int head, int tail) {

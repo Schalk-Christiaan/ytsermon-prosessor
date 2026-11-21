@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -15,6 +16,7 @@ import 'package:preekverwerker/core/cutter.dart';
 import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/store.dart';
+import 'package:preekverwerker/core/service_info.dart';
 import 'package:preekverwerker/core/settings.dart';
 import 'package:preekverwerker/core/youtube.dart';
 import 'package:preekverwerker/features/library/library_screen.dart';
@@ -1274,6 +1276,9 @@ void main() {
       final d = Directory.systemTemp.createTempSync('wa');
       addTearDown(() => d.deleteSync(recursive: true));
       File('${d.path}/WhatsApp.txt').writeAsStringSync('*Aanddiens*\nTema: X');
+      File('${d.path}/diens.json').writeAsStringSync(
+        jsonEncode({'info': ServiceInfo(date: '2026-11-15').toJson()}),
+      );
       final tc = testController(seed: false);
       final st = tc.$2
         ..merge([const ChannelItem('ccccccccccc', 'Preek c', 100)]);

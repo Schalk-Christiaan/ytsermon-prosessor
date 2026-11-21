@@ -288,6 +288,11 @@ class JobQueue extends ChangeNotifier {
   }
 }
 
+/// Awaits [work], or throws [JobCancelled] as soon as [cancel] fires: Ollama's HTTP call is not killable, so
+/// cancelling abandons it.
+Future<T> _abandonable<T>(Future<T> work, Future<void> cancel) =>
+    Future.any([work, cancel.then<T>((_) => throw JobCancelled())]);
+
 // stap: v1 2 Beplan | onderskrifte + video af; Ollama benoem die blokke, kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks
 // tak: Ollama af → "Ollama het nie geantwoord nie" met Probeer weer in Werkry
 /// Fetches meta, captions and video (the sound is needed for the blocks and the silence snap), has Ollama
@@ -314,8 +319,7 @@ JobRun planJob(SermonStore store) => (c) async {
   final sound = await soundBlocks(m.dir, video, cancel: c.cancel);
   c.phase(JobPhase.plan);
   final speech = blocks(segs, sound);
-  // Ollama's HTTP call is not killable: cancelling abandons it.
-  final a = await Future.any([
+  final a = await _abandonable(
     Planner().analyse(
       blocks: speech,
       sound: sound,
@@ -323,15 +327,15 @@ JobRun planJob(SermonStore store) => (c) async {
       originalDescription: m.info.descriptionText,
       psalms: ServiceInfo.fromInfo(m.info).psalms,
     ),
-    c.cancel.then<Analysis>((_) => throw JobCancelled()),
-  ]);
+    c.cancel,
+  );
   saveAnalysis(m.dir, a);
   final bounds = await snapBounds(
     video,
     findBounds(a.blocks, sound),
     cancel: c.cancel,
   );
-  await Future.any([
+  await _abandonable(
     Planner().loadOrPlan(
       m.dir,
       blocks: speech,
@@ -340,8 +344,8 @@ JobRun planJob(SermonStore store) => (c) async {
       originalDescription: m.info.descriptionText,
       cancel: c.cancel,
     ),
-    c.cancel.then<SermonPlan>((_) => throw JobCancelled()),
-  ]);
+    c.cancel,
+  );
 };
 
 // stap: v1 4 Sny | herkodeer presies van die eerste woord tot ná die Amen (met intro/outro en uitgeknipte stukke saamgevoeg); uitset in die uitsetgids
@@ -363,15 +367,17 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   final plan = _plan(store, c.id);
   final segs = parseJson3(m.captions.readAsStringSync());
   final settings = AppSettings.load(store.root);
+  final saved = loadAnalysis(m.dir);
   final info = ServiceInfo.fromInfo(m.info)
     ..theme ??= plan.title
-    ..label = loadService(m.dir);
+    ..label = saved.service;
   applyChoices(info, m.dir);
   final dest = Directory(serviceDir(out?.path ?? settings.outDir, info))
     ..createSync(recursive: true);
   File? clip(String? path) => path == null ? null : File(path);
-  final word = wordParts(loadLabels(m.dir), loadSound(m.dir), plan.parts());
-  final songs = loadSongs(m.dir);
+  final intro = clip(settings.intro), outro = clip(settings.outro);
+  final word = wordParts(saved.labels, loadSound(m.dir), plan.parts());
+  final songs = saved.songs;
   final files = <File>[];
   void saveOutputs() =>
       store.save(store.byId(c.id)!..outputs = [for (final f in files) f.path]);
@@ -383,8 +389,8 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
         video,
         plan.parts(),
         File(p.join(dest.path, '$kFullName.mp4')),
-        intro: clip(settings.intro),
-        outro: clip(settings.outro),
+        intro: intro,
+        outro: outro,
         onProgress: c.progress,
         cancel: c.cancel,
         log: c.log,
@@ -417,8 +423,8 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
         video,
         word,
         File(p.join(dest.path, '$kWordName.mp4')),
-        intro: clip(settings.intro),
-        outro: clip(settings.outro),
+        intro: intro,
+        outro: outro,
         onProgress: c.progress,
         cancel: c.cancel,
         log: c.log,
@@ -440,9 +446,9 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
       );
     }
   }
-  File(p.join(dest.path, 'WhatsApp.txt'))
+  File(p.join(dest.path, kWhatsappFile))
       .writeAsStringSync(whatsappText(settings.whatsappTemplate, info));
-  File(p.join(dest.path, 'diens.json')).writeAsStringSync(
+  File(p.join(dest.path, kIndexFile)).writeAsStringSync(
     jsonEncode({
       'info': info.toJson(),
       'title': plan.title,

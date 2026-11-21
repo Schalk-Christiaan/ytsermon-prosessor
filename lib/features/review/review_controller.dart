@@ -105,17 +105,12 @@ class ReviewController extends ChangeNotifier {
 
   FetchedMeta? meta;
   List<Segment> segments = [];
-  List<TimeBlock> blocks = [];
+  List<TimeBlock> sound = [];
   SermonPlan? plan;
   double duration = 0;
 
   /// Blocks the AI labelled as prayer, marked on the timeline and in the transcript.
   List<Span> prayerMarks = [];
-
-  static List<Span> _marks(Directory dir) => [
-    for (final l in loadLabels(dir))
-      if (l.label == BlockLabel.gebed) Span(l.start, l.end),
-  ];
 
   /// The songs the AI named (their names go on the timeline's music pieces).
   List<Song> songs = [];
@@ -140,11 +135,16 @@ class ReviewController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Reads the songs and the service facts of [m] from its work folder.
+  /// Reads the prayers, songs and service facts of [m] from its work folder (analysis.json, read once).
   void _loadService(FetchedMeta m) {
-    songs = loadSongs(m.dir);
+    final a = loadAnalysis(m.dir);
+    prayerMarks = [
+      for (final l in a.labels)
+        if (l.label == BlockLabel.gebed) Span(l.start, l.end),
+    ];
+    songs = a.songs;
     service = applyChoices(
-      ServiceInfo.fromInfo(m.info)..label = loadService(m.dir),
+      ServiceInfo.fromInfo(m.info)..label = a.service,
       m.dir,
     );
   }
@@ -185,8 +185,7 @@ class ReviewController extends ChangeNotifier {
       meta = FetchedMeta(id!, dir, j);
       duration = j.durationSeconds;
       segments = parseJson3(m.captions.readAsStringSync());
-      blocks = loadSound(dir);
-      prayerMarks = _marks(dir);
+      sound = loadSound(dir);
       _loadService(meta!);
     }
     final pf = File(p.join(dir.path, kPlanFile));
@@ -248,11 +247,11 @@ class ReviewController extends ChangeNotifier {
         notifyListeners();
         c.complete(f);
         // Older plans have no sound.json yet: analyse the video once (one ffmpeg run) for the timeline.
-        if (blocks.isEmpty) {
+        if (sound.isEmpty) {
           try {
             final b = await soundBlocks(m.dir, f);
             if (!stale()) {
-              blocks = b;
+              sound = b;
               notifyListeners();
             }
           } on Object {
@@ -562,8 +561,7 @@ class ReviewController extends ChangeNotifier {
     id = m.id;
     meta = m;
     segments = segs;
-    blocks = const [];
-    prayerMarks = _marks(m.dir);
+    sound = const [];
     _loadService(m);
     plan = p;
     duration = dur;

@@ -11,6 +11,7 @@ import 'dart:math' as math;
 import 'captions.dart';
 import 'cutter.dart';
 import 'models.dart';
+import 'planner.dart' show Labelled;
 import 'tools.dart';
 
 /// Shortest stretch without "Amen" or music that counts as the sermon.
@@ -63,9 +64,6 @@ Bounds findBounds(List<Block> blocks, List<TimeBlock> sound) {
   if (runs.isEmpty || len(runs.first) < kMinSermon) {
     return Bounds(0, total, reason: BoundsDoubt.noSermon);
   }
-  bool musicBetween(Block a, Block b) => sound.any(
-    (t) => t.kind == SegmentKind.music && t.end > a.end && t.start < b.start,
-  );
   // Index of the first block of the prayer that ends right before block [i], or -1.
   int prayerBefore(int i) {
     var k = i - 1;
@@ -76,7 +74,7 @@ Bounds findBounds(List<Block> blocks, List<TimeBlock> sound) {
     if (k < 0) return -1;
     while (k > 0 &&
         !_notPrayer.contains(blocks[k - 1].label) &&
-        !musicBetween(blocks[k - 1], blocks[k])) {
+        !musicBetween(sound, blocks[k - 1].end, blocks[k].start)) {
       k--;
     }
     return k;
@@ -111,11 +109,16 @@ Bounds findBounds(List<Block> blocks, List<TimeBlock> sound) {
   );
 }
 
+/// Whether a music stretch of [sound] lies between the times [from] and [to].
+bool musicBetween(List<TimeBlock> sound, double from, double to) => sound.any(
+  (t) => t.kind == SegmentKind.music && t.end > from && t.start < to,
+);
+
 // stap: diensindeling 6 Net die woord | alle spraak tussen die gebede (Skriflesing ingesluit), sonder gebede en sang, in een snit aanmekaar
 /// The kept pieces of "Net die woord": every labelled block that is not a prayer, inside the [within] spans
 /// (the sermon cut), joined into one span while neither a prayer nor music comes between.
 List<Span> wordParts(
-  List<({double start, double end, BlockLabel label})> labels,
+  List<Labelled> labels,
   List<TimeBlock> sound,
   List<Span> within,
 ) {
@@ -124,13 +127,7 @@ List<Span> wordParts(
   for (final b in labels) {
     if (b.label == BlockLabel.gebed) {
       run = null;
-    } else if (run != null &&
-        sound.any(
-          (t) =>
-              t.kind == SegmentKind.music &&
-              t.end > run!.end &&
-              t.start < b.start,
-        )) {
+    } else if (run != null && musicBetween(sound, run.end, b.start)) {
       run = null;
     }
     if (b.label == BlockLabel.gebed) continue;

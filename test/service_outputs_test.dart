@@ -154,7 +154,11 @@ void main() {
         await dur(p.join(d.path, 'Volle preek.mp4')),
         closeTo(3361.53 - 886.64, 0.05),
       );
-      final parts = wordParts(loadLabels(dir), loadSound(dir), plan.parts());
+      final parts = wordParts(
+        loadAnalysis(dir).labels,
+        loadSound(dir),
+        plan.parts(),
+      );
       expect(
         await dur(p.join(d.path, 'Net die woord.mp4')),
         closeTo(

@@ -11,6 +11,8 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:path/path.dart' as p;
+
 import 'models.dart';
 import 'tools.dart';
 
@@ -228,7 +230,7 @@ const kSoundFile = 'sound.json';
 
 /// Writes the classified blocks to [kSoundFile] in [dir].
 void saveSound(Directory dir, List<TimeBlock> blocks) =>
-    File('${dir.path}/$kSoundFile').writeAsStringSync(
+    File(p.join(dir.path, kSoundFile)).writeAsStringSync(
       jsonEncode([
         for (final b in blocks)
           {'start': b.start, 'end': b.end, 'kind': b.kind.name},
@@ -237,7 +239,7 @@ void saveSound(Directory dir, List<TimeBlock> blocks) =>
 
 /// The saved sound blocks of the work folder [dir]; empty when the video was never analysed.
 List<TimeBlock> loadSound(Directory dir) {
-  final f = File('${dir.path}/$kSoundFile');
+  final f = File(p.join(dir.path, kSoundFile));
   if (!f.existsSync()) return [];
   return [
     for (final j in jsonDecode(f.readAsStringSync()) as List)

@@ -3,7 +3,7 @@
 //   wanneer: oral waar 'n plan gebruik word
 //   groep: core | Kern
 //   skryf: —
-//   doel: Word, Segment (met woordtye), TimeBlock, Bounds, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
+//   doel: Word, Segment (met woordtye), TimeBlock, Block/BlockLabel (spraakblok met etiket), Song, Bounds, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
 //   status: bou
 /// What a stretch of the service sounds like (`silence` and `noise` come from the sound classification).
 enum SegmentKind { speech, music, silence, noise }

@@ -363,6 +363,9 @@ String serviceDir(String outDir, ServiceInfo info) => p.join(
 /// File names inside a [serviceDir] (without extension).
 const kFullName = 'Volle preek', kWordName = 'Net die woord';
 
+/// The text and the data file written beside the outputs of a service.
+const kWhatsappFile = 'WhatsApp.txt', kIndexFile = 'diens.json';
+
 /// ffmpeg arguments for one song: the part [s] of [video] as a stereo 128 kbps mp3 with ID3 title, album and track.
 List<String> songArgs(
   String video,
@@ -419,7 +422,7 @@ Future<File> cutSong(
       Span(song.start, song.end),
       out.path,
       title: name,
-      album: 'GK Oranjerivier ${info.date} ${_dienst(info)}',
+      album: '$kChurch ${info.date} ${_dienst(info)}',
       track: song.n,
     ),
     cancel: cancel,
@@ -427,6 +430,9 @@ Future<File> cutSong(
   );
   return out;
 }
+
+/// The church in the mp3 album tag; output text (like the upload template), not UI, so not in the ARB.
+const kChurch = 'GK Oranjerivier';
 
 String _dienst(ServiceInfo i) => i.evening ? 'Aanddiens' : 'Oggenddiens';
 

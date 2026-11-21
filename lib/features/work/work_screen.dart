@@ -12,7 +12,9 @@ import 'package:flutter/services.dart';
 
 import 'package:path/path.dart' as p;
 
+import '../../core/cutter.dart' show kWhatsappTemplate;
 import '../../core/jobs.dart';
+import '../../core/library.dart';
 import '../../core/store.dart';
 import '../../core/tools.dart';
 import '../../core/youtube.dart';
@@ -225,10 +227,12 @@ class WorkScreen extends StatelessWidget {
   // stap: diensindeling 11 Kopieer WhatsApp-teks | die teks langs die uitvoere (WhatsApp.txt) op die knipbord, om saam met die klank te plak
   /// Puts the `WhatsApp.txt` next to [file] on the clipboard.
   Future<void> _copyWhatsapp(BuildContext context, L l, String file) async {
-    final f = File(p.join(p.dirname(file), 'WhatsApp.txt'));
-    if (!f.existsSync()) return;
+    final s = readService(Directory(p.dirname(file)));
+    if (s == null) return;
     final m = ScaffoldMessenger.of(context);
-    await Clipboard.setData(ClipboardData(text: f.readAsStringSync()));
+    await Clipboard.setData(
+      ClipboardData(text: libraryWhatsapp(s, kWhatsappTemplate)),
+    );
     m.showSnackBar(SnackBar(content: Text(l.whatsappTextCopied)));
   }
 
