@@ -3,8 +3,9 @@
 //   wanneer: oral waar 'n plan gebruik word
 //   groep: core | Kern
 //   skryf: —
-//   doel: Segment, TimeBlock, Prayer, Short, SermonPlan met JSON
+//   doel: Segment, TimeBlock, Prayer, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON
 //   status: bou
+/// Whether a stretch of the service is speech or music.
 enum SegmentKind { speech, music }
 
 /// One caption line (or music marker); times in seconds from video start.
