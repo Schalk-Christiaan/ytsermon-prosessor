@@ -96,6 +96,34 @@ class _ServiceTimelineState extends State<ServiceTimeline>
   );
   final _scroll = ScrollController();
   double _viewport = 0;
+  Object? _barsKey;
+  List<(double, Color)> _bars = const [];
+
+  /// [waveBars] memoised on the data, the width and the colours: the build runs often, the bars do not.
+  List<(double, Color)> _barsFor(double w, ColorScheme cs) {
+    final key = (
+      widget.levels,
+      widget.blocks,
+      w,
+      cs.secondary,
+      cs.tertiary,
+      cs.onSurface,
+    );
+    if (_barsKey != key) {
+      _barsKey = key;
+      _bars = waveBars(
+        widget.levels,
+        widget.blocks,
+        widget.duration,
+        w,
+        cs.secondary,
+        cs.tertiary,
+        cs.onSurface,
+      );
+    }
+    return _bars;
+  }
+
   bool _started = false;
 
   @override
@@ -249,10 +277,11 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                                       ),
                                       child: RepaintBoundary(
                                         child: CustomPaint(
-                                          painter: _TracksPainter(
+                                          painter: TracksPainter(
                                             duration: widget.duration,
                                             blocks: widget.blocks,
                                             levels: widget.levels,
+                                            bars: _barsFor(w, cs),
                                             shorts: widget.shorts,
                                             cuts: widget.cuts,
                                             prayers: widget.prayers,
@@ -471,11 +500,13 @@ class _PlayheadPainter extends CustomPainter {
 }
 
 /// The three tracks. Static: it repaints when the data or the width change, never per playback tick.
-class _TracksPainter extends CustomPainter {
-  _TracksPainter({
+@visibleForTesting
+class TracksPainter extends CustomPainter {
+  TracksPainter({
     required this.duration,
     required this.blocks,
     required this.levels,
+    required this.bars,
     required this.shorts,
     required this.cuts,
     required this.prayers,
@@ -493,11 +524,21 @@ class _TracksPainter extends CustomPainter {
     required this.ink,
     required this.ground,
     required this.labelStyle,
-  });
+  }) : _sig = Object.hash(
+         Object.hashAll([for (final s in shorts) Object.hash(s.start, s.end)]),
+         Object.hashAll([for (final c in cuts) Object.hash(c.start, c.end)]),
+         Object.hashAll([for (final p in prayers) Object.hash(p.start, p.end)]),
+         Object.hashAll([for (final s in songs) Object.hash(s.start, s.name)]),
+         faulty.length,
+         blocks.length,
+       );
 
   final double duration, start, end;
   final List<TimeBlock> blocks;
   final List<double> levels;
+
+  /// Waveform bars (height, colour) from [waveBars], computed once per data/width, not per paint.
+  final List<(double, Color)> bars;
   final List<Short> shorts;
   final List<Span> cuts, prayers;
   final List<Song> songs;
@@ -538,24 +579,11 @@ class _TracksPainter extends CustomPainter {
         );
       }
     } else {
-      final n = (size.width / 2).floor();
-      final secsPerBar = duration / n;
-      for (var i = 0; i < n; i++) {
-        final a = (i * secsPerBar).floor(),
-            b = math.max(a + 1, ((i + 1) * secsPerBar).ceil());
-        var peak = -120.0;
-        for (var k = a; k < b && k < levels.length; k++) {
-          peak = math.max(peak, levels[k]);
-        }
-        final amp = ((peak + 60) / 60).clamp(0.04, 1.0) * (_kSoundH / 2 - 2);
-        final t = (i + 0.5) * secsPerBar;
-        final blk = blocks.where((q) => t >= q.start && t < q.end).firstOrNull;
+      for (var i = 0; i < bars.length; i++) {
+        final (amp, color) = bars[i];
         canvas.drawRect(
           Rect.fromLTWH(i * 2.0, _kSoundH / 2 - amp, 1.4, amp * 2),
-          Paint()
-            ..color = (blk == null ? ink : kind(blk.kind)).withValues(
-              alpha: 0.75,
-            ),
+          Paint()..color = color,
         );
       }
     }
@@ -674,8 +702,60 @@ class _TracksPainter extends CustomPainter {
     }
   }
 
+  /// Shorts, cuts and prayers are mutated in place, so they are compared by value.
+  final int _sig;
+
   @override
-  // Shorts are mutated in place (length slider), so a diff is impossible. The tracks repaint
-  // when the parent rebuilds (a change, a resize, a zoom), never on a playback tick.
-  bool shouldRepaint(_TracksPainter o) => true;
+  bool shouldRepaint(TracksPainter o) =>
+      !identical(o.levels, levels) ||
+      !identical(o.bars, bars) ||
+      o._sig != _sig ||
+      o.duration != duration ||
+      o.start != start ||
+      o.end != end ||
+      o.cutLabel != cutLabel ||
+      o.musicLabel != musicLabel ||
+      o.speech != speech ||
+      o.music != music ||
+      o.sermon != sermon ||
+      o.wood != wood ||
+      o.error != error ||
+      o.ink != ink ||
+      o.ground != ground ||
+      o.labelStyle != labelStyle;
+}
+
+/// The Klank bars: one per ~2 px, loudest second in each, in the colour of what plays then.
+List<(double, Color)> waveBars(
+  List<double> levels,
+  List<TimeBlock> blocks,
+  double duration,
+  double width,
+  Color speech,
+  Color music,
+  Color ink,
+) {
+  final n = (width / 2).floor();
+  if (levels.isEmpty || n <= 0) return const [];
+  final secsPerBar = duration / n;
+  return [
+    for (var i = 0; i < n; i++)
+      () {
+        final a = (i * secsPerBar).floor(),
+            b = math.max(a + 1, ((i + 1) * secsPerBar).ceil());
+        var peak = -120.0;
+        for (var k = a; k < b && k < levels.length; k++) {
+          peak = math.max(peak, levels[k]);
+        }
+        final t = (i + 0.5) * secsPerBar;
+        final blk = blocks.where((q) => t >= q.start && t < q.end).firstOrNull;
+        final c = blk == null
+            ? ink
+            : (blk.kind == SegmentKind.music ? music : speech);
+        return (
+          ((peak + 60) / 60).clamp(0.04, 1.0) * (_kSoundH / 2 - 2),
+          c.withValues(alpha: 0.75),
+        );
+      }(),
+  ];
 }
