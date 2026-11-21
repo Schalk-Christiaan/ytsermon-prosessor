@@ -23,6 +23,12 @@ Skills: `projekkonteks:ui-ux` vir UI; `projekkonteks:bewys` vir klaar; `diagnosi
 **Laaste sessie:** 2026-11-21
 **Volgende:** Schalk besluit oor die lBMw/6s-grensfoute (regmaak op die tak met 'n rooi toets per diens, of eers merge `git merge --no-ff bou/diensindeling`, `git worktree remove`, `git branch -d`); daarna `/bewys`.
 
+## Gebruikers
+- **Schalk**: tegnies; sleutelbord (I/O, ←/→, Shift, spasie, Ctrl+Z), spoed en die log. Struikel oor: stadige herhaalwerk, muis-net-paaie.
+- **Oom Johan** (±65, kerkkantoor, Maandag): net die muis, een duidelike knoppie, gewone Afrikaans, sekerheid dat dit gewerk het. Struikel oor: ikone sonder woorde, klein teikens, Engelse terme, foute sonder raad.
+- **Die predikant**: kyk titel, Skriflesing, beskrywing, en dat die preek nie halfpad begin nie. Struikel oor: afgekapte titels, nie kan sien waar die snit begin nie.
+- **Die WhatsApp-admin**: wil net die klank en die teks. Struikel oor: soek na die lêer, te veel stappe.
+
 ## Besluite
 2026-11-19 Flutter-desktop, alles in Dart; Python laat val (want een taal, een exe; yt-dlp/ffmpeg is los .exe-lêers)
 2026-11-19 Uitset: volle gesnyde preek én Shorts met ingebrande onderskrifte (want Schalk wil albei)
@@ -46,6 +52,10 @@ Skills: `projekkonteks:ui-ux` vir UI; `projekkonteks:bewys` vir klaar; `diagnosi
 2026-11-21 Liedname uit die aankondiging voor die sang, gekontroleer teen die beskrywing se psalmlys; alle drie uitvoere by verstek aan (want Schalk)
 2026-11-21 WhatsApp-teks uit 'n sjabloon in Instellings: *{diens} · {datum}* / Tema / Skriflesing / Fokus / {belydenis}; velde uit die beskrywing (want Schalk het die voorbeeld goedgekeur)
 2026-11-21 Twee Ollama-oproepe per preek (etikette, dan titel/beskrywing/Shorts) i.p.v. één (want qwen3:8b dryf by ~12k tokens; Schalk aanvaar)
+2026-11-21 UI-rigting: uitleg uit die Korsa-Dribbble-skoot (lig: rail, paneel, voorskou, bane-tydlyn) en clideo (donker, oranje speelkop, eienskappe-paneel met sliders); Oranje/rivier/kanselhout en Source Serif/Sans bly (want Schalk het albei kiekies gestuur; die oranje pas reeds)
+2026-11-21 Elke kontrole word outomaties getoets: inventaris van sleutels + widget-toetse + integration_test op Linux met cmake/ninja (want Schalk wil weet elke knoppie en slider werk)
+2026-11-21 Werkvlak: merge diensindeling eers; geen video-duimnaels in die tydlyn (net golfvorm); Preke verstek lys, rooster een klik weg; geen spoed-knoppies (want Schalk)
+2026-11-21 Impeccable in die projek (.claude/skills), sonder die web-hook (want die detektor/hook werk net op HTML/CSS)
 
 ## Name
 die kanaal = https://www.youtube.com/@gereformeerdekerkoranjeriv5791
