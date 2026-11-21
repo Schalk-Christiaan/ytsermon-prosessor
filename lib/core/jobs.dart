@@ -21,6 +21,7 @@ import 'paths.dart';
 import 'planner.dart';
 import 'playlists.dart';
 import 'settings.dart';
+import 'sound.dart';
 import 'store.dart';
 import 'tools.dart';
 import 'youtube.dart';
@@ -311,6 +312,7 @@ JobRun planJob(SermonStore store) => (c) async {
     );
     c.progress(null);
     bounds = await snapBounds(video, bounds, cancel: c.cancel);
+    await soundBlocks(m.dir, video, cancel: c.cancel);
   }
   c.phase(JobPhase.plan);
   // Ollama's HTTP call is not killable: cancelling abandons it.

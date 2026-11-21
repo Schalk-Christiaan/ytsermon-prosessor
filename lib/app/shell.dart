@@ -9,6 +9,9 @@
 // vloei: v1 | Verwerk nuutste diens
 // inleiding: Maandag: die diens van gister word een knoppie later 'n gesnyde preek met Shorts op YouTube.
 // hoekom: die gewone week; Oom Johan moet dit sonder hulp kan doen, met net een gevulde knoppie op elke skerm.
+// vloei: diensindeling | Die hele diens verstaan
+// inleiding: Die app hoor waar musiek en spraak is, benoem elke spraakstuk, en maak uit een diens drie uitvoere (volle preek, net die woord, sang) in een gids met 'n WhatsApp-teks.
+// hoekom: Schalk wil die woord en die sang apart hê, en die diensorde verskil van week tot week; musiek uit die klank is betroubaarder as YouTube se merkers.
 // vloei: v2 | 'n Ou preek verwerk
 // inleiding: 'n Diens van weke gelede wat nog nie opgelaai is nie, gevind met die filter "Nie opgelaai nie".
 // hoekom: die agterstand van die kanaal word so een vir een ingehaal.

@@ -92,14 +92,6 @@ void main() {
     expect(srt, contains('dis by hierdie erediens inskakel'));
   });
 
-  test('timeline merges into speech/music blocks', () {
-    final t = timeline(segs);
-    expect(t.first.kind, SegmentKind.music);
-    expect(t.first.start, closeTo(58.295, 1e-6));
-    expect(t.first.end, greaterThan(77));
-    expect(t.last.kind, SegmentKind.speech);
-  });
-
   test('real video token estimate (if cached)', () {
     final f = File(
       '/tmp/claude-1000/live/work/YWz5gf0onjk/YWz5gf0onjk.af-orig.json3',

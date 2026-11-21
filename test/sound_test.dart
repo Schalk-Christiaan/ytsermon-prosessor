@@ -47,6 +47,34 @@ SoundFeatures _load(String id) {
 }
 
 void main() {
+  test('sound.json round trip: loadSound reads what saveSound wrote', () {
+    final d = Directory.systemTemp.createTempSync('snd');
+    addTearDown(() => d.deleteSync(recursive: true));
+    expect(loadSound(d), isEmpty);
+    final b = classify(_load('YWz5gf0onjk'));
+    saveSound(d, b);
+    final r = loadSound(d);
+    expect(r.length, b.length);
+    expect(
+      r.map((x) => (x.start, x.end, x.kind)),
+      b.map((x) => (x.start, x.end, x.kind)),
+    );
+  });
+
+  test('YWz5gf0onjk music at 11:40-14:44, 22:10-23:30, 56:34-60:52', () {
+    final music = [
+      for (final b in classify(_load('YWz5gf0onjk')))
+        if (b.kind == SegmentKind.music) (b.start, b.end),
+    ];
+    for (final w in [(700, 884), (1330, 1410), (3394, 3652)]) {
+      expect(
+        music.any((m) => (m.$1 - w.$1).abs() <= 2 && (m.$2 - w.$2).abs() <= 2),
+        isTrue,
+        reason: '$w in $music',
+      );
+    }
+  });
+
   test('soundArgs asks for 16 kHz mono PCM on stdout', () {
     final a = soundArgs('v.mp4');
     expect(a, containsAllInOrder(['-i', 'v.mp4', '-ac', '1', '-ar', '16000']));

@@ -6,6 +6,7 @@
 //   doel: een ffmpeg-proses gee 16 kHz-PCM; Dart bereken per sekonde lae-energie-rame, platheid en dB en klassifiseer in stilte/musiek/spraak/geraas (spektrogram, nie YouTube se [musiek]-merkers nie)
 //   status: bou
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -220,4 +221,44 @@ List<TimeBlock> classify(SoundFeatures f) {
   return [
     for (final r in out) TimeBlock(r.$1.toDouble(), r.$2.toDouble(), r.$3),
   ];
+}
+
+/// File in the work folder that holds the classified [TimeBlock]s of the service.
+const kSoundFile = 'sound.json';
+
+/// Writes the classified blocks to [kSoundFile] in [dir].
+void saveSound(Directory dir, List<TimeBlock> blocks) =>
+    File('${dir.path}/$kSoundFile').writeAsStringSync(
+      jsonEncode([
+        for (final b in blocks)
+          {'start': b.start, 'end': b.end, 'kind': b.kind.name},
+      ]),
+    );
+
+/// The saved sound blocks of the work folder [dir]; empty when the video was never analysed.
+List<TimeBlock> loadSound(Directory dir) {
+  final f = File('${dir.path}/$kSoundFile');
+  if (!f.existsSync()) return [];
+  return [
+    for (final j in jsonDecode(f.readAsStringSync()) as List)
+      TimeBlock(
+        (j['start'] as num).toDouble(),
+        (j['end'] as num).toDouble(),
+        SegmentKind.values.byName(j['kind'] as String),
+      ),
+  ];
+}
+
+// stap: diensindeling 1 Klank | een ffmpeg-proses lees die klank, Dart klassifiseer elke sekonde as stilte/musiek/spraak/geraas; die uitslag word in sound.json bewaar
+/// The sound blocks of [video], analysed once and cached in [dir] as [kSoundFile].
+Future<List<TimeBlock>> soundBlocks(
+  Directory dir,
+  File video, {
+  Future<void>? cancel,
+}) async {
+  final saved = loadSound(dir);
+  if (saved.isNotEmpty) return saved;
+  final b = classify(await analyseSound(video.path, cancel: cancel));
+  saveSound(dir, b);
+  return b;
 }

@@ -3,7 +3,7 @@
 //   wanneer: ná fetchMeta
 //   groep: core | Kern
 //   skryf: —
-//   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI, kandidaat-gebede op woordvlak (merkwoord tot Amen-woord, vir findBounds), SRT en dienstydlyn (spraak/musiek)
+//   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI, kandidaat-gebede op woordvlak (merkwoord tot Amen-woord, vir findBounds), SRT
 //   status: bou
 import 'dart:convert';
 import 'dart:math' as math;
@@ -153,22 +153,6 @@ String toSrt(List<Segment> segs, double from, double to) {
     }
   }
   return out.toString();
-}
-
-/// Merges captions into speech/music blocks (gaps up to [gap] seconds are bridged) for the service timeline.
-List<TimeBlock> timeline(List<Segment> segs, {double gap = 10}) {
-  final out = <TimeBlock>[];
-  for (final s in segs) {
-    if (out.isNotEmpty &&
-        out.last.kind == s.kind &&
-        s.start - out.last.end <= gap) {
-      final l = out.removeLast();
-      out.add(TimeBlock(l.start, s.end > l.end ? s.end : l.end, l.kind));
-    } else {
-      out.add(TimeBlock(s.start, s.end, s.kind));
-    }
-  }
-  return out;
 }
 
 final _amen = RegExp(r'^amen[.!,]*$', caseSensitive: false);

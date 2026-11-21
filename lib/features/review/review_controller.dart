@@ -19,6 +19,7 @@ import '../../core/channel.dart';
 import '../../core/jobs.dart';
 import '../../core/models.dart';
 import '../../core/planner.dart';
+import '../../core/sound.dart';
 import '../../core/store.dart';
 
 /// What Hersien shows: nothing chosen, loading, an error, no plan yet or the editor.
@@ -150,7 +151,7 @@ class ReviewController extends ChangeNotifier {
       meta = FetchedMeta(id!, dir, j);
       duration = j.durationSeconds;
       segments = parseJson3(m.captions.readAsStringSync());
-      blocks = timeline(segments);
+      blocks = loadSound(dir);
       prayerMarks = _marks(segments);
     }
     final pf = File(p.join(dir.path, kPlanFile));
@@ -211,6 +212,18 @@ class ReviewController extends ChangeNotifier {
         videoReady = true;
         notifyListeners();
         c.complete(f);
+        // Older plans have no sound.json yet: analyse the video once (one ffmpeg run) for the timeline.
+        if (blocks.isEmpty) {
+          try {
+            final b = await soundBlocks(m.dir, f);
+            if (!stale()) {
+              blocks = b;
+              notifyListeners();
+            }
+          } on Object {
+            // no sound analysis: the timeline just stays empty
+          }
+        }
       },
       onError: (Object e) {
         if (stale()) return;
@@ -514,7 +527,7 @@ class ReviewController extends ChangeNotifier {
     id = m.id;
     meta = m;
     segments = segs;
-    blocks = timeline(segs);
+    blocks = const [];
     prayerMarks = _marks(segs);
     plan = p;
     duration = dur;

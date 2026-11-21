@@ -382,6 +382,7 @@ class _TimelinePainter extends CustomPainter {
       Paint()..color = ink.withValues(alpha: 0.06),
     );
     for (final b in blocks) {
+      if (b.kind != SegmentKind.music && b.kind != SegmentKind.speech) continue;
       final r = Rect.fromLTRB(
         x(b.start),
         8,
