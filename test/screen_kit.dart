@@ -202,6 +202,8 @@ SermonStore playlistStore() {
   String? token,
   bool client = true,
   void Function()? onSetup,
+  Future<String?> Function()? pickVideo,
+  Widget system = const SizedBox(),
 }) {
   final root = Directory.systemTemp.createTempSync('set');
   final set = AppSettings.load(root);
@@ -215,7 +217,8 @@ SermonStore playlistStore() {
       write: (v) async => tok = v,
     ),
     signIn: () async => tok = 'rt',
-    system: const SizedBox(),
+    system: system,
+    pickVideo: pickVideo ?? () async => null,
     onSetup: onSetup ?? () {},
     probe: (_) async => const MediaInfo(1920, 1080, '25', 12, true),
   );

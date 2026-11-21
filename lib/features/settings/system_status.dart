@@ -12,13 +12,17 @@ import '../../core/jobs.dart';
 import '../../core/tools.dart';
 import '../../l10n/app_localizations.dart';
 
+/// Test seam: a test swaps this so no real `yt-dlp -U` runs.
+@visibleForTesting
+Future<String> Function() ytDlpUpdater = updateYtDlp;
+
 /// Runs `yt-dlp -U` and reports the result (or the failure) as a SnackBar.
 Future<void> updateYtDlpSnack(BuildContext context) async {
   final m = ScaffoldMessenger.of(context);
   final l = L.of(context);
   try {
     m.showSnackBar(
-      SnackBar(content: Text(l.updateYtDlpDone(await updateYtDlp()))),
+      SnackBar(content: Text(l.updateYtDlpDone(await ytDlpUpdater()))),
     );
   } on Object catch (e) {
     m.showSnackBar(SnackBar(content: Text(l.errorGeneric(friendlyError(e)))));
