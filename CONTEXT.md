@@ -12,16 +12,16 @@ kaart: lib/core/*.dart, lib/app/*.dart, lib/features/**/*.dart
 Alles plaaslik: yt-dlp, ffmpeg, Ollama. Ontwikkel en toets op Linux, verskeep na die kerk-PC (Windows 11).
 
 ## Status
-Fases 1–6 en preekgrense op `main` (fa5f3f8; preekgrense `klaar` ná hersiening, nie deur /bewys nie); `flutter test` 163 groen. `main` nie gepush nie. Toetslys: `planne/toetslys-2026-11-20.md`.
-Volgende groot werk: `planne/diensindeling.md` (`oop`): spektrogram spraak/musiek → spraakblokke → één Ollama-oproep benoem blokke en liedere → grense → drie uitvoere (volle preek, net die woord, sang mp3's) per diens-gids + WhatsApp-sjabloon + blaaier (Preke/Sang). Prototipe en drempels: `navorsing/2026-11-21-spektrogram-spraak-musiek.md`.
-Bekende foute: merkwoord-gebede sien die geloofsbelydenis as gebed (diensindeling vervang dit); datum uit `upload_date` is 'n dag laat (`YWz5gf0onjk` 16 i.p.v. 15 Nov; diensindeling stap 3).
+Diensindeling gebou op tak `bou/diensindeling` (worktree `../.bou/ytsermon-prosessor-diensindeling`, 13 commits tot 6e17fd6, nie gemerge nie); plan `planne/diensindeling.md` `klaar` ná hersiening + stap 11–12, nie deur /bewys nie. `flutter test` 190 groen, `dart analyze` skoon. `main` (fa5f3f8+wip) nie gepush nie.
+Laaste regmaak: uitstuur-seën word in `planner.dart` aan sy vaste woorde herken (`_blessing`), want die KI het dit op lBMw/uub as ander/gebed benoem.
+Bekende foute (op die tak, toetse vang dit nie): `lBMwRt3eIus` laaste preekblok #22 as gebed, regte gebed #24 "ander" (gestoorde KI-antwoord deurmekaar, bv. `1023242526`); `6s_FFatG0so` gebed ná preek oor #50–52 verdeel, eerste helfte "preek". Grense-toets laat ±1,5 s toe (Aanvaarding ±0,5).
 Windows-installeerder: tak `bou/windows-installeerder`, plaaslik groen, CI nooit geloop nie (gh-token mis `workflow`-scope).
-Dev-masjien: `cmake`/`ninja` ontbreek; app loop via `flutter build bundle --debug` + kopieer `build/flutter_assets` na die bundel van 20 Nov (geldig solank `pubspec.yaml`/`linux/` nie verander nie).
-Ongetoets: handmerke in `test/fixtures/sermons.json` nie deur luister nie (spektrogram bevestig YWz 14:46 en uub 11:51); planJob/Hersien in die regte venster; regte YouTube-oplaai; kerk-PC.
-Oop vrae: watter video het die geloofsbelydenis as gebed gekry (fixture vir diensindeling stap 5)? Aannames in `planne/diensindeling.md` ## Vrae (intro/outro op albei video's, WhatsApp-mp3 = Net die woord, Oggend < 13:00).
-Skills: `projekkonteks:ui-ux` vir UI; `projekkonteks:bewys` vir klaar.
+Dev-masjien: geen `cmake`/`ninja`; app loop via `flutter build bundle --debug` + kopieer na die bundel (in die worktree: `build/linux/x64/debug/bundle/preekverwerker`, laai die seën-regmaak eers ná herbou). Ou werkgidse hou ou etikette tot herverwerk.
+Ongetoets: skermkiekies uit die lopende app; regte Ollama-etikette net op YWz; handmerke in `sermons.json`; regte YouTube-oplaai; kerk-PC.
+Oop vrae: watter video het die geloofsbelydenis as gebed gekry? Moet die lBMw/6s-grensfoute voor die merge reggemaak word?
+Skills: `projekkonteks:ui-ux` vir UI; `projekkonteks:bewys` vir klaar; `diagnosing-bugs` vir die grensfoute.
 **Laaste sessie:** 2026-11-21
-**Volgende:** Schalk gee die geloofsbelydenis-video, dan `/bou diensindeling`. Parallel: `sudo pacman -S cmake ninja`; `gh auth refresh -h github.com -s workflow` → push `bou/windows-installeerder`.
+**Volgende:** Schalk besluit oor die lBMw/6s-grensfoute (regmaak op die tak met 'n rooi toets per diens, of eers merge `git merge --no-ff bou/diensindeling`, `git worktree remove`, `git branch -d`); daarna `/bewys`.
 
 ## Besluite
 2026-11-19 Flutter-desktop, alles in Dart; Python laat val (want een taal, een exe; yt-dlp/ffmpeg is los .exe-lêers)
@@ -45,6 +45,7 @@ Skills: `projekkonteks:ui-ux` vir UI; `projekkonteks:bewys` vir klaar.
 2026-11-21 Uitvoer in een gids per diens: <uitset>/<jaar>/<JJJJ-MM-DD> <Oggend|Aand> - <tema>/ met Volle preek.mp4, Net die woord.mp4/.mp3, Sang/NN <lied>.mp3, WhatsApp.txt; geen biblioteek per lied nie (want Schalk: net in die diens se gids)
 2026-11-21 Liedname uit die aankondiging voor die sang, gekontroleer teen die beskrywing se psalmlys; alle drie uitvoere by verstek aan (want Schalk)
 2026-11-21 WhatsApp-teks uit 'n sjabloon in Instellings: *{diens} · {datum}* / Tema / Skriflesing / Fokus / {belydenis}; velde uit die beskrywing (want Schalk het die voorbeeld goedgekeur)
+2026-11-21 Twee Ollama-oproepe per preek (etikette, dan titel/beskrywing/Shorts) i.p.v. één (want qwen3:8b dryf by ~12k tokens; Schalk aanvaar)
 
 ## Name
 die kanaal = https://www.youtube.com/@gereformeerdekerkoranjeriv5791
