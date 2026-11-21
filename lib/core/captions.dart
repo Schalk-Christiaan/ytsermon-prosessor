@@ -173,6 +173,9 @@ List<TimeBlock> timeline(List<Segment> segs, {double gap = 10}) {
 
 final _amen = RegExp(r'^amen[.!,]*$', caseSensitive: false);
 
+/// Whether a caption word is "Amen".
+bool isAmen(String word) => _amen.hasMatch(word);
+
 /// Words that open a prayer: an invitation ("Kom ons bid", "Laat ons saam dank") or an
 /// address to God; matched against the words from one position on.
 final _prayerCue = RegExp(
@@ -187,7 +190,8 @@ const kMaxPrayer = 15 * 60.0;
 /// "Amen" too but run under ~30 s, while the prayers around the sermon run 1-9 min.
 const kMinPrayer = 45.0;
 
-List<Word> _wordsOf(Segment s) =>
+/// The words of a segment: its caption word times, or its text spread over the line.
+List<Word> wordsOf(Segment s) =>
     s.words.isNotEmpty ? s.words : _words([(s.start, s.text)], s.end);
 
 /// A cue only counts at the start of a sentence or after a pause (a line break, music): the creed's
@@ -203,7 +207,7 @@ const kAmenLength = 0.7;
 List<Prayer> prayers(List<Segment> segs) {
   final w = [
     for (final s in segs)
-      if (s.kind != SegmentKind.music) ..._wordsOf(s),
+      if (s.kind != SegmentKind.music) ...wordsOf(s),
   ];
   final out = <Prayer>[];
   int? from;
