@@ -16,6 +16,19 @@ double contrast(Color a, Color b) {
 }
 
 void main() {
+  // Step 2: the Karoo-wit / Karoo-nag table from planne/desktop-poleer.md.
+  test('Karoo palette values', () {
+    for (final (b, surf, ink, sec) in [
+      (Brightness.light, 0xFFF4F0E8, 0xFF2B2620, 0xFF5A6B47),
+      (Brightness.dark, 0xFF1C1915, 0xFFEDE6DA, 0xFFA9BC93),
+    ]) {
+      final cs = buildTheme(b).colorScheme;
+      expect(cs.surface, Color(surf));
+      expect(cs.onSurface, Color(ink));
+      expect(cs.secondary, Color(sec));
+    }
+  });
+
   for (final b in Brightness.values) {
     test('contrast ${b.name}', () {
       final t = buildTheme(b);

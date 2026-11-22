@@ -42,12 +42,12 @@ Modus: **Bedien**. Sien DESIGN.md. Bekende Material 3-desktoppatrone; die identi
 
 | Rol | Lig | Donker | Rede |
 |---|---|---|---|
-| Grond (`surface`) | kalksteen `#F3F4F1` | leiklip `#161D1F` | koel en neutraal, vermy room/beige-verstek |
-| Ink (`onSurface`) | `#1B2629` | `#E6EBEA` | vol ink vir lopende teks |
+| Grond (`surface`) | Karoo-wit `#F4F0E8` | Karoo-nag `#1C1915` | gebleikte klip en kalk; aards (gewysig deur desktop-poleer) |
+| Ink (`onSurface`) | `#2B2620` | `#EDE6DA` | vol ink vir lopende teks |
 | Aksie (`primary`) | Oranje `#B34E17` | `#F08A4B` | "doen dit": die rivier se naam; net vir primêre aksies en die preek-hakie |
-| Seleksie/inligting (`secondary`) | rivier `#2C6A66` | `#7FC4BD` | geselekteerde ry, vordering, inligting |
+| Seleksie/inligting (`secondary`) | Karoobos `#5A6B47` | `#A9BC93` | geselekteerde ry, vordering, inligting |
 | Kanselhout (`tertiary`) | `#6B4A32` | `#C9A27E` | Shorts-merkers op die tydlyn, niks anders nie |
-| Fout / sukses | `#B3261E` / `#2E7D4F` | `#F2B8B5` / `#8FD1A6` | altyd met ikoon + woord |
+| Fout / sukses | `#B3261E` / `#2A7549` | `#F2B8B5` / `#8FD1A6` | altyd met ikoon + woord |
 
 Bou met `ColorScheme.fromSeed(seedColor: oranje)` en oorskryf die rolle hierbo; vlakke deur `surfaceContainer*`, geen lukrake skaduwees. Kontras ≥ 4.5:1 vir teks, 3:1 vir rande en knoppievlakke, in albei temas; kontroleer met 'n klein toets in `test/theme_contrast_test.dart`.
 

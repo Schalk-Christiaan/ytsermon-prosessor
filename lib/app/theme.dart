@@ -3,9 +3,8 @@
 //   wanneer: by opstart
 //   groep: app | App-raam
 //   skryf: —
-//   doel: ontwerpstelsel (kleure, tipe, panele, seleksie) uit DESIGN.md, lig + donker
-//   status: klaar
-//   bewys: 7236634
+//   doel: ontwerpstelsel (Karoo-wit / Karoo-nag kleure, tipe, panele, seleksie), lig + donker
+//   status: bou
 import 'package:flutter/material.dart';
 
 /// Radius of every panel (DESIGN.md: flat panels on the ground, 12 dp apart).
@@ -32,7 +31,7 @@ Widget appPanel(
 const kPanelGap = 12.0;
 
 /// Extra tokens: wood tint for Shorts markers (kanselhout), success green, and the panel fill
-/// (white on limestone in light, one step above slate in dark).
+/// (lighter than the Karoo-wit ground in light, one step above Karoo-nag in dark).
 @immutable
 class AppTokens extends ThemeExtension<AppTokens> {
   const AppTokens({
@@ -60,42 +59,42 @@ const kOrange = Color(0xFFB34E17);
 ColorScheme _scheme(Brightness b) {
   final light = b == Brightness.light;
   return ColorScheme.fromSeed(seedColor: kOrange, brightness: b).copyWith(
-    surface: light ? const Color(0xFFF3F4F1) : const Color(0xFF161D1F),
-    onSurface: light ? const Color(0xFF1B2629) : const Color(0xFFE6EBEA),
+    surface: light ? const Color(0xFFF4F0E8) : const Color(0xFF1C1915),
+    onSurface: light ? const Color(0xFF2B2620) : const Color(0xFFEDE6DA),
     primary: light ? const Color(0xFFB34E17) : const Color(0xFFF08A4B),
-    onPrimary: light ? const Color(0xFFFFFFFF) : const Color(0xFF161D1F),
-    secondary: light ? const Color(0xFF2C6A66) : const Color(0xFF7FC4BD),
-    onSecondary: light ? const Color(0xFFFFFFFF) : const Color(0xFF161D1F),
+    onPrimary: light ? const Color(0xFFFFFFFF) : const Color(0xFF1C1915),
+    secondary: light ? const Color(0xFF5A6B47) : const Color(0xFFA9BC93),
+    onSecondary: light ? const Color(0xFFFFFFFF) : const Color(0xFF1C1915),
     tertiary: light ? const Color(0xFF6B4A32) : const Color(0xFFC9A27E),
-    onTertiary: light ? const Color(0xFFFFFFFF) : const Color(0xFF161D1F),
+    onTertiary: light ? const Color(0xFFFFFFFF) : const Color(0xFF1C1915),
     error: light ? const Color(0xFFB3261E) : const Color(0xFFF2B8B5),
-    onError: light ? const Color(0xFFFFFFFF) : const Color(0xFF161D1F),
-    // Selection: river tint with river ink (rail item, chosen tab, chosen row).
+    onError: light ? const Color(0xFFFFFFFF) : const Color(0xFF1C1915),
+    // Selection: Karoobos tint with Karoobos ink (rail item, chosen tab, chosen row).
     secondaryContainer: light
-        ? const Color(0xFFDCEBE9)
-        : const Color(0xFF24403E),
+        ? const Color(0xFFDDE3D2)
+        : const Color(0xFF34402B),
     onSecondaryContainer: light
-        ? const Color(0xFF17423F)
-        : const Color(0xFFCFE8E5),
+        ? const Color(0xFF2F3B24)
+        : const Color(0xFFDDE8CF),
     // Panels and their steps; `outline` is a 3:1 line (slider track, field border), `outlineVariant` a hairline.
     surfaceContainerLowest: light
-        ? const Color(0xFFFFFFFF)
-        : const Color(0xFF111719),
+        ? const Color(0xFFFBF8F2)
+        : const Color(0xFF24201B),
     surfaceContainerLow: light
-        ? const Color(0xFFF8F9F7)
-        : const Color(0xFF1A2224),
-    surfaceContainer: light ? const Color(0xFFEEF0ED) : const Color(0xFF1E2729),
+        ? const Color(0xFFF8F4EC)
+        : const Color(0xFF211D18),
+    surfaceContainer: light ? const Color(0xFFECE6DA) : const Color(0xFF2B2620),
     surfaceContainerHigh: light
-        ? const Color(0xFFE6E9E5)
-        : const Color(0xFF263133),
-    outline: light ? const Color(0xFF6D7A7C) : const Color(0xFF8A9799),
-    outlineVariant: light ? const Color(0xFFCCD3D1) : const Color(0xFF39464A),
+        ? const Color(0xFFE4DCCD)
+        : const Color(0xFF332D26),
+    outline: light ? const Color(0xFF6E6458) : const Color(0xFF9C9284),
+    outlineVariant: light ? const Color(0xFFD6CCBB) : const Color(0xFF3A332B),
   );
 }
 
 const _tabular = [FontFeature.tabularFigures()];
 
-/// The app theme for light or dark: Oranje action, river-teal selection, Source Serif/Sans.
+/// The app theme for light or dark: Oranje action, Karoobos selection, Source Serif/Sans.
 ThemeData buildTheme(Brightness b) {
   final cs = _scheme(b);
   final light = b == Brightness.light;
@@ -107,7 +106,7 @@ ThemeData buildTheme(Brightness b) {
   final t = base.textTheme;
   TextStyle serif(TextStyle? s) =>
       (s ?? const TextStyle()).copyWith(fontFamily: 'Source Serif 4');
-  final panel = light ? const Color(0xFFFFFFFF) : const Color(0xFF1E2729);
+  final panel = light ? const Color(0xFFFBF8F2) : const Color(0xFF24201B);
   final shape = RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(kPanelRadius),
   );
@@ -124,7 +123,7 @@ ThemeData buildTheme(Brightness b) {
       surfaceTintColor: Colors.transparent,
       shape: shape,
     ),
-    // Rivier, not orange: orange is the action, the playhead and the sermon handle.
+    // Karoobos, not orange: orange is the action, the playhead and the sermon handle.
     sliderTheme: SliderThemeData(
       activeTrackColor: cs.secondary,
       inactiveTrackColor: cs.outline,
@@ -137,7 +136,7 @@ ThemeData buildTheme(Brightness b) {
       ),
       trackHeight: 4,
     ),
-    // Secondary actions in river too: only the filled primary button is orange.
+    // Secondary actions in Karoobos too: only the filled primary button is orange.
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(foregroundColor: cs.secondary),
     ),
@@ -191,7 +190,7 @@ ThemeData buildTheme(Brightness b) {
     extensions: [
       AppTokens(
         wood: cs.tertiary,
-        success: light ? const Color(0xFF2E7D4F) : const Color(0xFF8FD1A6),
+        success: light ? const Color(0xFF2A7549) : const Color(0xFF8FD1A6),
         panel: panel,
       ),
     ],
