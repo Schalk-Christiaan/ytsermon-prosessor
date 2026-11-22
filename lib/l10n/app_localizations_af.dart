@@ -449,7 +449,7 @@ class LAf extends L {
   String get setupModel => 'Die KI-model is afgelaai (5 GB)';
 
   @override
-  String get setupChannel => 'Die kerk se YouTube-kanaal is gekoppel';
+  String get setupChannel => 'Jou YouTube-rekening is gekoppel (om op te laai)';
 
   @override
   String setupFolder(String path) {
@@ -778,4 +778,26 @@ class LAf extends L {
 
   @override
   String get noMatches => 'Geen preke pas by die soektog of filter nie';
+
+  @override
+  String get channelLabel => 'Jou YouTube-kanaal';
+
+  @override
+  String get channelHelp => 'Tik @naam, of plak die skakel van die kanaal.';
+
+  @override
+  String get channelCheck => 'Kontroleer';
+
+  @override
+  String channelFound(String name) {
+    return 'Gevind: $name';
+  }
+
+  @override
+  String get channelBadForm =>
+      'Dit lyk nie soos \'n YouTube-kanaal nie. Probeer @naam, of plak die skakel.';
+
+  @override
+  String get channelNotFound =>
+      'Kon nie hierdie kanaal vind nie. Kyk die naam en die internet, en probeer weer.';
 }

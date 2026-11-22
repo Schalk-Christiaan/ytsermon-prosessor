@@ -4,8 +4,7 @@
 //   groep: features | Skerms
 //   skryf: —
 //   doel: wys yt-dlp/ffmpeg/ffprobe/Ollama met ikoon + woord (Gereed / Ontbreek); "Werk yt-dlp by"
-//   status: klaar
-//   bewys: 7236634
+//   status: bou
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
@@ -30,7 +29,7 @@ Future<void> updateYtDlpSnack(BuildContext context) async {
   }
 }
 
-/// Shows yt-dlp, ffmpeg, ffprobe and Ollama as green or red, with the fix for each.
+/// Shows yt-dlp, ffmpeg, ffprobe and Ollama as green or red; sized to its content so the page above scrolls as one.
 class SystemStatus extends StatefulWidget {
   const SystemStatus({super.key});
 
@@ -55,44 +54,41 @@ class _SystemStatusState extends State<SystemStatus> {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l.settingsSystem, style: th.textTheme.headlineSmall),
           const SizedBox(height: 16),
-          Expanded(
-            child: FutureBuilder<List<ToolStatus>>(
-              future: _f,
-              builder: (c, snap) => ListView(
-                children: [
-                  for (final s in snap.data ?? const <ToolStatus>[])
-                    SizedBox(
-                      height: 56,
-                      child: Row(
-                        children: [
-                          Icon(
-                            s.ok
-                                ? Icons.check_circle_rounded
-                                : Icons.error_rounded,
-                            color: s.ok
-                                ? th.extension<AppTokens>()!.success
-                                : th.colorScheme.error,
-                          ),
-                          const SizedBox(width: 16),
-                          SizedBox(
-                            width: 120,
-                            child: Text(
-                              s.name,
-                              style: th.textTheme.titleMedium,
-                            ),
-                          ),
-                          Expanded(child: Text(_text(l, s))),
-                        ],
-                      ),
+          FutureBuilder<List<ToolStatus>>(
+            future: _f,
+            builder: (c, snap) => Column(
+              children: [
+                for (final s in snap.data ?? const <ToolStatus>[])
+                  SizedBox(
+                    height: 56,
+                    child: Row(
+                      children: [
+                        Icon(
+                          s.ok
+                              ? Icons.check_circle_rounded
+                              : Icons.error_rounded,
+                          color: s.ok
+                              ? th.extension<AppTokens>()!.success
+                              : th.colorScheme.error,
+                        ),
+                        const SizedBox(width: 16),
+                        SizedBox(
+                          width: 120,
+                          child: Text(s.name, style: th.textTheme.titleMedium),
+                        ),
+                        Expanded(child: Text(_text(l, s))),
+                      ],
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
+          const SizedBox(height: 8),
           OutlinedButton(
             key: const ValueKey('ctl.instellings.update-ytdlp'),
             onPressed: () => updateYtDlpSnack(context),

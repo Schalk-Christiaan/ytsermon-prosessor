@@ -3,20 +3,21 @@
 //   wanneer: eerste begin (setupDone vals); Instellings → Opstelling
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | setupDone; maak die uitsetgids
-//   doel: Opstelling-lys: Ollama loop → model afgelaai → kanaal gekoppel → uitsetgids, elk een knoppie; "Begin werk" as alles klaar is
-//   status: klaar
-//   bewys: 7236634
+//   doel: Opstelling-lys: Ollama loop → model afgelaai → kanaal gekoppel (ChannelField) → uitsetgids, elk een knoppie; "Begin werk" as alles klaar is
+//   status: bou
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
+import '../../core/channel.dart' show channelName;
 import '../../core/jobs.dart';
 import '../../core/settings.dart';
 import '../../core/tools.dart' as tools;
 import '../../core/tools.dart' show ToolStatus;
 import '../../core/youtube.dart';
 import '../../l10n/app_localizations.dart';
+import '../settings/channel_field.dart';
 
 /// Opstelling: four steps to green (Ollama, model, channel, folder), one button at a time.
 class SetupScreen extends StatefulWidget {
@@ -30,6 +31,7 @@ class SetupScreen extends StatefulWidget {
     this.probe = tools.probeOllama,
     this.startOllama = tools.startOllama,
     this.pull = tools.pullModel,
+    this.validateChannel = channelName,
   });
   final AppSettings settings;
   final GoogleAuth auth;
@@ -38,6 +40,9 @@ class SetupScreen extends StatefulWidget {
   final Future<ToolStatus> Function() probe;
   final Future<void> Function() startOllama;
   final Future<void> Function({required void Function(double) onProgress}) pull;
+
+  /// Test seam: the yt-dlp check of the channel field.
+  final Future<String> Function(String url) validateChannel;
 
   @override
   State<SetupScreen> createState() => _SetupScreenState();
@@ -121,6 +126,12 @@ class _SetupScreenState extends State<SetupScreen> {
             const SizedBox(height: 8),
             Text(l.setupIntro, style: th.textTheme.bodyLarge),
             const SizedBox(height: 24),
+            ChannelField(
+              settings: widget.settings,
+              screen: 'opstelling',
+              validate: widget.validateChannel,
+            ),
+            const SizedBox(height: 16),
             _step(
               th,
               l,

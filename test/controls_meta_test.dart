@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preekverwerker/app/shell.dart';
 import 'package:preekverwerker/core/settings.dart';
@@ -57,6 +58,65 @@ List<String?> controlKeys(WidgetTester t, Finder root) {
   return out;
 }
 
+/// Whether the control [e] answers the keyboard and the pointer: a disabled button is skipped.
+bool _enabled(Widget w) =>
+    !(w is ButtonStyleButton && w.onPressed == null) &&
+    !(w is IconButton && w.onPressed == null) &&
+    !(w is TextField && w.enabled == false);
+
+/// Tab through [screen] once: every enabled control with a `ctl.` key must get the keyboard focus
+/// (so it has a focus ring) and be at least 40 px high (a hit target an unsure hand can find).
+Future<void> checkKeyboard(WidgetTester t, String screen) async {
+  final want = <String, double>{};
+  for (final e
+      in find
+          .descendant(
+            of: find.byType(Scaffold).first,
+            matching: find.byWidgetPredicate(_isControl),
+          )
+          .evaluate()) {
+    var nested = false;
+    e.visitAncestorElements((a) {
+      if (_isControl(a.widget) && a.widget is! InkWell) nested = true;
+      return !nested;
+    });
+    final k = e.widget.key;
+    if (nested || k is! ValueKey<String> || !_enabled(e.widget)) continue;
+    final box = e.renderObject as RenderBox;
+    want[k.value] = box.size.height;
+  }
+  expect(want, isNotEmpty, reason: screen);
+  final reached = <String>{};
+  for (var i = 0; i < want.length * 2 + 20; i++) {
+    await t.sendKeyEvent(LogicalKeyboardKey.tab);
+    await t.pump();
+    FocusManager.instance.primaryFocus?.context?.visitAncestorElements((a) {
+      final k = a.widget.key;
+      if (k is ValueKey<String> && k.value.startsWith('ctl.')) {
+        reached.add(k.value);
+        return false;
+      }
+      return true;
+    });
+  }
+  final skip = {
+    for (final k in want.keys)
+      if (k.contains('.row') || k.endsWith('hersien.zoom')) k,
+  };
+  expect(
+    want.keys.where((k) => !reached.contains(k) && !skip.contains(k)),
+    isEmpty,
+    reason: '$screen: not reachable with Tab',
+  );
+  expect(
+    want.entries
+        .where((e) => e.value < 39.5 && !skip.contains(e.key))
+        .map((e) => '${e.key} ${e.value}'),
+    isEmpty,
+    reason: '$screen: shorter than 40 px',
+  );
+}
+
 void checkScreen(WidgetTester t, String screen) {
   final keys = controlKeys(t, find.byType(Scaffold).first);
   expect(keys, isNotEmpty, reason: '$screen shows no controls');
@@ -96,6 +156,7 @@ void main() {
         final (st, q) = seededSermons();
         await pump(t, prekeScreen(st, q));
         checkScreen(t, 'preke');
+        await checkKeyboard(t, 'preke');
       });
 
       testWidgets('preke: fout en invoer-dialoog', (t) async {
@@ -139,6 +200,7 @@ void main() {
           settle: false,
         );
         checkScreen(t, 'hersien');
+        await checkKeyboard(t, 'hersien');
         final keys = controlKeys(t, find.byType(Scaffold).first);
         expect(
           keys,
@@ -198,6 +260,7 @@ void main() {
             settle: false,
           );
           checkScreen(t, 'werk');
+          await checkKeyboard(t, 'werk');
         }
       });
 
@@ -213,6 +276,7 @@ void main() {
           ),
         );
         checkScreen(t, 'snitlyste');
+        await checkKeyboard(t, 'snitlyste');
       });
 
       testWidgets('instellings', (t) async {
@@ -221,6 +285,7 @@ void main() {
           set.intro = '/tmp/intro.mp4';
           await pump(t, w, settle: false);
           checkScreen(t, 'instellings');
+          await checkKeyboard(t, 'instellings');
         }
       });
 
@@ -228,12 +293,14 @@ void main() {
         final (w, _, _) = setupScreen();
         await pump(t, w);
         checkScreen(t, 'opstelling');
+        await checkKeyboard(t, 'opstelling');
       });
 
       testWidgets('biblioteek', (t) async {
         final (w, _, _) = libraryScreen();
         await pump(t, w, settle: false);
         checkScreen(t, 'biblioteek');
+        await checkKeyboard(t, 'biblioteek');
         await t.tap(find.byKey(const ValueKey('ctl.biblioteek.view')));
         await t.tap(find.text('Sang'));
         await t.pump();

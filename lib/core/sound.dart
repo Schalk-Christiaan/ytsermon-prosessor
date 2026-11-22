@@ -4,7 +4,7 @@
 //   groep: core | Kern
 //   skryf: <werkmap>/<id>/sound.json | die klas van elke sekonde (stilte/musiek/spraak/geraas); sound.level.json | die dB per sekonde (golfvorm in Hersien)
 //   doel: een ffmpeg-proses gee 16 kHz-PCM; Dart bereken per sekonde lae-energie-rame, platheid en dB en klassifiseer in stilte/musiek/spraak/geraas (spektrogram, nie YouTube se [musiek]-merkers nie)
-//   status: klaar
+//   status: bou
 //   bewys: 7236634
 import 'dart:async';
 import 'dart:convert';
@@ -232,6 +232,7 @@ const kSoundFile = 'sound.json';
 /// Loudness per second (whole dB), kept next to [kSoundFile] so Hersien can draw the waveform without re-analysing.
 const kLevelFile = 'sound.level.json';
 
+/// Writes [db] to [kLevelFile] in [dir] so Hersien can draw the waveform.
 void saveLevels(Directory dir, List<double> db) =>
     File(p.join(dir.path, kLevelFile))
         .writeAsStringSync(jsonEncode([for (final v in db) v.round()]));

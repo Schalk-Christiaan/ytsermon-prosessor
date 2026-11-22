@@ -4,8 +4,7 @@
 //   groep: features | Skerms
 //   skryf: <app-support>/work/<id>/plan.json | die plan; elke wysiging stoor dadelik
 //   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit die etikette (analysis.json), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
-//   status: klaar
-//   bewys: 7236634
+//   status: bou
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -256,7 +255,9 @@ class ReviewController extends ChangeNotifier {
         _pos ??= (positions ?? player.stream.position).listen(
           (d) => position.value = d.inMilliseconds / 1000,
         );
-        await (openVideo?.call(f) ?? player.open(Media(f.path), play: false));
+        // video.player: the VideoController must exist BEFORE open(), else a paused player never draws a frame (black panel on Linux).
+        await (openVideo?.call(f) ??
+            video.player.open(Media(f.path), play: false));
         if (stale()) return;
         videoReady = true;
         notifyListeners();

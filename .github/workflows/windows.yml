@@ -18,6 +18,8 @@ env:
   FLUTTER_VERSION: 3.47.9
   YTDLP_VERSION: 2026.10.26
   YTDLP_SHA256: f5389d3698ecde4ef06f4e6b1ce0294fe9ac1396228c8990b8d3416d6d177a7d
+  QJS_VERSION: v0.18.0
+  QJS_SHA256: ff03398d74ea6e6bd3a8e58058f7003225abcac229d7d57775b7aaae812a49c7
   FFMPEG_VERSION: 9.0.2
   FFMPEG_SHA256: 60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba
 
@@ -50,6 +52,8 @@ jobs:
           }
           New-Item -ItemType Directory -Force deps | Out-Null
           Get-Pinned "https://github.com/yt-dlp/yt-dlp/releases/download/$env:YTDLP_VERSION/yt-dlp.exe" deps/yt-dlp.exe $env:YTDLP_SHA256
+          # yt-dlp needs a JS runtime for YouTube (no node/deno on a clean Windows); QuickJS-ng is 1.9 MB.
+          Get-Pinned "https://github.com/quickjs-ng/quickjs/releases/download/$env:QJS_VERSION/qjs-windows-x86_64.exe" deps/qjs.exe $env:QJS_SHA256
           Get-Pinned "https://github.com/GyanD/codexffmpeg/releases/download/$env:FFMPEG_VERSION/ffmpeg-$env:FFMPEG_VERSION-essentials_build.zip" ffmpeg.zip $env:FFMPEG_SHA256
           Expand-Archive ffmpeg.zip -DestinationPath ffmpeg
           Copy-Item ffmpeg/*/bin/ffmpeg.exe, ffmpeg/*/bin/ffprobe.exe deps/
@@ -81,7 +85,7 @@ jobs:
 
           Install-Setup
           $need = 'preekverwerker.exe', 'flutter_windows.dll', 'libmpv-2.dll', 'desktop_drop_plugin.dll',
-            'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'yt-dlp.exe', 'ffmpeg.exe', 'ffprobe.exe',
+            'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'yt-dlp.exe', 'qjs.exe', 'ffmpeg.exe', 'ffprobe.exe',
             'data\app.so', 'unins000.exe'
           $missing = $need | Where-Object { -not (Test-Path (Join-Path $app $_)) }
           Get-ChildItem $app -Recurse -File | Where-Object FullName -notlike '*flutter_assets*' |

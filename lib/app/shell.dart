@@ -4,8 +4,7 @@
 //   groep: app | App-raam
 //   skryf: —
 //   doel: Rail en inhoud as twee panele (radius 16) op die grond; rail: Preke (tuis), Hersien, Werk, Snitlyste, Biblioteek, Instellings (Kanaal + Stelsel); begin op Opstelling tot dit klaar is
-//   status: klaar
-//   bewys: 7236634
+//   status: bou
 
 // vloei: v1 | Verwerk nuutste diens
 // inleiding: Maandag: die diens van gister word een knoppie later 'n gesnyde preek met Shorts op YouTube.
@@ -69,7 +68,7 @@ class Shell extends StatefulWidget {
     super.key,
     required this.store,
     required this.jobs,
-    this.list = listChannel,
+    this.list,
     this.settings,
     this.auth,
     this.quota,
@@ -82,8 +81,8 @@ class Shell extends StatefulWidget {
   final GoogleAuth? auth;
   final UploadQuota? quota;
 
-  /// Test seam: the channel lister.
-  final Future<List<ChannelItem>> Function() list;
+  /// Test seam: the channel lister (default: the channel set in Instellings).
+  final Future<List<ChannelItem>> Function()? list;
 
   @override
   State<Shell> createState() => _ShellState();
@@ -148,55 +147,60 @@ class _ShellState extends State<Shell> {
             const SizedBox(width: kPanelGap),
             Expanded(
               child: _panel(
-                IndexedStack(
-                  index: _i,
-                  children: [
-                    SermonsScreen(
-                      store: widget.store,
-                      jobs: widget.jobs,
-                      list: widget.list,
-                      settings: _settings,
-                      onOpen: (id) {
-                        _review.open(id);
-                        setState(() => _i = 1);
-                      },
-                    ),
-                    ReviewScreen(
-                      controller: _review,
-                      settings: _settings,
-                      onWork: () => setState(() => _i = 2),
-                    ),
-                    WorkScreen(
-                      store: widget.store,
-                      jobs: widget.jobs,
-                      onBack: () => setState(() => _i = 0),
-                      quota: _quota,
-                    ),
-                    PlaylistsScreen(store: widget.store, settings: _settings),
-                    SettingsScreen(
-                      settings: _settings,
-                      auth: _auth,
-                      signIn: () => _auth.signIn(openPath),
-                      system: const SystemStatus(),
-                      onSetup: () => setState(() => _i = 5),
-                    ),
-                    // Built only while shown, so it probes Ollama when opened, not at every start.
-                    if (_i == 5)
-                      SetupScreen(
+                // Titles, paths and errors can be selected and copied.
+                SelectionArea(
+                  child: IndexedStack(
+                    index: _i,
+                    children: [
+                      SermonsScreen(
+                        key: ValueKey(_settings.channelUrl),
+                        store: widget.store,
+                        jobs: widget.jobs,
+                        list: widget.list,
+                        settings: _settings,
+                        onOpen: (id) {
+                          _review.open(id);
+                          setState(() => _i = 1);
+                        },
+                      ),
+                      ReviewScreen(
+                        controller: _review,
+                        settings: _settings,
+                        onWork: () => setState(() => _i = 2),
+                      ),
+                      WorkScreen(
+                        store: widget.store,
+                        jobs: widget.jobs,
+                        onBack: () => setState(() => _i = 0),
+                        quota: _quota,
+                      ),
+                      PlaylistsScreen(store: widget.store, settings: _settings),
+                      SettingsScreen(
                         settings: _settings,
                         auth: _auth,
                         signIn: () => _auth.signIn(openPath),
-                        onSettings: () => setState(() => _i = 4),
-                        onDone: () => setState(() => _i = 0),
-                      )
-                    else
-                      const SizedBox(),
-                    // Built only while shown, so the folder is read when opened.
-                    if (_i == 6)
-                      LibraryScreen(settings: _settings)
-                    else
-                      const SizedBox(),
-                  ],
+                        system: const SystemStatus(),
+                        onChannelChanged: () => setState(() {}),
+                        onSetup: () => setState(() => _i = 5),
+                      ),
+                      // Built only while shown, so it probes Ollama when opened, not at every start.
+                      if (_i == 5)
+                        SetupScreen(
+                          settings: _settings,
+                          auth: _auth,
+                          signIn: () => _auth.signIn(openPath),
+                          onSettings: () => setState(() => _i = 4),
+                          onDone: () => setState(() => _i = 0),
+                        )
+                      else
+                        const SizedBox(),
+                      // Built only while shown, so the folder is read when opened.
+                      if (_i == 6)
+                        LibraryScreen(settings: _settings)
+                      else
+                        const SizedBox(),
+                    ],
+                  ),
                 ),
               ),
             ),

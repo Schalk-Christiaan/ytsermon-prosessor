@@ -3,8 +3,8 @@
 //   wanneer: by oopmaak van Instellings en voor elke aflaai/KI-oproep
 //   groep: core | Kern
 //   skryf: —
-//   doel: vind yt-dlp/ffmpeg/ffprobe/ollama (langs die exe, Ollama se gids, PATH), loop eksterne prosesse (runTool), toets Ollama + qwen3:8b, laai die model af, begin Ollama
-//   status: klaar
+//   doel: vind yt-dlp/ffmpeg/ffprobe/ollama (langs die exe, Ollama se gids, PATH), loop eksterne prosesse (runTool), toets Ollama + qwen3:8b, laai die model af, begin Ollama; wys qjs.exe (QuickJS) as JS-looptyd aan yt-dlp as dit langs die exe lê
+//   status: bou
 //   bewys: 7236634
 import 'dart:async';
 import 'dart:convert';
@@ -59,7 +59,12 @@ Future<void> runTool(
 }) async {
   final path = findExecutable(exe) ?? (p.isAbsolute(exe) ? exe : null);
   if (path == null) throw StateError('$exe ontbreek');
-  final proc = await Process.start(path, args, workingDirectory: cwd);
+  // yt-dlp needs a JS runtime for YouTube; Windows ships none, so the installer puts qjs (QuickJS) next to the exe.
+  final qjs = exe == 'yt-dlp' ? findExecutable('qjs') : null;
+  final proc = await Process.start(path, [
+    if (qjs != null) ...['--js-runtimes', 'quickjs:$qjs'],
+    ...args,
+  ], workingDirectory: cwd);
   var cancelled = false, finished = false;
   cancel?.then((_) {
     if (finished) return;

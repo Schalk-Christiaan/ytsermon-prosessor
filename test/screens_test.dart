@@ -63,13 +63,16 @@ Future<void> _fonts() async {
   }
 }
 
-/// Saves the RepaintBoundary under [key] as `out/shots/<name>.png`.
+/// Where the screenshots go (env SHOTS, e.g. docs/kiekies/nagskof/voor).
+final _shotsDir = Platform.environment['SHOTS'] ?? 'out/shots';
+
+/// Saves the RepaintBoundary under [key] as `<_shotsDir>/<name>.png`.
 Future<void> _shot(WidgetTester t, GlobalKey key, String name) =>
     t.runAsync(() async {
       final r = key.currentContext!.findRenderObject() as RenderRepaintBoundary;
       final img = await r.toImage();
       final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
-      File(p.join('out', 'shots', '$name.png'))
+      File(p.join(_shotsDir, '$name.png'))
           .writeAsBytesSync(bytes!.buffer.asUint8List());
     });
 
@@ -87,7 +90,7 @@ Widget _app(Brightness b, Widget home) => MaterialApp(
 );
 
 void main() {
-  final shots = Directory('out/shots')..createSync(recursive: true);
+  final shots = Directory(_shotsDir)..createSync(recursive: true);
 
   ReviewController ready([Directory? dir]) {
     final segs = parseJson3(
@@ -275,7 +278,7 @@ void main() {
   });
 
   for (final b in Brightness.values) {
-    for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
+    for (final (w, h) in [(1100.0, 720.0), (1600.0, 900.0)]) {
       testWidgets('hersien ${b.name} ${w.toInt()}', (t) async {
         await _fonts();
         t.view.physicalSize = Size(w, h);
@@ -654,7 +657,7 @@ void main() {
   for (final b in Brightness.values) {
     for (final (w, h) in [
       (1100.0, 720.0),
-      (1920.0, 1080.0),
+      (1600.0, 900.0),
       if (b == Brightness.light) (750.0, 720.0),
     ]) {
       testWidgets('preke skermkiekie ${b.name} ${w.toInt()}', (t) async {
@@ -819,7 +822,7 @@ void main() {
   });
 
   for (final b in Brightness.values) {
-    for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
+    for (final (w, h) in [(1100.0, 720.0), (1600.0, 900.0)]) {
       for (final audio in [false, true]) {
         final name = audio ? 'werk-klank' : 'werk';
         testWidgets('$name skermkiekie ${b.name} ${w.toInt()}', (t) async {
@@ -1065,7 +1068,7 @@ void main() {
   });
 
   for (final b in Brightness.values) {
-    for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
+    for (final (w, h) in [(1100.0, 720.0), (1600.0, 900.0)]) {
       testWidgets('fase 3 skermkiekies ${b.name} ${w.toInt()}', (t) async {
         await _fonts();
         t.view.physicalSize = Size(w, h);
@@ -1211,7 +1214,7 @@ void main() {
   });
 
   for (final b in Brightness.values) {
-    for (final (w, h) in [(1100.0, 720.0), (1920.0, 1080.0)]) {
+    for (final (w, h) in [(1100.0, 720.0), (1600.0, 900.0)]) {
       testWidgets('opstelling skermkiekie ${b.name} ${w.toInt()}', (t) async {
         await _fonts();
         t.view.physicalSize = Size(w, h);

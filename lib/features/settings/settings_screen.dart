@@ -3,9 +3,8 @@
 //   wanneer: Instellings (rail)
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | kliëntlêer en privaatheid; refresh-token via GoogleAuth
-//   doel: Kanaal (kliënt-ID-lêer, Koppel/Ontkoppel, privaatheid van oplaaie), uitsetgids, intro/outro (met lengte) en Opstelling, bo die Stelsel-lys
-//   status: klaar
-//   bewys: 7236634
+//   doel: Jou YouTube-kanaal (ChannelField), Kanaal (kliënt-ID-lêer, Koppel/Ontkoppel, privaatheid van oplaaie), uitsetgids, intro/outro (met lengte) en Opstelling, bo die Stelsel-lys
+//   status: bou
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
@@ -14,11 +13,13 @@ import 'package:path/path.dart' as p;
 
 import '../../app/theme.dart';
 import '../../core/captions.dart';
+import '../../core/channel.dart' show channelName;
 import '../../core/cutter.dart';
 import '../../core/jobs.dart';
 import '../../core/settings.dart';
 import '../../core/youtube.dart';
 import '../../l10n/app_localizations.dart';
+import 'channel_field.dart';
 
 /// Instellings: channel, folders, intro/outro, description template and system status.
 class SettingsScreen extends StatefulWidget {
@@ -29,6 +30,8 @@ class SettingsScreen extends StatefulWidget {
     required this.signIn,
     required this.system,
     this.onSetup,
+    this.onChannelChanged,
+    this.validateChannel = channelName,
     this.pickVideo = pickVideoFile,
     this.probe = probeMedia,
   });
@@ -43,6 +46,10 @@ class SettingsScreen extends StatefulWidget {
 
   /// Opens the Opstelling list again.
   final VoidCallback? onSetup;
+
+  /// Runs after another channel was saved; [validateChannel] is the test seam for the yt-dlp check.
+  final VoidCallback? onChannelChanged;
+  final Future<String> Function(String url) validateChannel;
 
   /// Test seams: the file picker and ffprobe (for the clip length).
   final Future<String?> Function() pickVideo;
@@ -126,12 +133,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         : ok
         ? l.connected
         : l.notConnected;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Flexible(
-          flex: 3,
-          child: SingleChildScrollView(
+    // One scroll for the whole page, so a short window never squeezes the Stelsel list over the rest.
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 760),
@@ -153,6 +160,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: Text(l.navSetup),
                         ),
                     ],
+                  ),
+                  const SizedBox(height: 24),
+                  ChannelField(
+                    settings: widget.settings,
+                    screen: 'instellings',
+                    validate: widget.validateChannel,
+                    onChanged: widget.onChannelChanged,
                   ),
                   const SizedBox(height: 24),
                   Text(l.settingsChannel, style: th.textTheme.headlineSmall),
@@ -259,9 +273,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-        ),
-        Expanded(flex: 2, child: widget.system),
-      ],
+          widget.system,
+        ],
+      ),
     );
   }
 

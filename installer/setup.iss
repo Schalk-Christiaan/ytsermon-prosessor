@@ -90,6 +90,7 @@ Name: "ollama"; Description: "{cm:OllamaTask}"; Check: NeedsOllama
 ; Flutter bundle incl. plugin DLLs, libmpv and the VC++ runtime DLLs the workflow copies next to the exe.
 Source: "..\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\deps\yt-dlp.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\deps\qjs.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\deps\ffmpeg.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\deps\ffprobe.exe"; DestDir: "{app}"; Flags: ignoreversion
 

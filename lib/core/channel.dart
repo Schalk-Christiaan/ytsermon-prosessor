@@ -3,9 +3,8 @@
 //   wanneer: as 'n preek-URL gelaai word
 //   groep: core | Kern
 //   skryf: werkmap/<id>/ (info.json, onderskrifte, video.mp4)
-//   doel: lys die kanaal (flat), video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af
-//   status: klaar
-//   bewys: 7236634
+//   doel: lys die kanaal (flat; URL uit instellings, normaliseer), video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 
@@ -41,15 +40,40 @@ List<ChannelItem> parseChannel(Iterable<dynamic> playlists) {
   ];
 }
 
-/// Lists the whole channel (`/streams` then `/videos`) with one yt-dlp call per tab.
-Future<List<ChannelItem>> listChannel() async {
+/// One canonical channel URL (`https://www.youtube.com/@name`, `/channel/UC…` or `/c/name`) from what a
+/// person types or pastes (`@name`, `youtube.com/@name/videos`, a full link …); null when it is none of those.
+String? normalizeChannelUrl(String input) {
+  final m = RegExp(
+    r'^(?:(?:https?://)?(?:www\.|m\.)?youtube\.com)?/?(@[^\s/?#]+|channel/UC[\w-]{22}|c/[^\s/?#]+)(?:[/?#].*)?$',
+    caseSensitive: false,
+  ).firstMatch(input.trim());
+  return m == null ? null : 'https://www.youtube.com/${m.group(1)}';
+}
+
+/// The name of the channel at [url] (one yt-dlp call for its newest video); throws [ProcessException]
+/// when there is no such channel.
+Future<String> channelName(String url) async {
+  final out = StringBuffer();
+  await runTool('yt-dlp', [
+    '--flat-playlist',
+    '-I',
+    '1',
+    '-J',
+    '$url/videos',
+  ], onLine: out.write);
+  final j = jsonDecode(out.toString()) as Map<String, dynamic>;
+  return '${j['channel'] ?? j['uploader'] ?? j['title']}';
+}
+
+/// Lists the whole channel at [url] (`/streams` then `/videos`) with one yt-dlp call per tab.
+Future<List<ChannelItem>> listChannel([String url = kChannelUrl]) async {
   final tabs = <dynamic>[];
   for (final tab in ['streams', 'videos']) {
     final out = StringBuffer();
     await runTool('yt-dlp', [
       '--flat-playlist',
       '-J',
-      '$kChannelUrl/$tab',
+      '$url/$tab',
     ], onLine: out.write);
     tabs.add(jsonDecode(out.toString()));
   }

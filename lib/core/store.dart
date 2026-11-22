@@ -3,9 +3,8 @@
 //   wanneer: by begin (laai almal) en by elke toestandsverandering van 'n preek
 //   groep: core | Kern
 //   skryf: <werkmap>/<id>/sermon.json | atomies (.tmp, dan hernoem)
-//   doel: elke diens as Sermon met toestand wat herbegin oorleef; voeg die kanaallys by
-//   status: klaar
-//   bewys: 7236634
+//   doel: elke diens as Sermon met toestand wat herbegin oorleef; voeg die kanaallys by en snoei ongeraakte preke van 'n vorige kanaal; 'n beskadigde sermon.json word oorgeslaan
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 
@@ -123,7 +122,11 @@ class SermonStore extends ChangeNotifier {
       final f = _file(id);
       Sermon? s;
       if (f.existsSync()) {
-        s = Sermon.fromJson(jsonDecode(f.readAsStringSync()));
+        try {
+          s = Sermon.fromJson(jsonDecode(f.readAsStringSync()));
+        } on Object {
+          continue; // one damaged file must not stop the app from starting
+        }
       } else if (hasPlan) {
         final info = File(p.join(d.path, '$id.info.json'));
         final j = info.existsSync()
@@ -167,6 +170,16 @@ class SermonStore extends ChangeNotifier {
       }
       s.order = i;
       _write(s);
+    }
+    // A listing from another channel: untouched sermons of the old one go (an empty list proves nothing).
+    if (listed.isNotEmpty) {
+      final ids = {for (final it in listed) it.id};
+      for (final s in [..._byId.values]) {
+        if (s.state == SermonState.nuut && !ids.contains(s.id)) {
+          _byId.remove(s.id);
+          if (_file(s.id).existsSync()) _file(s.id).deleteSync();
+        }
+      }
     }
     notifyListeners();
     return fresh;

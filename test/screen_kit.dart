@@ -204,6 +204,7 @@ SermonStore playlistStore() {
   void Function()? onSetup,
   Future<String?> Function()? pickVideo,
   Widget system = const SizedBox(),
+  Future<String> Function(String)? validate,
 }) {
   final root = Directory.systemTemp.createTempSync('set');
   final set = AppSettings.load(root);
@@ -218,6 +219,7 @@ SermonStore playlistStore() {
     ),
     signIn: () async => tok = 'rt',
     system: system,
+    validateChannel: validate ?? (u) async => 'Kerk',
     pickVideo: pickVideo ?? () async => null,
     onSetup: onSetup ?? () {},
     probe: (_) async => const MediaInfo(1920, 1080, '25', 12, true),
@@ -228,6 +230,7 @@ SermonStore playlistStore() {
 (Widget, AppSettings, List<String>) setupScreen({
   String ollama = 'notRunning',
   bool signedIn = false,
+  Future<String> Function(String)? validate,
 }) {
   final root = Directory.systemTemp.createTempSync('setup');
   final set = AppSettings.load(root)..outDir = p.join(root.path, 'Preke');
@@ -258,6 +261,7 @@ SermonStore playlistStore() {
     },
     onSettings: () => calls.add('settings'),
     onDone: () => calls.add('done'),
+    validateChannel: validate ?? (u) async => 'Kerk',
   );
   return (Scaffold(body: w), set, calls);
 }

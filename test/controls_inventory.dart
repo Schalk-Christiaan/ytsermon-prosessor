@@ -117,6 +117,8 @@ const kControls = <String, Set<String>>{
   },
   'instellings': {
     'ctl.instellings.setup',
+    'ctl.instellings.channel',
+    'ctl.instellings.channel-check',
     'ctl.instellings.connect',
     'ctl.instellings.disconnect',
     'ctl.instellings.client-file',
@@ -129,6 +131,8 @@ const kControls = <String, Set<String>>{
     'ctl.instellings.update-ytdlp',
   },
   'opstelling': {
+    'ctl.opstelling.channel',
+    'ctl.opstelling.channel-check',
     'ctl.opstelling.step-1',
     'ctl.opstelling.step-2',
     'ctl.opstelling.step-3',

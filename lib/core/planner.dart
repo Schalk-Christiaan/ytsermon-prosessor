@@ -3,11 +3,11 @@
 //   wanneer: ná captions, een Ollama-oproep per preek
 //   groep: core | Kern
 //   skryf: werkmap/<id>/plan.json, analysis.json | die plan; die etikette van die spraakblokke, die liedere en die diens-soort
-//   doel: laat qwen3:8b net teks skryf (Shorts, titel, beskrywing) binne die snit wat findBounds reeds bepaal het (geen grense van die KI nie); analyse() benoem die spraakblokke en liedere (nooit tye); validate() toets die plan, shortFault() elke Short apart; berg plan.json op
-//   status: klaar
-//   bewys: 7236634
+//   doel: laat qwen3:8b net teks skryf (Shorts, titel, beskrywing) binne die snit wat findBounds reeds bepaal het (geen grense van die KI nie); analyse() benoem die spraakblokke en liedere (nooit tye); validate() toets die plan, shortFault() elke Short apart; gebed ná die preek begin by die gebedsopening naby die KI se gebed_na; berg plan.json op
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:path/path.dart' as p;
 
@@ -439,14 +439,41 @@ class Planner {
     }
     // Everything between the two framing prayers belongs to the sermon (reading,
     // creed and the like inside it stay preek: "volle preek" runs prayer to prayer).
-    final voor = nr(j['gebed_voor']), na = nr(j['gebed_na']);
+    final voor = nr(j['gebed_voor']);
+    var na = nr(j['gebed_na']), prayerFrom = na;
+    // The AI often points gebed_na at the sermon's own closing "Amen" or at the middle of the prayer;
+    // the prayer after the sermon opens with "Kom ons dank/bid" or "Onse Vader", so look for that opening
+    // within three blocks of its answer and take the prayer from there (to the next "Amen" when it lies later).
+    if (voor > 0 && na > 0) {
+      final open = [
+        for (
+          var k = math.max(voor + 1, na - 3);
+          k <= math.min(blocks.length, na + 3);
+          k++
+        )
+          if (_prayerOpening.hasMatch(blocks[k - 1].text.toLowerCase())) k,
+      ].firstOrNull;
+      if (open != null) {
+        prayerFrom = open;
+        if (na < open) {
+          na = open;
+          while (na < blocks.length &&
+              na < open + 3 &&
+              !isAmen(blocks[na - 1].words.last.text)) {
+            na++;
+          }
+        }
+      }
+    }
     if (voor > 0) {
-      for (var i = voor + 1; i < na; i++) {
+      for (var i = voor + 1; i < prayerFrom; i++) {
         mark(i, BlockLabel.preek);
       }
     }
     mark(voor, BlockLabel.gebed);
-    mark(na, BlockLabel.gebed);
+    for (var i = prayerFrom; i <= na; i++) {
+      mark(i, BlockLabel.gebed);
+    }
     // The closing blessing has fixed words; the AI calls it gebed or ander too often.
     for (final b in blocks.skip(na)) {
       if (_blessing.hasMatch(b.text.toLowerCase())) b.label = BlockLabel.seen;
@@ -472,6 +499,9 @@ class Planner {
     );
   }
 }
+
+/// How a prayer opens in the service ("Kom ons dank saam", "Laat ons bid", "Onse Vader …").
+final _prayerOpening = RegExp(r'^(kom ons|laat ons) (dank|bid)|^onse vader');
 
 /// The Aaronic or apostolic blessing ("Die Here seën u en behoed u", "Die genade van onse Here …"),
 /// also with caption slips like "seun" for "seën".

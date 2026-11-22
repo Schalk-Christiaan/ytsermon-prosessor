@@ -306,7 +306,7 @@
   "setupIntro": "Vier dinge, een keer. Daarna begin die app by Preke.",
   "setupOllama": "Ollama (die KI op hierdie rekenaar) loop",
   "setupModel": "Die KI-model is afgelaai (5 GB)",
-  "setupChannel": "Die kerk se YouTube-kanaal is gekoppel",
+  "setupChannel": "Jou YouTube-rekening is gekoppel (om op te laai)",
   "setupFolder": "Gids vir gesnyde preke: {path}",
   "@setupFolder": {
     "placeholders": {
@@ -498,5 +498,18 @@
   "previewVideoMissing": "Video nog nie gereed nie",
   "viewList": "Lys",
   "viewGrid": "Rooster",
-  "noMatches": "Geen preke pas by die soektog of filter nie"
+  "noMatches": "Geen preke pas by die soektog of filter nie",
+  "channelLabel": "Jou YouTube-kanaal",
+  "channelHelp": "Tik @naam, of plak die skakel van die kanaal.",
+  "channelCheck": "Kontroleer",
+  "channelFound": "Gevind: {name}",
+  "@channelFound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "channelBadForm": "Dit lyk nie soos 'n YouTube-kanaal nie. Probeer @naam, of plak die skakel.",
+  "channelNotFound": "Kon nie hierdie kanaal vind nie. Kyk die naam en die internet, en probeer weer."
 }
