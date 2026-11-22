@@ -9,10 +9,15 @@ import 'package:flutter/material.dart';
 
 import 'theme.dart';
 
-/// Fades and slides [child] up 8 px when it first appears; still when motion is reduced.
+/// Fades and slides [child] in from [from] (default 8 px below) when it first appears; still when motion is reduced.
 class Reveal extends StatelessWidget {
-  const Reveal({super.key, required this.child});
+  const Reveal({
+    super.key,
+    required this.child,
+    this.from = const Offset(0, 8),
+  });
   final Widget child;
+  final Offset from;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +30,7 @@ class Reveal extends StatelessWidget {
       child: child,
       builder: (_, v, c) => Opacity(
         opacity: v,
-        child: Transform.translate(offset: Offset(0, (1 - v) * 8), child: c),
+        child: Transform.translate(offset: from * (1 - v), child: c),
       ),
     );
   }

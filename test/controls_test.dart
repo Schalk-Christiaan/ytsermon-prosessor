@@ -314,6 +314,54 @@ void main() {
       );
     });
 
+    testWidgets('panel content slides in and fades on a selection change', (
+      t,
+    ) async {
+      final c = await hersien(t);
+      double opacityOf(String k) => t
+          .widget<Opacity>(
+            find.ancestor(of: key(k), matching: find.byType(Opacity)).first,
+          )
+          .opacity;
+      await t.tap(key('hersien.short-block').first);
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 50));
+      expect(opacityOf('hersien.select-back'), lessThan(1));
+      await t.pump(const Duration(milliseconds: 300));
+      expect(opacityOf('hersien.select-back'), 1);
+      expect(c.selected, isNotNull);
+    });
+
+    testWidgets('panel content with reduced motion appears at once', (t) async {
+      await hersien(t);
+      t.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(t.platformDispatcher.clearAllTestValues);
+      await t.pump();
+      await t.tap(key('hersien.short-block').first);
+      await t.pump();
+      expect(
+        find.ancestor(
+          of: key('hersien.select-back'),
+          matching: find.byType(Opacity),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('narrow window: the properties drawer slides in', (t) async {
+      await hersien(t, w: 1100);
+      await t.tap(key('hersien.properties-toggle'));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 50));
+      cover(['hersien.properties-toggle']);
+      final o = find.ancestor(
+        of: find.byKey(const ValueKey('review.properties')),
+        matching: find.byType(Opacity),
+      );
+      expect(t.widget<Opacity>(o.first).opacity, lessThan(1));
+    });
+
     testWidgets('selection follows the timeline and the lists', (t) async {
       final c = await hersien(t);
       final n = c.plan!.shorts.length;

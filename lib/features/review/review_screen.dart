@@ -6,6 +6,7 @@
 //   doel: die preekredigeerder: preek uit Preke → plan → hakies, I/O, uitknip, transkripsie, Shorts, ontdoen (kortpaaie) → kies uitvoere, Oggend/Aand en soort diens (liedname op die tydlyn) → keur goed en sny
 //   status: bou
 
+import '../../app/motion.dart' show Reveal;
 import '../../app/job_progress.dart';
 
 import 'package:flutter/material.dart';
@@ -335,7 +336,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
                           bottom: 0,
                           right: 0,
                           width: 380,
-                          child: props,
+                          child: Reveal(
+                            from: const Offset(40, 0),
+                            child: props,
+                          ),
                         ),
                     ],
                   ),

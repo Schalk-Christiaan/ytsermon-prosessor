@@ -6,6 +6,9 @@
 //   doel: twee oortjies (Inligting, Transkripsie); Inligting wys titel, beskrywing, uitvoere en die Shorts- en snitlyste, of net die Short/snit wat in die diensbaan gekies is (slider met syferveld); Herstel na die KI-voorstel
 //   status: bou
 import 'package:flutter/material.dart';
+
+import '../../app/motion.dart' show Reveal;
+
 import 'package:flutter/services.dart';
 
 import '../../core/captions.dart';
@@ -114,7 +117,11 @@ class _PropertiesPanelState extends State<PropertiesPanel>
                           onSeek: c.seek,
                         ),
                       )
-                    : _info(l, th, plan),
+                    : Reveal(
+                        key: ValueKey(c.selected ?? 'overview'),
+                        from: const Offset(16, 0),
+                        child: _info(l, th, plan),
+                      ),
               ),
             ),
             const Divider(),
