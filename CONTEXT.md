@@ -12,14 +12,14 @@ kaart: lib/core/*.dart, lib/app/*.dart, lib/features/**/*.dart
 Alles plaaslik: yt-dlp, ffmpeg, Ollama. Ontwikkel en toets op Linux, verskeep na die kerk-PC (Windows 11).
 
 ## Status
-Alles in `main`; Windows-CI groen (44914060183, 44914313563), artefak `Setup` bestaan. `/bewys` 2026-11-21 geslaag (273 toetse, E2E YWz). Nog op die kerk-PC ongetoets.
-Nuwe plan `planne/nagskof-poleer.md` (status `oop`, 21 stappe): foute → kodehersiening → argitektuur → eie kanaal-URL (`kChannelUrl` in `lib/core/channel.dart` word instelling) → persona-kritiek → persona-vloeie → UI/UX + Tab-fokus per skerm → Setup.exe in Windows-VM → `/bewys` → Setup.exe na USB (`/run/media/schalk/Ventoy/Preekverwerker/`) net ná volle VM-toets. Stop by oplaai; niks word na YouTube opgelaai nie.
-Bekende foute (stap A): `lBMwRt3eIus` preekblok #22 as gebed, #24 "ander"; `6s_FFatG0so` gebed ná preek oor #50–52 verdeel; grense-toets ±1,5 s (moet ±0,5).
-Windows-VM (`omarchy-windows`, dockur): begin net via `sudo env PKEXEC_UID=1000 /usr/bin/omarchy-windows-vm __priv up_wait` (sonder dit is `/storage` leeg en laai dit Windows af). Windows was nooit klaar geïnstalleer nie; outo-installasie het 2026-11-21 22:35 begin. Kiekie: `docker exec omarchy-windows sh -c 'printf "screendump /shared/scr.ppm\n" | nc -q1 -U /run/shm/monitor.sock'` → `~/Windows/scr.ppm`; gedeelde gids `~/Windows` = `\\host.lan\Data`. Container kon nie DNS oplos nie: internet in die VM nog onbevestig.
-Oop vrae vir Schalk: is "knoppies selekteerbaar" = Tab/fokus/kopieerbare teks? Personas reg (Oom Koos as maatstaf)?
-Skills vir die bou: diagnosing-bugs, tdd, code-review, codebase-design, projekkonteks:ui-ux, impeccable, run, projekkonteks:bewys (tabel in die plan).
-**Laaste sessie:** 2026-11-21
-**Volgende:** `/bou nagskof-poleer`; kyk eers of die VM-installasie klaar is (kiekie hierbo) en of die VM internet het.
+`nagskof-poleer` gemerge en gepush (095995d); Windows-CI groen (44983908373, Setup.exe met `qjs.exe` vir yt-dlp se JS). `/bewys` ná die merge nog nie gedoen nie; nog op die kerk-PC ongetoets.
+Ná die merge, nog nie gepush nie: `3f7f88f` (diensbaan-hakies volg die muis: sleep = begin + totale afstand), `9ac4e14` (preek-tydskuifbalke en klankvolume uit die Hersien-paneel).
+Nuwe plan `planne/hersien-paneel.md` (status `oop`): Hersien-paneel volg die keuse in die diensbaan (besluit 2026-11-22).
+VM-toets van die nuwe Setup.exe (aflaai met qjs, sny, klank) nog oop; daarna eers USB (stap 21 van nagskof-poleer). Kiekies van nagskof is verlore saam met die worktree (PNG's is gitignored).
+Oop vrae in `planne/nagskof-poleer.md` `## Vrae`: store.merge vee ou-kanaal-preke uit?, kChurch as instelling, ReviewController opdeel, kanaal sonder /videos, lBMw-begin ná aankondigings.
+Windows-VM (`omarchy-windows`): Windows 11 is geïnstalleer; wyser onbruikbaar, dryf met QEMU-monitor `sendkey`. Kiekie: `docker exec omarchy-windows sh -c 'printf "screendump /shared/scr.ppm\n" | nc -q1 -U /run/shm/monitor.sock'` → `~/Windows/scr.ppm`.
+**Laaste sessie:** 2026-11-22
+**Volgende:** `/bou hersien-paneel`; daarna push, VM-toets van Setup.exe, `/bewys`.
 
 ## Gebruikers
 - **Schalk**: tegnies; sleutelbord (I/O, ←/→, Shift, spasie, Ctrl+Z), spoed en die log. Struikel oor: stadige herhaalwerk, muis-net-paaie.
