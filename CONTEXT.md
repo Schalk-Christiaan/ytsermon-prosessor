@@ -56,6 +56,7 @@ Skills vir die bou: diagnosing-bugs, tdd, code-review, codebase-design, projekko
 2026-11-21 Impeccable in die projek (.claude/skills), sonder die web-hook (want die detektor/hook werk net op HTML/CSS)
 2026-11-21 Nagskof stop by oplaai; Setup.exe gaan net na die USB-stokkie ná 'n volle Windows-VM-toets (want Schalk)
 2026-11-21 Die kanaal-URL word 'n instelling met die kerk se kanaal as verstek (want ander gemeentes/kanale)
+2026-11-22 Hersien-paneel volg die keuse in die diensbaan (niks: titel/beskrywing/uitvoer; Short- of snit-blok: daardie item), plus oortjie Transkripsie; preek-tydskuifbalke en klankvolume verwyder (want hakies in die diensbaan doen dit; Schalk hou nie van die chip-oortjies nie)
 
 ## Name
 die kanaal = https://www.youtube.com/@gereformeerdekerkoranjeriv5791
