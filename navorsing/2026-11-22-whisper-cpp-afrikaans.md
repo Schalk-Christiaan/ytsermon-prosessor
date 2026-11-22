@@ -23,7 +23,7 @@ Merke: **waar** = self gemeet of van die bron gelees; **onbewys** = nie getoets 
 
 ## Maatstaf (Linux, CPU, eie toets)
 Masjien: dev-PC, 12 drade (ggml `zen4`-agterkant), **CPU-only**. Die Vulkan-weergawe is **onbewys**: `vulkan-headers` ontbreek (`/usr/include/vulkan` bestaan nie) en niks word stelselwyd geïnstalleer sonder om te vra nie. Dus: amptelike `whisper-bin-ubuntu-x64` b5907, model turbo q5_0, `-l af -ojf -pp`.
-Video `YWz5gf0onjk`, twee vensters van 10 min; vergelyk met YouTube `af-orig` van dieselfde venster (die onderskrifte het nie die bate-gids se gids nie; `yt-dlp --write-auto-subs --sub-langs af-orig`).
+Video `YWz5gf0onjk`, twee vensters van 10 min; vergelyk met YouTube `af-orig` van dieselfde venster (`yt-dlp --write-auto-subs --sub-langs af-orig --sub-format json3`).
 Maatstawwe: **Nederlands-merkers** = woorde in 'n lys van Nederlandse vorms (toch, niet, zijn, mijn, hebben, koninkrijk, duivels, ...) of met `ij` of op `-lijk(e)` (Afrikaans: `-lik`); `segmente met NL` = segmente met minstens een merker; **ooreenkoms** = `difflib.SequenceMatcher`-verhouding van woordreekse teenoor YouTube. Dit is 'n growwe skatting (die merkerlys is nie volledig nie).
 
 | Venster | Opdrag | Tyd | x intyds | NL-woorde | Segmente met NL | Ooreenkoms met YouTube |
@@ -32,7 +32,7 @@ Maatstawwe: **Nederlands-merkers** = woorde in 'n lys van Nederlandse vorms (toc
 | 20:00-30:00 | met `--prompt` | 421 s | 0,70 | 13 / 2536 | 9 / 415 | **0,11 (lus)** |
 | 30:00-40:00 (preek) | sonder `--prompt` | 360 s | 0,60 | 11 / 1235 (0,9 %) | 11 / 109 (10 %) | 0,81 |
 | 30:00-40:00 | met `--prompt` | 364 s | 0,61 | 11 / 1230 (0,9 %) | 11 / 122 (9 %) | 0,82 |
-YouTube self het in die twee vensters 1 en 0 merkers.
+YouTube het in die twee vensters 1 en 0 merkers.
 
 ### Bevindings
 - **Gehalte is bruikbaar, maar nie so goed as YouTube nie:** minder as 15 % van die segmente het 'n Nederlandse vorm (verre onder die helfte), ooreenkoms ~0,8 met YouTube. Tipiese slips: "ontzettend", "goddelooses", "makkelijk", "wonderlijk", "pijn", "koninkrijk". Dit is genoeg vir grense, beplanning en Shorts-onderskrifte as terugval; vir 'n gelese transkripsie is YouTube beter.
