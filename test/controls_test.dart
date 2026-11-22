@@ -776,6 +776,7 @@ void main() {
       void Function()? onBack,
       List<String>? opened,
       Future<String?> Function()? pickDir,
+      GroupSuggestions? suggestions,
     }) async {
       await loadFonts();
       setView(t, 1100, 900);
@@ -790,6 +791,7 @@ void main() {
               jobs: q,
               onBack: onBack ?? () {},
               pickDir: pickDir ?? () async => null,
+              suggestions: suggestions,
               open: (path, {select = false}) async =>
                   opened?.add('${select ? 'show:' : 'play:'}$path'),
             ),
@@ -959,6 +961,28 @@ void main() {
       await t.pump(const Duration(milliseconds: 50));
       expect(tc.$3.jobs.single.status, JobStatus.gekanselleer);
       await t.pump(const Duration(seconds: 3));
+    });
+
+    testWidgets('suggested playlists: accept files the sermon, ignore drops', (
+      t,
+    ) async {
+      final (st, q) = workQueue();
+      final set = AppSettings.load(st.root)
+        ..groups.add(PlaylistGroup('g1', 'Advent 2026'));
+      final sug = GroupSuggestions(set, st);
+      final id = st.sorted.first.id;
+      sug.pending[id] = (groupIds: ['g1'], newName: 'Johannes');
+      sug.pending['x2'] = (groupIds: [], newName: 'Ander');
+      await werk(t, st, q, suggestions: sug);
+      expect(find.text('Voorgestelde snitlyste'), findsOneWidget);
+      expect(find.textContaining('Advent 2026, Johannes'), findsOneWidget);
+      await tapKey(t, 'werk.suggest-ignore.1');
+      expect(sug.pending.keys, [id]);
+      await tapKey(t, 'werk.suggest-accept.0');
+      expect(sug.pending, isEmpty);
+      expect(set.groups.first.sermons, [id]);
+      expect(set.groups.last.name, 'Johannes');
+      expect(find.text('Voorgestelde snitlyste'), findsNothing);
     });
   });
 

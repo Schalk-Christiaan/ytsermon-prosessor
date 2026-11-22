@@ -654,5 +654,18 @@
         "type": "String"
       }
     }
+  },
+  "workSuggestions": "Voorgestelde snitlyste",
+  "suggestFor": "{title}: {names}",
+  "suggestAcceptOne": "Aanvaar",
+  "@suggestFor": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
   }
 }

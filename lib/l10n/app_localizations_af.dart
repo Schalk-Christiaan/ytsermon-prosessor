@@ -963,4 +963,15 @@ class LAf extends L {
   @override
   String get suggestOllamaDown =>
       'Ollama het nie geantwoord nie. Maak Ollama oop en probeer weer.';
+
+  @override
+  String get workSuggestions => 'Voorgestelde snitlyste';
+
+  @override
+  String suggestFor(String title, String names) {
+    return '$title: $names';
+  }
+
+  @override
+  String get suggestAcceptOne => 'Aanvaar';
 }

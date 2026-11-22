@@ -52,6 +52,7 @@ import '../core/store.dart';
 import '../core/tools.dart';
 import '../core/youtube.dart';
 import '../features/library/library_screen.dart';
+import '../core/suggest.dart';
 import '../features/playlists/playlists_screen.dart';
 import '../features/review/review_controller.dart';
 import '../features/review/review_screen.dart';
@@ -122,6 +123,10 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
       settings: _settings,
     );
   late final _settings = widget.settings ?? AppSettings.load(widget.store.root);
+
+  /// Playlist suggestions after every finished cut (asked once, never blocks the render).
+  late final _suggestions = GroupSuggestions(_settings, widget.store)
+    ..attach(widget.jobs);
   late final _quota =
       widget.quota ??
       UploadQuota(File(p.join(widget.store.root.path, 'quota.json')));
@@ -258,10 +263,12 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
                                   onBack: () => _go(0),
                                   quota: _quota,
                                   onSelection: (v) => selection[2]!.value = v,
+                                  suggestions: _suggestions,
                                 ),
                                 PlaylistsScreen(
                                   store: widget.store,
                                   settings: _settings,
+                                  suggestions: _suggestions,
                                 ),
                                 SettingsScreen(
                                   settings: _settings,

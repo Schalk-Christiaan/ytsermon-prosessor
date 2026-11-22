@@ -119,6 +119,8 @@ const kControls = <String, Set<String>>{
     'ctl.werk.show',
     'ctl.werk.retry',
     'ctl.werk.log',
+    'ctl.werk.suggest-accept',
+    'ctl.werk.suggest-ignore',
   },
   'snitlyste': {
     'ctl.snitlyste.rule-book',

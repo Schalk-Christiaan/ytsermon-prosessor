@@ -1712,6 +1712,24 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Ollama het nie geantwoord nie. Maak Ollama oop en probeer weer.'**
   String get suggestOllamaDown;
+
+  /// No description provided for @workSuggestions.
+  ///
+  /// In af, this message translates to:
+  /// **'Voorgestelde snitlyste'**
+  String get workSuggestions;
+
+  /// No description provided for @suggestFor.
+  ///
+  /// In af, this message translates to:
+  /// **'{title}: {names}'**
+  String suggestFor(String title, String names);
+
+  /// No description provided for @suggestAcceptOne.
+  ///
+  /// In af, this message translates to:
+  /// **'Aanvaar'**
+  String get suggestAcceptOne;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

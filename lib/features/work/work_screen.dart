@@ -3,7 +3,7 @@
 //   wanneer: Werk (rail)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag- en fout-lyste, en die uitvoere in drie groepe (Volle preke, Shorts, Klank vir WhatsApp) met kies-alles en 'n aftreklys per groep (Laai op, Kopieer na gids, Wys in gids, Kopieer WhatsApp-teks, Klank vir WhatsApp); oplaai-teller
+//   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag- en fout-lyste, voorgestelde snitlyste (Aanvaar/Ignoreer), en die uitvoere in drie groepe (Volle preke, Shorts, Klank vir WhatsApp) met kies-alles en 'n aftreklys per groep (Laai op, Kopieer na gids, Wys in gids, Kopieer WhatsApp-teks, Klank vir WhatsApp); oplaai-teller
 //   status: bou
 import 'dart:io';
 
@@ -18,6 +18,7 @@ import '../../core/jobs.dart';
 import '../../core/library.dart';
 import '../../core/storage.dart' show formatBytes;
 import '../../core/store.dart';
+import '../../core/suggest.dart';
 import '../../core/tools.dart';
 import '../../core/youtube.dart';
 import '../../l10n/app_localizations.dart';
@@ -46,6 +47,7 @@ class WorkScreen extends StatefulWidget {
     this.quota,
     this.pickDir = pickFolder,
     this.onSelection,
+    this.suggestions,
   });
   final SermonStore store;
   final JobQueue jobs;
@@ -64,6 +66,9 @@ class WorkScreen extends StatefulWidget {
 
   /// Status-bar text for the selection, null when nothing is selected.
   final void Function(String?)? onSelection;
+
+  /// Playlist suggestions made after a render; null hides the section.
+  final GroupSuggestions? suggestions;
 
   @override
   State<WorkScreen> createState() => _WorkScreenState();
@@ -159,7 +164,7 @@ class _WorkScreenState extends State<WorkScreen> {
       child: Focus(
         autofocus: true,
         child: ListenableBuilder(
-          listenable: jobs,
+          listenable: Listenable.merge([jobs, ?widget.suggestions]),
           builder: (context, _) {
             final cur = jobs.current;
             final waiting = jobs.jobs.where((j) => j.status == JobStatus.wag);
@@ -192,6 +197,7 @@ class _WorkScreenState extends State<WorkScreen> {
                 for (final j in waiting) _line(l, th, j),
                 if (failed.isNotEmpty) _section(l.workFailed, th),
                 for (final j in failed) _failed(l, th, j),
+                ..._suggested(l, th),
                 for (final g in WorkGroup.values)
                   ..._group(l, th, g, groups[g]!),
               ],
@@ -200,6 +206,42 @@ class _WorkScreenState extends State<WorkScreen> {
         ),
       ),
     );
+  }
+
+  /// One row per sermon with suggested playlists: the names, Aanvaar and Ignoreer.
+  List<Widget> _suggested(L l, ThemeData th) {
+    final sug = widget.suggestions;
+    if (sug == null || sug.pending.isEmpty) return const [];
+    return [
+      _section(l.workSuggestions, th),
+      for (final (i, e) in sug.pending.entries.indexed)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.suggestFor(
+                    store.byId(e.key)?.title ?? e.key,
+                    sug.names(e.value).join(', '),
+                  ),
+                  style: th.textTheme.bodyLarge,
+                ),
+              ),
+              TextButton(
+                key: ValueKey('ctl.werk.suggest-ignore.$i'),
+                onPressed: () => sug.ignore(e.key),
+                child: Text(l.suggestIgnore),
+              ),
+              FilledButton(
+                key: ValueKey('ctl.werk.suggest-accept.$i'),
+                onPressed: () => sug.accept(e.key),
+                child: Text(l.suggestAcceptOne),
+              ),
+            ],
+          ),
+        ),
+    ];
   }
 
   Widget _section(String text, ThemeData th) => Padding(

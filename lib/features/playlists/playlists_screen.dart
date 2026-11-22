@@ -22,12 +22,16 @@ class PlaylistsScreen extends StatefulWidget {
     required this.store,
     required this.settings,
     this.suggest,
+    this.suggestions,
   });
   final SermonStore store;
   final AppSettings settings;
 
   /// Test seam for Ollama: which sermons fit the group; null = the real call.
   final Future<List<Suggestion>> Function(PlaylistGroup g)? suggest;
+
+  /// Accepting a suggestion on Werk changes the groups: rebuild when it does.
+  final GroupSuggestions? suggestions;
 
   @override
   State<PlaylistsScreen> createState() => _PlaylistsScreenState();
@@ -67,7 +71,7 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
     final th = Theme.of(context);
     final rules = widget.settings.rules;
     return ListenableBuilder(
-      listenable: widget.store,
+      listenable: Listenable.merge([widget.store, ?widget.suggestions]),
       builder: (context, _) {
         final counts = <String?, int>{};
         for (final s in widget.store.sorted) {
