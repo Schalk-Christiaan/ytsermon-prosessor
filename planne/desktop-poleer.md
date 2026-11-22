@@ -1,4 +1,4 @@
-status: oop
+status: bou
 
 # Desktop-poleer: Windows-styl, Karoo-wit, Werk-rooster, stoorspasie, snitlysgroepe met KI, pixel-kuns uit Bybelverhale
 

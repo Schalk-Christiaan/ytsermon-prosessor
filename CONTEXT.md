@@ -14,12 +14,12 @@ Alles plaaslik: yt-dlp, ffmpeg, Ollama. Ontwikkel en toets op Linux, verskeep na
 ## Status
 `nagskof-poleer` gemerge en gepush (095995d); Windows-CI groen (44983908373, Setup.exe met `qjs.exe` vir yt-dlp se JS). `/bewys` ná die merge nog nie gedoen nie; nog op die kerk-PC ongetoets.
 Ná die merge, nog nie gepush nie: `3f7f88f` (diensbaan-hakies volg die muis: sleep = begin + totale afstand), `9ac4e14` (preek-tydskuifbalke en klankvolume uit die Hersien-paneel).
-Nuwe plan `planne/desktop-poleer.md` (status `oop`, 22 stappe): Windows-styl A + Werk-groepe, Karoo-wit, animasies, kies-alles, stoorspasie, klankskuifbalk, snitlysgroepe met KI, pixel-kuns uit Bybelverhale en duidelike vordering; neem `hersien-paneel.md` (nou `stop`) op.
+Nuwe plan `planne/desktop-poleer.md` (status `bou`, 22 stappe; bou loop in die agtergrond op tak `bou/desktop-poleer`, worktree `../.bou/ytsermon-prosessor-desktop-poleer`): Windows-styl A + Werk-groepe, Karoo-wit, animasies, kies-alles, stoorspasie, klankskuifbalk, snitlysgroepe met KI, pixel-kuns uit Bybelverhale en duidelike vordering; neem `hersien-paneel.md` (nou `stop`) op.
 VM-toets van die nuwe Setup.exe (aflaai met qjs, sny, klank) nog oop; daarna eers USB (stap 21 van nagskof-poleer). Kiekies van nagskof is verlore saam met die worktree (PNG's is gitignored).
 Oop vrae in `planne/nagskof-poleer.md` `## Vrae`: store.merge vee ou-kanaal-preke uit?, kChurch as instelling, ReviewController opdeel, kanaal sonder /videos, lBMw-begin ná aankondigings.
 Windows-VM (`omarchy-windows`): Windows 11 is geïnstalleer; wyser onbruikbaar, dryf met QEMU-monitor `sendkey`. Kiekie: `docker exec omarchy-windows sh -c 'printf "screendump /shared/scr.ppm\n" | nc -q1 -U /run/shm/monitor.sock'` → `~/Windows/scr.ppm`.
 **Laaste sessie:** 2026-11-22
-**Volgende:** `/bou desktop-poleer`; daarna push, VM-toets van Setup.exe, `/bewys`.
+**Volgende:** wag vir die uitvoerder (kyk `## Log` in `planne/desktop-poleer.md`; hervat met `/bou desktop-poleer` as dit gestop het), dan hersien en merge; daarna push, VM-toets van Setup.exe, `/bewys`.
 
 ## Gebruikers
 - **Schalk**: tegnies; sleutelbord (I/O, ←/→, Shift, spasie, Ctrl+Z), spoed en die log. Struikel oor: stadige herhaalwerk, muis-net-paaie.
