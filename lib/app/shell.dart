@@ -66,9 +66,10 @@ import '../features/work/work_screen.dart';
 import '../l10n/app_localizations.dart';
 import 'theme.dart';
 
-/// The app frame: navigation rail and the five screens; starts on Opstelling until setup is done.
 /// Rail indexes of the screens that report a selection to the status bar.
 const _kPreke = 0, _kWerk = 2;
+
+/// The app frame: navigation rail and the five screens; starts on Opstelling until setup is done.
 
 class Shell extends StatefulWidget {
   const Shell({

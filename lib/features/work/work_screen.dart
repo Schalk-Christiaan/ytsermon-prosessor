@@ -29,7 +29,7 @@ import '../../core/suggest.dart';
 import '../../core/tools.dart';
 import '../../core/youtube.dart';
 import '../../l10n/app_localizations.dart';
-import '../sermons/sermons_screen.dart' show SermonThumb;
+import '../sermons/sermons_screen.dart' show SermonThumb, ViewToggle;
 
 /// The three groups of outputs on the Werk screen.
 enum WorkGroup { full, shorts, audio }
@@ -214,26 +214,10 @@ class _WorkScreenState extends State<WorkScreen> {
                   children: [
                     Text(l.navWerk, style: th.textTheme.headlineMedium),
                     const SizedBox(width: 16),
-                    SegmentedButton<bool>(
-                      key: const ValueKey('ctl.werk.view'),
-                      showSelectedIcon: false,
-                      segments: [
-                        ButtonSegment(
-                          value: false,
-                          icon: const Icon(Icons.view_list_rounded),
-                          label: Text(l.viewList),
-                        ),
-                        ButtonSegment(
-                          value: true,
-                          icon: const Icon(Icons.grid_view_rounded),
-                          label: Text(l.viewGrid),
-                        ),
-                      ],
-                      selected: {_settings.sermonGrid},
-                      onSelectionChanged: (v) => setState(() {
-                        _settings.sermonGrid = v.single;
-                        _settings.save();
-                      }),
+                    ViewToggle(
+                      keyName: 'ctl.werk.view',
+                      settings: _settings,
+                      onChanged: () => setState(() {}),
                     ),
                   ],
                 ),

@@ -520,26 +520,10 @@ class _SermonsScreenState extends State<SermonsScreen> {
         children: [
           Text(l.navPreke, style: th.textTheme.headlineMedium),
           const SizedBox(width: 16),
-          SegmentedButton<bool>(
-            key: const ValueKey('ctl.preke.view'),
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(
-                value: false,
-                icon: const Icon(Icons.view_list_rounded),
-                label: Text(l.viewList),
-              ),
-              ButtonSegment(
-                value: true,
-                icon: const Icon(Icons.grid_view_rounded),
-                label: Text(l.viewGrid),
-              ),
-            ],
-            selected: {_settings.sermonGrid},
-            onSelectionChanged: (v) => setState(() {
-              _settings.sermonGrid = v.single;
-              _settings.save();
-            }),
+          ViewToggle(
+            keyName: 'ctl.preke.view',
+            settings: _settings,
+            onChanged: () => setState(() {}),
           ),
         ],
       ),
@@ -924,6 +908,48 @@ class _Skeleton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// List/grid switch shared by Preke and Werk; stores the choice in [AppSettings.sermonGrid].
+class ViewToggle extends StatelessWidget {
+  const ViewToggle({
+    super.key,
+    required this.keyName,
+    required this.settings,
+    required this.onChanged,
+  });
+
+  final String keyName;
+  final AppSettings settings;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    return SegmentedButton<bool>(
+      key: ValueKey(keyName),
+      showSelectedIcon: false,
+      segments: [
+        ButtonSegment(
+          value: false,
+          icon: const Icon(Icons.view_list_rounded),
+          label: Text(l.viewList),
+        ),
+        ButtonSegment(
+          value: true,
+          icon: const Icon(Icons.grid_view_rounded),
+          label: Text(l.viewGrid),
+        ),
+      ],
+      selected: {settings.sermonGrid},
+      onSelectionChanged: (v) {
+        settings
+          ..sermonGrid = v.single
+          ..save();
+        onChanged();
+      },
     );
   }
 }
