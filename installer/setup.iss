@@ -93,6 +93,8 @@ Source: "..\deps\yt-dlp.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\deps\qjs.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\deps\ffmpeg.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\deps\ffprobe.exe"; DestDir: "{app}"; Flags: ignoreversion
+; whisper.cpp (CPU): whisper-cli finds its DLLs next to itself, and the app finds whisper-cli next to the exe.
+Source: "..\deps\whisper\*"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Preekverwerker"; Filename: "{app}\preekverwerker.exe"

@@ -3,7 +3,7 @@
 #   wanneer: push na main of bou/windows-installeerder, tag v*, of met die hand (Actions → Windows → Run workflow)
 #   groep: installer | Installeerder
 #   skryf: artefak Setup (Setup.exe + inhoud.txt)
-#   doel: bou die Windows-app, sit vasgepende yt-dlp/ffmpeg/ffprobe (SHA-256) en die VC++-looptyd by, maak Setup.exe met Inno Setup, en rook-toets dit: stil installeer, app begin, opgradeer oor die lopende app, deïnstalleer met die werkgids behou
+#   doel: bou die Windows-app, sit vasgepende yt-dlp/ffmpeg/ffprobe/whisper-cli (SHA-256) en die VC++-looptyd by, maak Setup.exe met Inno Setup, en rook-toets dit: stil installeer, app begin, opgradeer oor die lopende app, deïnstalleer met die werkgids behou
 #   status: bou
 # Plan: planne/windows-installeerder.md
 name: Windows
@@ -22,6 +22,11 @@ env:
   QJS_SHA256: ff03398d74ea6e6bd3a8e58058f7003225abcac229d7d57775b7aaae812a49c7
   FFMPEG_VERSION: 9.0.2
   FFMPEG_SHA256: 60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba
+  # whisper.cpp (local transcription when a video has no YouTube captions): the 9 MB CPU build goes into Setup.exe.
+  # The CUDA build (whisper-bin-win-cuda-12.4.0-x64.zip, 735 MB, SHA-256 34f872ce724ca1ff0a4afca481853e5ee74250f8cb22153e499f953562846039)
+  # is too big to bundle and unproven on the church PC's driver (needs >= 551); see navorsing/2026-11-22-whisper-cpp-afrikaans.md.
+  WHISPER_VERSION: b5907
+  WHISPER_SHA256: ecca07b277d943e9b9f4712856a144b857271a6b333104e511e1988e80db582b
 
 jobs:
   build:
@@ -55,6 +60,10 @@ jobs:
           # yt-dlp needs a JS runtime for YouTube (no node/deno on a clean Windows); QuickJS-ng is 1.9 MB.
           Get-Pinned "https://github.com/quickjs-ng/quickjs/releases/download/$env:QJS_VERSION/qjs-windows-x86_64.exe" deps/qjs.exe $env:QJS_SHA256
           Get-Pinned "https://github.com/GyanD/codexffmpeg/releases/download/$env:FFMPEG_VERSION/ffmpeg-$env:FFMPEG_VERSION-essentials_build.zip" ffmpeg.zip $env:FFMPEG_SHA256
+          Get-Pinned "https://github.com/ggml-org/whisper.cpp/releases/download/$env:WHISPER_VERSION/whisper-bin-x64.zip" whisper.zip $env:WHISPER_SHA256
+          Expand-Archive whisper.zip -DestinationPath whisper
+          New-Item -ItemType Directory -Force deps/whisper | Out-Null
+          Copy-Item whisper/Release/whisper-cli.exe, whisper/Release/whisper.dll, whisper/Release/ggml*.dll deps/whisper/
           Expand-Archive ffmpeg.zip -DestinationPath ffmpeg
           Copy-Item ffmpeg/*/bin/ffmpeg.exe, ffmpeg/*/bin/ffprobe.exe deps/
           # App-local VC++ runtime: a clean Windows 11 often lacks it, and the redist would need admin.
@@ -86,6 +95,7 @@ jobs:
           Install-Setup
           $need = 'preekverwerker.exe', 'flutter_windows.dll', 'libmpv-2.dll', 'desktop_drop_plugin.dll',
             'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'yt-dlp.exe', 'qjs.exe', 'ffmpeg.exe', 'ffprobe.exe',
+            'whisper-cli.exe', 'whisper.dll', 'ggml.dll',
             'data\app.so', 'unins000.exe'
           $missing = $need | Where-Object { -not (Test-Path (Join-Path $app $_)) }
           Get-ChildItem $app -Recurse -File | Where-Object FullName -notlike '*flutter_assets*' |
@@ -94,6 +104,9 @@ jobs:
           if ($missing) { throw "Ontbreek in die installasie: $($missing -join ', ')" }
           & "$app\yt-dlp.exe" --version
           & "$app\ffprobe.exe" -version | Select-Object -First 1
+          # whisper-cli must start (a missing DLL makes it exit at once without output).
+          & "$app\whisper-cli.exe" --help *> whisper-help.txt
+          if (-not (Select-String -Path whisper-help.txt -Pattern 'usage' -Quiet)) { Get-Content whisper-help.txt -Tail 20; throw 'whisper-cli --help het misluk' }
           if (-not (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Preekverwerker\Preekverwerker.lnk")) { throw 'Geen Start-kieslys-ikoon nie' }
 
           # The app must start and stay up (missing DLLs or a startup exception end it at once).
