@@ -1454,6 +1454,30 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Preke op skyf: {used}'**
   String statusDiskUsed(String used);
+
+  /// No description provided for @colDate.
+  ///
+  /// In af, this message translates to:
+  /// **'Datum'**
+  String get colDate;
+
+  /// No description provided for @colLength.
+  ///
+  /// In af, this message translates to:
+  /// **'Lengte'**
+  String get colLength;
+
+  /// No description provided for @colState.
+  ///
+  /// In af, this message translates to:
+  /// **'Stand'**
+  String get colState;
+
+  /// No description provided for @colSize.
+  ///
+  /// In af, this message translates to:
+  /// **'Grootte'**
+  String get colSize;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

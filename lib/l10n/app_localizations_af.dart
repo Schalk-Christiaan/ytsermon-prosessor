@@ -801,4 +801,16 @@ class LAf extends L {
   String statusDiskUsed(String used) {
     return 'Preke op skyf: $used';
   }
+
+  @override
+  String get colDate => 'Datum';
+
+  @override
+  String get colLength => 'Lengte';
+
+  @override
+  String get colState => 'Stand';
+
+  @override
+  String get colSize => 'Grootte';
 }

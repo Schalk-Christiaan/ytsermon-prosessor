@@ -3,7 +3,7 @@
 //   wanneer: Preke (rail, tuis)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: die hele kanaal (uit instellings) as lys met toestand (titel bo, Skriflesing onder); filter (ook "Nie opgelaai nie"), soek; "Verwerk nuutste diens" → plan → Hersien; "Verwerk volgende" → werkry; "Voer opname in" (knoppie of insleep) → Hersien
+//   doel: die hele kanaal (uit instellings) as tabel (Titel, Datum, Lengte, Stand, Grootte; klik op opskrif sorteer) of rooster; filter (ook "Nie opgelaai nie"), soek; "Verwerk nuutste diens" → plan → Hersien; "Verwerk volgende" → werkry; "Voer opname in" (knoppie of insleep) → Hersien
 //   status: bou
 import 'dart:io';
 
@@ -16,6 +16,7 @@ import '../../core/channel.dart';
 import '../../core/jobs.dart';
 import '../../core/recording.dart';
 import '../../core/settings.dart';
+import '../../core/storage.dart';
 import '../../core/store.dart';
 import '../../l10n/app_localizations.dart';
 import '../settings/settings_screen.dart';
@@ -54,6 +55,7 @@ class SermonsScreen extends StatefulWidget {
     this.pickVideo = pickVideoFile,
     this.importFile,
     this.settings,
+    this.sizes,
   });
   final SermonStore store;
   final JobQueue jobs;
@@ -68,6 +70,9 @@ class SermonsScreen extends StatefulWidget {
   final Future<String?> Function() pickVideo;
   final Future<Sermon> Function(File f, String title, DateTime date)?
   importFile;
+
+  /// Test seam: folder sizes by sermon ID (default: [sermonSizes] under the store's root).
+  final Future<Map<String, int>> Function(List<String> ids)? sizes;
 
   /// The shell's one [AppSettings]; a second instance would overwrite the other screens' saves.
   final AppSettings? settings;
@@ -91,14 +96,39 @@ class _SermonsScreenState extends State<SermonsScreen> {
   String? _error;
   int _fresh = 0;
 
+  // Table sort: null column = channel order (newest first); a click on a header sorts, again reverses.
+  String? _sortCol;
+  bool _asc = true;
+
+  // Size of each sermon's work folder; read at load and after the queue runs empty, kept only here.
+  Map<String, int> _sizes = {};
+  bool _wasBusy = false;
+
   @override
   void initState() {
     super.initState();
     _refresh(); // once per start, and again on "Probeer weer"
+    widget.jobs.addListener(_jobsChanged);
+  }
+
+  void _jobsChanged() {
+    final busy = widget.jobs.jobs.any(
+      (j) => j.status == JobStatus.besig || j.status == JobStatus.wag,
+    );
+    if (_wasBusy && !busy) _loadSizes();
+    _wasBusy = busy;
+  }
+
+  Future<void> _loadSizes() async {
+    final ids = [for (final s in widget.store.sorted) s.id];
+    final sizes =
+        await (widget.sizes?.call(ids) ?? sermonSizes(widget.store.root, ids));
+    if (mounted) setState(() => _sizes = sizes);
   }
 
   @override
   void dispose() {
+    widget.jobs.removeListener(_jobsChanged);
     _search.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -119,6 +149,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
         _loading = false;
         _fresh = first ? 0 : fresh.length;
       });
+      _loadSizes();
     } on Object catch (e) {
       if (!mounted) return;
       setState(() {
@@ -307,6 +338,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
                               .contains(q)))
                     s,
               ];
+              _sortRows(rows);
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -329,6 +361,82 @@ class _SermonsScreenState extends State<SermonsScreen> {
       ),
     );
   }
+
+  void _sortRows(List<Sermon> rows) {
+    final c = _sortCol;
+    if (c == null) return;
+    int cmp(Sermon a, Sermon b) => switch (c) {
+      'title' => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+      'date' => (a.date ?? '').compareTo(b.date ?? ''),
+      'length' => a.duration.compareTo(b.duration),
+      'state' => a.state.index.compareTo(b.state.index),
+      _ => (_sizes[a.id] ?? 0).compareTo(_sizes[b.id] ?? 0),
+    };
+    rows.sort((a, b) => _asc ? cmp(a, b) : cmp(b, a));
+  }
+
+  /// One sortable column header: the word and, on the sorted column, an arrow (shape, not colour).
+  Widget _sortHead(
+    ThemeData th,
+    String id,
+    String label, {
+    bool right = false,
+  }) {
+    final on = _sortCol == id;
+    return InkWell(
+      key: ValueKey('ctl.preke.sort-$id'),
+      onTap: () => setState(() {
+        if (_sortCol == id) {
+          _asc = !_asc;
+        } else {
+          _sortCol = id;
+          _asc = true;
+        }
+      }),
+      child: SizedBox(
+        height: 32,
+        child: Row(
+          mainAxisAlignment: right
+              ? MainAxisAlignment.end
+              : MainAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: th.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (on)
+              Icon(
+                _asc
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded,
+                size: 14,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tableHead(L l, ThemeData th) => Container(
+    height: 32,
+    color: th.colorScheme.surfaceContainer,
+    child: Row(
+      children: [
+        const SizedBox(width: 40 + 64 + 12),
+        Expanded(child: _sortHead(th, 'title', l.title)),
+        SizedBox(width: 104, child: _sortHead(th, 'date', l.colDate)),
+        SizedBox(width: 72, child: _sortHead(th, 'length', l.colLength)),
+        SizedBox(width: 140, child: _sortHead(th, 'state', l.colState)),
+        SizedBox(
+          width: 88,
+          child: _sortHead(th, 'size', l.colSize, right: true),
+        ),
+        const SizedBox(width: 12),
+      ],
+    ),
+  );
 
   Widget _header(L l, ThemeData th) => Wrap(
     alignment: WrapAlignment.spaceBetween,
@@ -513,10 +621,17 @@ class _SermonsScreenState extends State<SermonsScreen> {
         itemBuilder: (context, i) => _card(l, th, rows[i]),
       );
     }
-    return ListView.builder(
-      itemCount: rows.length,
-      itemExtent: 64,
-      itemBuilder: (context, i) => _row(l, th, rows[i]),
+    return Column(
+      children: [
+        _tableHead(l, th),
+        Expanded(
+          child: ListView.builder(
+            itemCount: rows.length,
+            itemExtent: 48,
+            itemBuilder: (context, i) => _row(l, th, rows[i]),
+          ),
+        ),
+      ],
     );
   }
 
@@ -576,7 +691,16 @@ class _SermonsScreenState extends State<SermonsScreen> {
           const Spacer(),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: _status(l, th, s),
+            child: Row(
+              children: [
+                Expanded(child: _status(l, th, s)),
+                if (_sizes[s.id] != null)
+                  Text(
+                    formatBytes(_sizes[s.id]!),
+                    style: th.textTheme.labelMedium,
+                  ),
+              ],
+            ),
           ),
         ],
       ),
@@ -590,12 +714,8 @@ class _SermonsScreenState extends State<SermonsScreen> {
     child: Row(
       children: [
         _select(s),
-        SermonThumb(sermon: s, width: 80, height: 45),
+        SermonThumb(sermon: s, width: 64, height: 36),
         const SizedBox(width: 12),
-        SizedBox(
-          width: 104,
-          child: Text(s.date ?? l.noDate, style: th.textTheme.labelMedium),
-        ),
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -605,7 +725,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
                 s.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: th.textTheme.headlineSmall?.copyWith(fontSize: 18),
+                style: th.textTheme.titleMedium,
               ),
               if (s.scripture != null)
                 Text(
@@ -617,11 +737,37 @@ class _SermonsScreenState extends State<SermonsScreen> {
             ],
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(
+          width: 104,
+          child: Text(s.date ?? l.noDate, style: th.textTheme.labelMedium),
+        ),
+        SizedBox(
+          width: 72,
+          child: Text(_len(s.duration), style: th.textTheme.labelMedium),
+        ),
         SizedBox(width: 140, child: _status(l, th, s)),
+        SizedBox(
+          width: 88,
+          child: Text(
+            _sizes[s.id] == null ? '' : formatBytes(_sizes[s.id]!),
+            textAlign: TextAlign.end,
+            style: th.textTheme.labelMedium,
+          ),
+        ),
+        const SizedBox(width: 12),
       ],
     ),
   );
+
+  /// `m:ss` or `h:mm:ss` for a sermon length in seconds.
+  static String _len(double sec) {
+    final t = sec.round();
+    final h = t ~/ 3600, m = (t % 3600) ~/ 60, s = t % 60;
+    final ss = s.toString().padLeft(2, '0');
+    return h > 0
+        ? '$h:${m.toString().padLeft(2, '0')}:$ss'
+        : '${m.toString().padLeft(2, '0')}:$ss';
+  }
 }
 
 /// The YouTube thumbnail of a sermon; no network, a local recording or a failed load shows

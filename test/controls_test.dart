@@ -550,6 +550,27 @@ void main() {
       },
     );
 
+    testWidgets('column headers sort the table', (t) async {
+      final (st, _, _) = await preke(t);
+      String first() => t
+          .widget<Text>(
+            find
+                .descendant(
+                  of: key('preke.row').first,
+                  matching: find.textContaining('Preek '),
+                )
+                .first,
+          )
+          .data!;
+      expect(first(), st.sorted.first.title);
+      for (final c in ['title', 'date', 'length', 'state', 'size']) {
+        await tapKey(t, 'preke.sort-$c');
+      }
+      await tapKey(t, 'preke.sort-title');
+      await tapKey(t, 'preke.sort-title');
+      expect(first(), 'Preek 9');
+    });
+
     testWidgets('new services strip can be dismissed', (t) async {
       await preke(
         t,
