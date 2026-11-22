@@ -43,6 +43,8 @@ const kControls = <String, Set<String>>{
   },
   'hersien': {
     'ctl.hersien.plan-now',
+    'ctl.hersien.volume',
+    'ctl.hersien.mute',
     'ctl.hersien.retry',
     'ctl.hersien.set-manually',
     'ctl.hersien.replan-cancel',

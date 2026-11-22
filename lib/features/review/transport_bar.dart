@@ -3,7 +3,7 @@
 //   wanneer: Hersien-skerm (onder die voorskou)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: vervoerbalk (speel/pouse, tyd, na die hakies, 5 s terug/vorentoe, zoem met syferveld) en gereedskapbalk (I/O, knip uit, Short by, voorskou van die snit)
+//   doel: vervoerbalk (speel/pouse, tyd, na die hakies, 5 s terug/vorentoe, klankvolume met demp, zoem met syferveld) en gereedskapbalk (I/O, knip uit, Short by, voorskou van die snit)
 //   status: klaar
 //   bewys: 7236634
 import 'package:flutter/material.dart';
@@ -72,6 +72,34 @@ class TransportBar extends StatelessWidget {
           tooltip: l.playEnd,
           onPressed: () => c.playFrom(false),
           icon: const Icon(Icons.skip_next_rounded),
+        ),
+        const SizedBox(width: 8),
+        ValueListenableBuilder<double>(
+          valueListenable: c.volume,
+          builder: (context, v, _) => Row(
+            children: [
+              IconButton(
+                key: const ValueKey('ctl.hersien.mute'),
+                tooltip: l.volume,
+                onPressed: c.toggleMute,
+                icon: Icon(
+                  v == 0 ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                ),
+              ),
+              SizedBox(
+                width: 100,
+                child: Slider(
+                  key: const ValueKey('ctl.hersien.volume'),
+                  value: v,
+                  min: 0,
+                  max: 100,
+                  divisions: 20,
+                  semanticFormatterCallback: (v) => '${v.round()} %',
+                  onChanged: c.setVolume,
+                ),
+              ),
+            ],
+          ),
         ),
         const Spacer(),
         const Icon(Icons.zoom_in_rounded, size: 20),

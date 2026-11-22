@@ -1544,6 +1544,12 @@ abstract class L {
   /// In af, this message translates to:
   /// **'{n, plural, =1{1 lêer} other{{n} lêers}} gekopieer'**
   String workCopied(int n);
+
+  /// No description provided for @volume.
+  ///
+  /// In af, this message translates to:
+  /// **'Klankvolume (voorskou)'**
+  String get volume;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

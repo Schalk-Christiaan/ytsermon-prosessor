@@ -74,6 +74,21 @@ class ReviewController extends ChangeNotifier {
   late final video = VideoController(player);
   bool videoReady = false;
 
+  /// Preview volume 0-100 (the player only; the cut is not changed), kept for the session.
+  final volume = ValueNotifier<double>(100);
+  double _beforeMute = 100;
+
+  void setVolume(double v) {
+    volume.value = v.clamp(0, 100);
+    if (videoReady) player.setVolume(volume.value);
+  }
+
+  /// The speaker icon: mutes, or brings back the volume from before the mute.
+  void toggleMute() {
+    if (volume.value > 0) _beforeMute = volume.value;
+    setVolume(volume.value > 0 ? 0 : _beforeMute);
+  }
+
   /// Playhead in seconds, from the media_kit position stream (no polling).
   final position = ValueNotifier<double>(0);
 
@@ -252,6 +267,7 @@ class ReviewController extends ChangeNotifier {
             video.player.open(Media(f.path), play: false));
         if (stale()) return;
         videoReady = true;
+        player.setVolume(volume.value);
         notifyListeners();
         c.complete(f);
         // Older plans have no sound.json yet: analyse the video once (one ffmpeg run) for the timeline.
@@ -617,6 +633,7 @@ class ReviewController extends ChangeNotifier {
     position.removeListener(_skipCuts);
     jobs.removeListener(_onJobs);
     _pos?.cancel();
+    volume.dispose();
     if (videoReady) player.dispose();
     super.dispose();
   }

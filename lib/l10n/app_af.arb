@@ -572,5 +572,6 @@
         "type": "int"
       }
     }
-  }
+  },
+  "volume": "Klankvolume (voorskou)"
 }

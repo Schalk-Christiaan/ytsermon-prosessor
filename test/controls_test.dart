@@ -165,6 +165,40 @@ void main() {
       );
     });
 
+    testWidgets(
+      'volume: drag and arrow keys set it; the icon mutes and restores',
+      (t) async {
+        final c = await hersien(t);
+        expect(c.volume.value, 100);
+        final r = t.getRect(key('hersien.volume'));
+        await t.tapAt(Offset(r.left + r.width * 0.5, r.center.dy));
+        await t.pump();
+        expect(c.volume.value, closeTo(50, 15));
+        cover(['hersien.volume']);
+        final mid = c.volume.value;
+        // Tab to the slider, then the arrow key steps it.
+        for (var i = 0; i < 60; i++) {
+          final f = FocusManager.instance.primaryFocus?.context;
+          if (f != null &&
+              f.findAncestorWidgetOfExactType<Slider>()?.key ==
+                  const ValueKey('ctl.hersien.volume'))
+            break;
+          await t.sendKeyEvent(LogicalKeyboardKey.tab);
+          await t.pump();
+        }
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await t.pump();
+        expect(c.volume.value, greaterThan(mid));
+        await tapKey(t, 'hersien.mute');
+        expect(c.volume.value, 0);
+        await tapKey(t, 'hersien.mute');
+        expect(c.volume.value, greaterThan(mid));
+        await t.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+      },
+    );
+
     testWidgets('zoom and Herstel', (t) async {
       final c = await hersien(t);
       await typeKey(t, 'hersien.zoom-field', '3');

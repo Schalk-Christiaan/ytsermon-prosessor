@@ -864,4 +864,7 @@ class LAf extends L {
     );
     return '$_temp0 gekopieer';
   }
+
+  @override
+  String get volume => 'Klankvolume (voorskou)';
 }
