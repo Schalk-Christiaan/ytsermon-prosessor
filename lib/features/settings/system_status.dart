@@ -5,6 +5,8 @@
 //   skryf: —
 //   doel: wys yt-dlp/ffmpeg/ffprobe/Ollama met ikoon + woord (Gereed / Ontbreek); "Werk yt-dlp by"
 //   status: bou
+import '../../app/motion.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
@@ -68,13 +70,16 @@ class _SystemStatusState extends State<SystemStatus> {
                     height: 56,
                     child: Row(
                       children: [
-                        Icon(
-                          s.ok
-                              ? Icons.check_circle_rounded
-                              : Icons.error_rounded,
-                          color: s.ok
-                              ? th.extension<AppTokens>()!.success
-                              : th.colorScheme.error,
+                        PopIn(
+                          key: ValueKey(s.ok),
+                          child: Icon(
+                            s.ok
+                                ? Icons.check_circle_rounded
+                                : Icons.error_rounded,
+                            color: s.ok
+                                ? th.extension<AppTokens>()!.success
+                                : th.colorScheme.error,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         SizedBox(

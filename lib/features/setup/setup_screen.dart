@@ -11,6 +11,8 @@ import '../../app/job_progress.dart';
 
 import '../../app/pixel_scenes.dart';
 
+import '../../app/motion.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
@@ -280,12 +282,15 @@ class _SetupScreenState extends State<SetupScreen> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(
-                      done
-                          ? Icons.check_circle_rounded
-                          : Icons.radio_button_unchecked_rounded,
-                      size: 18,
-                      color: done ? ok : th.colorScheme.outline,
+                    PopIn(
+                      key: ValueKey(done),
+                      child: Icon(
+                        done
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        size: 18,
+                        color: done ? ok : th.colorScheme.outline,
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Text(done ? l.stepDone : l.stepTodo),

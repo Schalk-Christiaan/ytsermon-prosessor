@@ -44,6 +44,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
+import 'motion.dart';
 import 'pixel_art.dart';
 import '../core/channel.dart';
 import '../core/jobs.dart';
@@ -145,7 +146,7 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
     0: ValueNotifier<String?>(null),
     2: ValueNotifier<String?>(null),
   };
-  String? _disk;
+  (int, int?)? _disk; // bytes used by the work folder, bytes free
   bool _wasBusy = false;
 
   @override
@@ -167,12 +168,7 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
   Future<void> _readDisk() async {
     final r = await widget.storage?.call();
     if (r == null || !mounted) return;
-    final l = L.of(context);
-    setState(
-      () => _disk = r.$2 == null
-          ? l.statusDiskUsed(formatBytes(r.$1))
-          : l.statusDisk(formatBytes(r.$1), formatBytes(r.$2!)),
-    );
+    setState(() => _disk = r);
   }
 
   @override
@@ -344,7 +340,16 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
             ),
           ),
           const SizedBox(width: 16),
-          if (_disk != null) Text(_disk!, style: th.textTheme.labelMedium),
+          if (_disk != null)
+            CountText(
+              value: _disk!.$1,
+              style: th.textTheme.labelMedium,
+              format: (used) => _disk!.$2 == null
+                  ? L.of(context).statusDiskUsed(formatBytes(used))
+                  : L
+                        .of(context)
+                        .statusDisk(formatBytes(used), formatBytes(_disk!.$2!)),
+            ),
         ],
       ),
     );

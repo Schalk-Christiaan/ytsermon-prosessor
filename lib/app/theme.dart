@@ -127,6 +127,12 @@ ThemeData buildTheme(Brightness b) {
     padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12)),
     shape: WidgetStatePropertyAll(shape),
     textStyle: WidgetStatePropertyAll(t.labelLarge),
+    // Pressed: the label shrinks a touch (0.97), then returns.
+    foregroundBuilder: (context, states, child) => AnimatedScale(
+      scale: states.contains(WidgetState.pressed) ? 0.97 : 1,
+      duration: motion(context, kMotionFast),
+      child: child,
+    ),
   );
   return base.copyWith(
     // Compact sideways, but never below the 32 px control height.

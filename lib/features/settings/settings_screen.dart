@@ -8,6 +8,9 @@
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
+
+import '../../app/motion.dart';
+
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
@@ -173,11 +176,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(
-                        ok
-                            ? Icons.check_circle_rounded
-                            : Icons.link_off_rounded,
-                        color: ok ? tokens.success : th.colorScheme.outline,
+                      PopIn(
+                        key: ValueKey(ok),
+                        child: Icon(
+                          ok
+                              ? Icons.check_circle_rounded
+                              : Icons.link_off_rounded,
+                          color: ok ? tokens.success : th.colorScheme.outline,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

@@ -11,6 +11,8 @@ import 'package:file_selector/file_selector.dart';
 
 import '../../app/pixel_scenes.dart';
 
+import '../../app/motion.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -200,12 +202,14 @@ class _WorkScreenState extends State<WorkScreen> {
                   _section(l.workWaiting, th),
                   queueScene(waiting.length),
                 ],
-                for (final j in waiting) _line(l, th, j),
+                for (final j in waiting)
+                  Reveal(key: ObjectKey(j), child: _line(l, th, j)),
                 if (failed.isNotEmpty) ...[
                   _section(l.workFailed, th),
                   errorScene(),
                 ],
-                for (final j in failed) _failed(l, th, j),
+                for (final j in failed)
+                  Reveal(key: ObjectKey(j), child: _failed(l, th, j)),
                 ..._suggested(l, th),
                 for (final g in WorkGroup.values)
                   ..._group(l, th, g, groups[g]!),
@@ -339,7 +343,8 @@ class _WorkScreenState extends State<WorkScreen> {
           ),
         ),
       ),
-      for (final i in items) _row(l, th, g, i),
+      for (final i in items)
+        Reveal(key: ValueKey('rv.${i.path}'), child: _row(l, th, g, i)),
     ];
   }
 

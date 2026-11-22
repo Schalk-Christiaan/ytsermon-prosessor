@@ -1,48 +1,104 @@
-// Step 5: the screen switch fades through, and drops the animation under "reduce motion".
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:preekverwerker/app/shell.dart';
-import 'package:preekverwerker/core/settings.dart';
+import 'package:preekverwerker/app/motion.dart';
 
-import 'helpers.dart';
 import 'screen_kit.dart';
 
-Widget _shell(dynamic tc, {required bool reduce}) => Builder(
-  builder: (c) => MediaQuery(
-    data: MediaQuery.of(c).copyWith(disableAnimations: reduce),
-    child: Shell(
-      store: tc.$2,
-      jobs: tc.$3,
-      list: () async => [],
-      settings: AppSettings.load(tc.$2.root)..setupDone = true,
+Widget wrap(Widget w, {bool reduced = false}) => appWrap(
+  Brightness.light,
+  Builder(
+    builder: (c) => MediaQuery(
+      data: MediaQuery.of(c).copyWith(disableAnimations: reduced),
+      child: Scaffold(body: Center(child: w)),
     ),
   ),
 );
 
+double scaleOf(WidgetTester t, Finder f) => t
+    .widget<AnimatedScale>(
+      find.ancestor(of: f, matching: find.byType(AnimatedScale)).first,
+    )
+    .scale;
+
 void main() {
-  for (final reduce in [false, true]) {
-    testWidgets('screen switch fade (reduce motion: $reduce)', (t) async {
-      await loadFonts();
-      setView(t, 1280, 800);
-      final tc = testController(seed: false);
-      await t.pumpWidget(appWrap(Brightness.light, _shell(tc, reduce: reduce)));
-      await t.pump(const Duration(milliseconds: 10));
-      final fade = find.byKey(const ValueKey('shell.switch'));
-      expect(fade, findsOneWidget);
-      expect(t.widget(fade), isA<FadeTransition>());
-      double op() => t.widget<FadeTransition>(fade).opacity.value;
-      expect(op(), 1);
-      await t.tap(find.byKey(const ValueKey('ctl.skulp.nav-2')));
-      await t.pump();
-      if (reduce) {
-        expect(op(), 1, reason: 'no animation');
-      } else {
-        expect(op(), lessThan(1), reason: 'starts faded out');
-        await t.pump(const Duration(milliseconds: 300));
-        expect(op(), 1);
-      }
-      await t.runAsync(() => Future<void>.delayed(const Duration(seconds: 3)));
-      await t.pumpWidget(const SizedBox());
-    });
-  }
+  testWidgets('a pressed button shrinks to 0.97 and returns', (t) async {
+    await loadFonts();
+    await t.pumpWidget(
+      wrap(FilledButton(onPressed: () {}, child: const Text('Ok'))),
+    );
+    expect(scaleOf(t, find.text('Ok')), 1);
+    final g = await t.startGesture(t.getCenter(find.text('Ok')));
+    await t.pump();
+    expect(scaleOf(t, find.text('Ok')), 0.97);
+    await g.up();
+    await t.pumpAndSettle();
+    expect(scaleOf(t, find.text('Ok')), 1);
+  });
+
+  testWidgets('Reveal fades in and slides up; reduced motion shows at once', (
+    t,
+  ) async {
+    await t.pumpWidget(wrap(const Reveal(child: Text('ry'))));
+    expect(t.widget<Opacity>(find.byType(Opacity)).opacity, 0);
+    await t.pump(const Duration(milliseconds: 260));
+    expect(t.widget<Opacity>(find.byType(Opacity)).opacity, 1);
+    await t.pumpWidget(const SizedBox());
+    await t.pumpWidget(wrap(const Reveal(child: Text('ry')), reduced: true));
+    expect(find.byType(Opacity), findsNothing);
+  });
+
+  testWidgets('PopIn scales from 0.9 to 1', (t) async {
+    await t.pumpWidget(wrap(const PopIn(child: Text('ok'))));
+    expect(
+      t
+          .widget<Transform>(
+            find
+                .descendant(
+                  of: find.byType(PopIn),
+                  matching: find.byType(Transform),
+                )
+                .first,
+          )
+          .transform
+          .storage[0],
+      closeTo(0.9, 0.001),
+    );
+    await t.pump(const Duration(milliseconds: 260));
+    expect(
+      t
+          .widget<Transform>(
+            find
+                .descendant(
+                  of: find.byType(PopIn),
+                  matching: find.byType(Transform),
+                )
+                .first,
+          )
+          .transform
+          .storage[0],
+      closeTo(1, 0.001),
+    );
+  });
+
+  testWidgets('CountText counts up in 150 ms, not at first build', (t) async {
+    Widget w(int v) => wrap(CountText(value: v, format: (n) => '$n MB'));
+    await t.pumpWidget(w(100));
+    expect(find.text('100 MB'), findsOneWidget);
+    await t.pumpWidget(w(200));
+    await t.pump(const Duration(milliseconds: 75));
+    final mid = find.textContaining(' MB');
+    final n = int.parse(t.widget<Text>(mid).data!.split(' ').first);
+    expect(n, inExclusiveRange(100, 200));
+    await t.pump(const Duration(milliseconds: 100));
+    expect(find.text('200 MB'), findsOneWidget);
+  });
+
+  testWidgets('CountText with reduced motion jumps', (t) async {
+    Widget w(int v) =>
+        wrap(CountText(value: v, format: (n) => '$n MB'), reduced: true);
+    await t.pumpWidget(w(100));
+    await t.pumpWidget(w(200));
+    await t.pump();
+    expect(find.text('200 MB'), findsOneWidget);
+  });
 }

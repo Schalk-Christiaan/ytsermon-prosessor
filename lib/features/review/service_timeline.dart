@@ -96,7 +96,7 @@ class ServiceTimeline extends StatefulWidget {
 }
 
 class _ServiceTimelineState extends State<ServiceTimeline>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _glide = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 400),
@@ -106,6 +106,13 @@ class _ServiceTimelineState extends State<ServiceTimeline>
     parent: _glide,
     curve: Curves.easeOutCubic,
   );
+  // A Short just made fades in (the only animated block; never the drag).
+  late final AnimationController _born = AnimationController(
+    vsync: this,
+    duration: kMotionMed,
+    value: 1,
+  );
+  Short? _fresh;
   final _scroll = ScrollController();
   Object? _barsKey;
   List<(double, Color)> _bars = const [];
@@ -150,6 +157,14 @@ class _ServiceTimelineState extends State<ServiceTimeline>
   void didUpdateWidget(ServiceTimeline old) {
     super.didUpdateWidget(old);
     if (old.animateKey != widget.animateKey) _run();
+    if (widget.shorts.length > old.shorts.length &&
+        !MediaQuery.disableAnimationsOf(context)) {
+      _fresh = widget.shorts.firstWhere(
+        (s) => !old.shorts.contains(s),
+        orElse: () => widget.shorts.last,
+      );
+      _born.forward(from: 0);
+    }
     if (old.zoom != widget.zoom) {
       // Keep the playhead in the middle of the view when the zoom changes.
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -181,6 +196,7 @@ class _ServiceTimelineState extends State<ServiceTimeline>
   @override
   void dispose() {
     _glide.dispose();
+    _born.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -255,7 +271,7 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                   child: SizedBox(
                     width: w,
                     child: AnimatedBuilder(
-                      animation: _t,
+                      animation: Listenable.merge([_t, _born]),
                       builder: (context, _) {
                         final s = lerpDouble(0, widget.sermonStart, _t.value)!;
                         final e = lerpDouble(
@@ -337,6 +353,8 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                                             songs: widget.songs,
                                             faulty: widget.faulty,
                                             selected: widget.selected,
+                                            fresh: _fresh,
+                                            freshT: _born.value,
                                             cutLabel: l.cutOut,
                                             musicLabel: l.music,
                                             start: s,
@@ -564,6 +582,8 @@ class TracksPainter extends CustomPainter {
     required this.songs,
     required this.faulty,
     this.selected,
+    this.fresh,
+    this.freshT = 1,
     required this.cutLabel,
     required this.musicLabel,
     required this.start,
@@ -598,6 +618,10 @@ class TracksPainter extends CustomPainter {
 
   /// The selected Short or cut: an extra thick outline.
   final Object? selected;
+
+  /// A Short that was just made, drawn at [freshT] (0..1) of its opacity.
+  final Short? fresh;
+  final double freshT;
   final String cutLabel, musicLabel;
   final Color speech, music, sermon, wood, error, ink, ground;
   final TextStyle labelStyle;
@@ -753,7 +777,11 @@ class TracksPainter extends CustomPainter {
         ),
         const Radius.circular(2),
       );
-      canvas.drawRRect(r, Paint()..color = bad ? error : wood);
+      final c = bad ? error : wood;
+      canvas.drawRRect(
+        r,
+        Paint()..color = identical(s, fresh) ? c.withValues(alpha: freshT) : c,
+      );
       if (bad || identical(selected, s)) {
         canvas.drawRRect(
           r,
@@ -775,6 +803,7 @@ class TracksPainter extends CustomPainter {
       !identical(o.bars, bars) ||
       o._sig != _sig ||
       !identical(o.selected, selected) ||
+      o.freshT != freshT ||
       o.duration != duration ||
       o.start != start ||
       o.end != end ||
