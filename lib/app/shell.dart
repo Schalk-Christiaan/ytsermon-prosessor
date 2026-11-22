@@ -94,10 +94,26 @@ class Shell extends StatefulWidget {
   State<Shell> createState() => _ShellState();
 }
 
-class _ShellState extends State<Shell> {
+class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
   // 0 Preke, 1 Hersien, 2 Werk, 3 Snitlyste, 4 Instellings, 5 Opstelling (no rail item), 6 Biblioteek
   // stap: v6 1 Begin op Opstelling | tot setupDone waar is, wys die app net die Opstelling-lys
   late int _i = _settings.setupDone ? 0 : 5;
+  // Fade-through of the content on a screen change: new screen fades in and slides up 8 px.
+  late final _switch = AnimationController(vsync: this, value: 1);
+  late final _fade = CurvedAnimation(parent: _switch, curve: kMotionCurve);
+
+  /// Go to screen [i]; the content fades in (instantly under reduced motion).
+  void _go(int i) {
+    setState(() => _i = i);
+    final d = motion(context);
+    if (d == Duration.zero) {
+      _switch.value = 1;
+    } else {
+      _switch.duration = d;
+      _switch.forward(from: 0);
+    }
+  }
+
   late final _review = ReviewController(store: widget.store, jobs: widget.jobs)
     ..updateYouTube = (id) => updateOnYouTube(
       widget.store,
@@ -154,6 +170,8 @@ class _ShellState extends State<Shell> {
   void dispose() {
     widget.jobs.removeListener(_jobsChanged);
     selection.dispose();
+    _fade.dispose();
+    _switch.dispose();
     _review.dispose();
     super.dispose();
   }
@@ -197,60 +215,74 @@ class _ShellState extends State<Shell> {
                     child: _panel(
                       // Titles, paths and errors can be selected and copied.
                       SelectionArea(
-                        child: IndexedStack(
-                          index: _i,
-                          children: [
-                            SermonsScreen(
-                              key: ValueKey(_settings.channelUrl),
-                              store: widget.store,
-                              jobs: widget.jobs,
-                              list: widget.list,
-                              settings: _settings,
-                              onOpen: (id) {
-                                _review.open(id);
-                                setState(() => _i = 1);
-                              },
+                        child: FadeTransition(
+                          key: const ValueKey('shell.switch'),
+                          opacity: _fade,
+                          child: AnimatedBuilder(
+                            animation: _switch,
+                            builder: (_, child) => Transform.translate(
+                              offset: Offset(
+                                0,
+                                8 * (1 - kMotionCurve.transform(_switch.value)),
+                              ),
+                              child: child,
                             ),
-                            ReviewScreen(
-                              controller: _review,
-                              settings: _settings,
-                              onWork: () => setState(() => _i = 2),
+                            child: IndexedStack(
+                              index: _i,
+                              children: [
+                                SermonsScreen(
+                                  key: ValueKey(_settings.channelUrl),
+                                  store: widget.store,
+                                  jobs: widget.jobs,
+                                  list: widget.list,
+                                  settings: _settings,
+                                  onOpen: (id) {
+                                    _review.open(id);
+                                    _go(1);
+                                  },
+                                ),
+                                ReviewScreen(
+                                  controller: _review,
+                                  settings: _settings,
+                                  onWork: () => _go(2),
+                                ),
+                                WorkScreen(
+                                  store: widget.store,
+                                  jobs: widget.jobs,
+                                  onBack: () => _go(0),
+                                  quota: _quota,
+                                ),
+                                PlaylistsScreen(
+                                  store: widget.store,
+                                  settings: _settings,
+                                ),
+                                SettingsScreen(
+                                  settings: _settings,
+                                  auth: _auth,
+                                  signIn: () => _auth.signIn(openPath),
+                                  system: const SystemStatus(),
+                                  onChannelChanged: () => setState(() {}),
+                                  onSetup: () => _go(5),
+                                ),
+                                // Built only while shown, so it probes Ollama when opened, not at every start.
+                                if (_i == 5)
+                                  SetupScreen(
+                                    settings: _settings,
+                                    auth: _auth,
+                                    signIn: () => _auth.signIn(openPath),
+                                    onSettings: () => _go(4),
+                                    onDone: () => _go(0),
+                                  )
+                                else
+                                  const SizedBox(),
+                                // Built only while shown, so the folder is read when opened.
+                                if (_i == 6)
+                                  LibraryScreen(settings: _settings)
+                                else
+                                  const SizedBox(),
+                              ],
                             ),
-                            WorkScreen(
-                              store: widget.store,
-                              jobs: widget.jobs,
-                              onBack: () => setState(() => _i = 0),
-                              quota: _quota,
-                            ),
-                            PlaylistsScreen(
-                              store: widget.store,
-                              settings: _settings,
-                            ),
-                            SettingsScreen(
-                              settings: _settings,
-                              auth: _auth,
-                              signIn: () => _auth.signIn(openPath),
-                              system: const SystemStatus(),
-                              onChannelChanged: () => setState(() {}),
-                              onSetup: () => setState(() => _i = 5),
-                            ),
-                            // Built only while shown, so it probes Ollama when opened, not at every start.
-                            if (_i == 5)
-                              SetupScreen(
-                                settings: _settings,
-                                auth: _auth,
-                                signIn: () => _auth.signIn(openPath),
-                                onSettings: () => setState(() => _i = 4),
-                                onDone: () => setState(() => _i = 0),
-                              )
-                            else
-                              const SizedBox(),
-                            // Built only while shown, so the folder is read when opened.
-                            if (_i == 6)
-                              LibraryScreen(settings: _settings)
-                            else
-                              const SizedBox(),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -302,7 +334,7 @@ class _ShellState extends State<Shell> {
         child: InkWell(
           key: ValueKey('ctl.skulp.nav-$i'),
           borderRadius: BorderRadius.circular(kPanelRadius),
-          onTap: () => setState(() => _i = i),
+          onTap: () => _go(i),
           child: Ink(
             height: 36,
             decoration: sel

@@ -27,6 +27,15 @@ Widget appPanel(
   child: child,
 );
 
+/// Motion constants: every animation in the app uses these (exit shorter than entry).
+const kMotionFast = Duration(milliseconds: 150);
+const kMotionMed = Duration(milliseconds: 250);
+const kMotionCurve = Curves.easeOutCubic;
+
+/// [d], or zero when the system asks for reduced motion.
+Duration motion(BuildContext c, [Duration d = kMotionMed]) =>
+    MediaQuery.disableAnimationsOf(c) ? Duration.zero : d;
+
 /// Gap between panels in the workspace.
 const kPanelGap = 12.0;
 
