@@ -4,8 +4,7 @@
 //   groep: core | Kern
 //   skryf: —
 //   doel: json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI (uit blokke), spraakblokke (pouse/Amen/musiek), SRT
-//   status: klaar
-//   bewys: 7236634
+//   status: bou
 import 'dart:convert';
 import 'dart:math' as math;
 
