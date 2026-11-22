@@ -77,6 +77,8 @@ class SermonsScreen extends StatefulWidget {
 }
 
 class _SermonsScreenState extends State<SermonsScreen> {
+  static const _thumbH = 126.0;
+
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
   late final _settings = widget.settings ?? AppSettings.load(widget.store.root);
@@ -500,9 +502,10 @@ class _SermonsScreenState extends State<SermonsScreen> {
     }
     if (_settings.sermonGrid) {
       return GridView.builder(
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 300,
-          mainAxisExtent: 232,
+          // Thumbnail + text block; the text block grows with the text scale so the card never overflows.
+          mainAxisExtent: _thumbH + MediaQuery.textScalerOf(context).scale(112),
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
@@ -553,7 +556,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
         children: [
           Stack(
             children: [
-              SermonThumb(sermon: s, width: 300, height: 140),
+              SermonThumb(sermon: s, width: 300, height: _thumbH),
               Positioned(top: 0, left: 0, child: _select(s)),
             ],
           ),
