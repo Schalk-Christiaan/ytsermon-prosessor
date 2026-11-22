@@ -791,4 +791,14 @@ class LAf extends L {
   @override
   String get channelNotFound =>
       'Kon nie hierdie kanaal vind nie. Kyk die naam en die internet, en probeer weer.';
+
+  @override
+  String statusDisk(String used, String free) {
+    return 'Preke op skyf: $used · $free vry';
+  }
+
+  @override
+  String statusDiskUsed(String used) {
+    return 'Preke op skyf: $used';
+  }
 }

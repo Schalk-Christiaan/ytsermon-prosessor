@@ -1442,6 +1442,18 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Kon nie hierdie kanaal vind nie. Kyk die naam en die internet, en probeer weer.'**
   String get channelNotFound;
+
+  /// No description provided for @statusDisk.
+  ///
+  /// In af, this message translates to:
+  /// **'Preke op skyf: {used} · {free} vry'**
+  String statusDisk(String used, String free);
+
+  /// No description provided for @statusDiskUsed.
+  ///
+  /// In af, this message translates to:
+  /// **'Preke op skyf: {used}'**
+  String statusDiskUsed(String used);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -3,7 +3,7 @@
 //   wanneer: by opstart
 //   groep: app | App-raam
 //   skryf: —
-//   doel: Rail en inhoud as twee panele (radius 16) op die grond; rail: Preke (tuis), Hersien, Werk, Snitlyste, Biblioteek, Instellings (Kanaal + Stelsel); begin op Opstelling tot dit klaar is
+//   doel: Sybalk (200 px, ikoon + woord, oranje streep) en inhoud as twee panele op die grond, statusbalk onder (keuse links, skyfspasie regs); sybalk: Preke (tuis), Hersien, Werk, Snitlyste, Biblioteek, Instellings (Kanaal + Stelsel); begin op Opstelling tot dit klaar is
 //   status: bou
 
 // vloei: v1 | Verwerk nuutste diens
@@ -47,6 +47,7 @@ import 'package:path/path.dart' as p;
 import '../core/channel.dart';
 import '../core/jobs.dart';
 import '../core/settings.dart';
+import '../core/storage.dart';
 import '../core/store.dart';
 import '../core/tools.dart';
 import '../core/youtube.dart';
@@ -72,6 +73,7 @@ class Shell extends StatefulWidget {
     this.settings,
     this.auth,
     this.quota,
+    this.storage,
   });
   final SermonStore store;
   final JobQueue jobs;
@@ -80,6 +82,10 @@ class Shell extends StatefulWidget {
   final AppSettings? settings;
   final GoogleAuth? auth;
   final UploadQuota? quota;
+
+  /// Disk figures for the status bar: (bytes used by the work folder, bytes free), read on request.
+  /// App wiring passes [readStorage]; tests leave it null and the bar shows nothing.
+  final Future<(int, int?)> Function()? storage;
 
   /// Test seam: the channel lister (default: the channel set in Instellings).
   final Future<List<ChannelItem>> Function()? list;
@@ -112,8 +118,42 @@ class _ShellState extends State<Shell> {
         write: (v) async => _memToken = v,
       );
 
+  /// Text for the left of the status bar (selection count and size); screens fill it.
+  final selection = ValueNotifier<String?>(null);
+  String? _disk;
+  bool _wasBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _readDisk();
+    widget.jobs.addListener(_jobsChanged);
+  }
+
+  // Refresh the disk figures once when the queue has just run empty (no polling).
+  void _jobsChanged() {
+    final busy = widget.jobs.jobs.any(
+      (j) => j.status == JobStatus.besig || j.status == JobStatus.wag,
+    );
+    if (_wasBusy && !busy) _readDisk();
+    _wasBusy = busy;
+  }
+
+  Future<void> _readDisk() async {
+    final r = await widget.storage?.call();
+    if (r == null || !mounted) return;
+    final l = L.of(context);
+    setState(
+      () => _disk = r.$2 == null
+          ? l.statusDiskUsed(formatBytes(r.$1))
+          : l.statusDisk(formatBytes(r.$1), formatBytes(r.$2!)),
+    );
+  }
+
   @override
   void dispose() {
+    widget.jobs.removeListener(_jobsChanged);
+    selection.dispose();
     _review.dispose();
     super.dispose();
   }
@@ -122,90 +162,127 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     final l = L.of(context);
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(kPanelGap),
-        child: Row(
-          children: [
-            _panel(
-              SizedBox(
-                width: 88,
-                child: Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    _dest(Icons.church_rounded, l.navPreke, 0),
-                    _dest(Icons.rate_review_rounded, l.navReview, 1),
-                    _dest(Icons.work_history_rounded, l.navWerk, 2),
-                    _dest(Icons.playlist_play_rounded, l.navSnitlyste, 3),
-                    _dest(Icons.video_library_rounded, l.navBiblioteek, 6),
-                    const Spacer(),
-                    _dest(Icons.settings_rounded, l.navSettings, 4),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: kPanelGap),
-            Expanded(
-              child: _panel(
-                // Titles, paths and errors can be selected and copied.
-                SelectionArea(
-                  child: IndexedStack(
-                    index: _i,
-                    children: [
-                      SermonsScreen(
-                        key: ValueKey(_settings.channelUrl),
-                        store: widget.store,
-                        jobs: widget.jobs,
-                        list: widget.list,
-                        settings: _settings,
-                        onOpen: (id) {
-                          _review.open(id);
-                          setState(() => _i = 1);
-                        },
+      body: Column(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(kPanelGap),
+              child: Row(
+                children: [
+                  _panel(
+                    SizedBox(
+                      key: const ValueKey('shell.sidebar'),
+                      width: 200,
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 8),
+                          _dest(Icons.church_rounded, l.navPreke, 0),
+                          _dest(Icons.rate_review_rounded, l.navReview, 1),
+                          _dest(Icons.work_history_rounded, l.navWerk, 2),
+                          _dest(Icons.playlist_play_rounded, l.navSnitlyste, 3),
+                          _dest(
+                            Icons.video_library_rounded,
+                            l.navBiblioteek,
+                            6,
+                          ),
+                          const Spacer(),
+                          _dest(Icons.settings_rounded, l.navSettings, 4),
+                          const SizedBox(height: 8),
+                        ],
                       ),
-                      ReviewScreen(
-                        controller: _review,
-                        settings: _settings,
-                        onWork: () => setState(() => _i = 2),
-                      ),
-                      WorkScreen(
-                        store: widget.store,
-                        jobs: widget.jobs,
-                        onBack: () => setState(() => _i = 0),
-                        quota: _quota,
-                      ),
-                      PlaylistsScreen(store: widget.store, settings: _settings),
-                      SettingsScreen(
-                        settings: _settings,
-                        auth: _auth,
-                        signIn: () => _auth.signIn(openPath),
-                        system: const SystemStatus(),
-                        onChannelChanged: () => setState(() {}),
-                        onSetup: () => setState(() => _i = 5),
-                      ),
-                      // Built only while shown, so it probes Ollama when opened, not at every start.
-                      if (_i == 5)
-                        SetupScreen(
-                          settings: _settings,
-                          auth: _auth,
-                          signIn: () => _auth.signIn(openPath),
-                          onSettings: () => setState(() => _i = 4),
-                          onDone: () => setState(() => _i = 0),
-                        )
-                      else
-                        const SizedBox(),
-                      // Built only while shown, so the folder is read when opened.
-                      if (_i == 6)
-                        LibraryScreen(settings: _settings)
-                      else
-                        const SizedBox(),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: kPanelGap),
+                  Expanded(
+                    child: _panel(
+                      // Titles, paths and errors can be selected and copied.
+                      SelectionArea(
+                        child: IndexedStack(
+                          index: _i,
+                          children: [
+                            SermonsScreen(
+                              key: ValueKey(_settings.channelUrl),
+                              store: widget.store,
+                              jobs: widget.jobs,
+                              list: widget.list,
+                              settings: _settings,
+                              onOpen: (id) {
+                                _review.open(id);
+                                setState(() => _i = 1);
+                              },
+                            ),
+                            ReviewScreen(
+                              controller: _review,
+                              settings: _settings,
+                              onWork: () => setState(() => _i = 2),
+                            ),
+                            WorkScreen(
+                              store: widget.store,
+                              jobs: widget.jobs,
+                              onBack: () => setState(() => _i = 0),
+                              quota: _quota,
+                            ),
+                            PlaylistsScreen(
+                              store: widget.store,
+                              settings: _settings,
+                            ),
+                            SettingsScreen(
+                              settings: _settings,
+                              auth: _auth,
+                              signIn: () => _auth.signIn(openPath),
+                              system: const SystemStatus(),
+                              onChannelChanged: () => setState(() {}),
+                              onSetup: () => setState(() => _i = 5),
+                            ),
+                            // Built only while shown, so it probes Ollama when opened, not at every start.
+                            if (_i == 5)
+                              SetupScreen(
+                                settings: _settings,
+                                auth: _auth,
+                                signIn: () => _auth.signIn(openPath),
+                                onSettings: () => setState(() => _i = 4),
+                                onDone: () => setState(() => _i = 0),
+                              )
+                            else
+                              const SizedBox(),
+                            // Built only while shown, so the folder is read when opened.
+                            if (_i == 6)
+                              LibraryScreen(settings: _settings)
+                            else
+                              const SizedBox(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          _statusBar(context),
+        ],
+      ),
+    );
+  }
+
+  /// Bottom bar: selection on the left, disk figures on the right.
+  Widget _statusBar(BuildContext context) {
+    final th = Theme.of(context);
+    return Container(
+      key: const ValueKey('shell.status'),
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      color: th.colorScheme.surfaceContainer,
+      child: Row(
+        children: [
+          ValueListenableBuilder<String?>(
+            valueListenable: selection,
+            builder: (_, v, _) =>
+                Text(v ?? '', style: th.textTheme.labelMedium),
+          ),
+          const Spacer(),
+          if (_disk != null) Text(_disk!, style: th.textTheme.labelMedium),
+        ],
       ),
     );
   }
@@ -221,28 +298,41 @@ class _ShellState extends State<Shell> {
       button: true,
       label: label,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
         child: InkWell(
           key: ValueKey('ctl.skulp.nav-$i'),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(kPanelRadius),
           onTap: () => setState(() => _i = i),
           child: Ink(
-            width: 72,
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            height: 36,
             decoration: sel
                 ? BoxDecoration(
                     color: cs.secondaryContainer,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(kPanelRadius),
                   )
                 : null,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
               children: [
-                Icon(icon, color: sel ? cs.onSecondaryContainer : null),
-                const SizedBox(height: 4),
+                // The stripe is shape, not only colour, so the current screen reads without colour.
+                if (sel)
+                  Container(
+                    key: const ValueKey('shell.nav-stripe'),
+                    width: 3,
+                    height: 20,
+                    color: cs.primary,
+                  )
+                else
+                  const SizedBox(width: 3),
+                const SizedBox(width: 10),
+                Icon(
+                  icon,
+                  size: 20,
+                  color: sel ? cs.onSecondaryContainer : null,
+                ),
+                const SizedBox(width: 12),
                 Text(
                   label,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: sel ? FontWeight.w700 : null,
                     color: sel ? cs.onSecondaryContainer : null,
                   ),

@@ -11,6 +11,7 @@ import 'app/theme.dart';
 import 'core/jobs.dart';
 import 'core/paths.dart';
 import 'core/settings.dart';
+import 'core/storage.dart';
 import 'core/store.dart';
 import 'core/youtube.dart';
 import 'l10n/app_localizations.dart';
@@ -45,6 +46,7 @@ Future<void> main() async {
       settings: settings,
       auth: auth,
       quota: quota,
+      storage: () => readStorage(store.root),
     ),
   );
 }
@@ -58,7 +60,9 @@ class PreekApp extends StatelessWidget {
     required this.auth,
     required this.quota,
     this.themeMode = ThemeMode.system,
+    this.storage,
   });
+  final Future<(int, int?)> Function()? storage;
   final SermonStore store;
   final JobQueue jobs;
   final AppSettings settings;
@@ -87,6 +91,7 @@ class PreekApp extends StatelessWidget {
       settings: settings,
       auth: auth,
       quota: quota,
+      storage: storage,
     ),
   );
 }

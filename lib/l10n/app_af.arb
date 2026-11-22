@@ -508,5 +508,9 @@
     }
   },
   "channelBadForm": "Dit lyk nie soos 'n YouTube-kanaal nie. Probeer @naam, of plak die skakel.",
-  "channelNotFound": "Kon nie hierdie kanaal vind nie. Kyk die naam en die internet, en probeer weer."
+  "channelNotFound": "Kon nie hierdie kanaal vind nie. Kyk die naam en die internet, en probeer weer.",
+  "statusDisk": "Preke op skyf: {used} · {free} vry",
+  "@statusDisk": {"placeholders": {"used": {"type": "String"}, "free": {"type": "String"}}},
+  "statusDiskUsed": "Preke op skyf: {used}",
+  "@statusDiskUsed": {"placeholders": {"used": {"type": "String"}}}
 }
