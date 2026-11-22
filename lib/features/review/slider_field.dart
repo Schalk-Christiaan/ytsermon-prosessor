@@ -128,8 +128,6 @@ class _SliderFieldState extends State<SliderField> {
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                   decoration: InputDecoration(
-                    isDense: true,
-                    border: const OutlineInputBorder(),
                     errorText: _bad ? '' : null,
                     errorStyle: const TextStyle(height: 0, fontSize: 0),
                   ),

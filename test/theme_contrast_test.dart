@@ -101,7 +101,7 @@ void main() {
       );
       // orange is not the slider: it belongs to the action, the playhead and the sermon handle
       expect(sl.activeTrackColor, isNot(cs.primary));
-      expect(kPanelRadius, 16);
+      expect(kPanelRadius, 4);
     });
   }
 }

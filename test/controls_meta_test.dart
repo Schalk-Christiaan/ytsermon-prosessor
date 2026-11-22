@@ -65,7 +65,7 @@ bool _enabled(Widget w) =>
     !(w is TextField && w.enabled == false);
 
 /// Tab through [screen] once: every enabled control with a `ctl.` key must get the keyboard focus
-/// (so it has a focus ring) and be at least 40 px high (a hit target an unsure hand can find).
+/// (so it has a focus ring) and be at least 32 px high (a hit target an unsure hand can find).
 Future<void> checkKeyboard(WidgetTester t, String screen) async {
   final want = <String, double>{};
   for (final e
@@ -110,10 +110,10 @@ Future<void> checkKeyboard(WidgetTester t, String screen) async {
   );
   expect(
     want.entries
-        .where((e) => e.value < 39.5 && !skip.contains(e.key))
+        .where((e) => e.value < 31.5 && !skip.contains(e.key))
         .map((e) => '${e.key} ${e.value}'),
     isEmpty,
-    reason: '$screen: shorter than 40 px',
+    reason: '$screen: shorter than 32 px',
   );
 }
 

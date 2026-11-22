@@ -7,8 +7,8 @@
 //   status: bou
 import 'package:flutter/material.dart';
 
-/// Radius of every panel (DESIGN.md: flat panels on the ground, 12 dp apart).
-const kPanelRadius = 16.0;
+/// Radius of every panel, button and field (Windows desktop style; dialogs use 8).
+const kPanelRadius = 4.0;
 
 /// A flat panel on the ground (DESIGN.md): panel fill, radius 16, content clipped to it.
 Widget appPanel(
@@ -110,8 +110,30 @@ ThemeData buildTheme(Brightness b) {
   final shape = RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(kPanelRadius),
   );
+  // Desktop controls: 32 px high, radius 4, compact padding.
+  final button = ButtonStyle(
+    visualDensity:
+        VisualDensity.standard, // the 32 px minimum already is the dense size
+    minimumSize: const WidgetStatePropertyAll(Size(0, 32)),
+    padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12)),
+    shape: WidgetStatePropertyAll(shape),
+    textStyle: WidgetStatePropertyAll(t.labelLarge),
+  );
   return base.copyWith(
+    // Compact sideways, but never below the 32 px control height.
+    visualDensity: const VisualDensity(horizontal: -2),
+    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     scaffoldBackgroundColor: cs.surface,
+    filledButtonTheme: FilledButtonThemeData(style: button),
+    elevatedButtonTheme: ElevatedButtonThemeData(style: button),
+    inputDecorationTheme: InputDecorationTheme(
+      isDense: true,
+      constraints: const BoxConstraints(minHeight: 32),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(kPanelRadius),
+      ),
+    ),
     cardTheme: CardThemeData(
       color: panel,
       elevation: 0,
@@ -121,7 +143,7 @@ ThemeData buildTheme(Brightness b) {
     dialogTheme: DialogThemeData(
       backgroundColor: panel,
       surfaceTintColor: Colors.transparent,
-      shape: shape,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     // Karoobos, not orange: orange is the action, the playhead and the sermon handle.
     sliderTheme: SliderThemeData(
@@ -138,13 +160,17 @@ ThemeData buildTheme(Brightness b) {
     ),
     // Secondary actions in Karoobos too: only the filled primary button is orange.
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: cs.secondary),
+      style: button.merge(TextButton.styleFrom(foregroundColor: cs.secondary)),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(foregroundColor: cs.secondary),
+      style: button.merge(
+        OutlinedButton.styleFrom(foregroundColor: cs.secondary),
+      ),
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
       style: ButtonStyle(
+        visualDensity: VisualDensity.standard,
+        minimumSize: const WidgetStatePropertyAll(Size(0, 32)),
         backgroundColor: WidgetStateProperty.resolveWith(
           (s) => s.contains(WidgetState.selected)
               ? cs.secondaryContainer
@@ -186,6 +212,9 @@ ThemeData buildTheme(Brightness b) {
       headlineSmall: serif(t.headlineSmall),
       labelMedium: t.labelMedium?.copyWith(fontFeatures: _tabular),
       bodySmall: t.bodySmall?.copyWith(fontFeatures: _tabular),
+      labelSmall: t.labelSmall?.copyWith(
+        fontSize: 12,
+      ), // smallest UI text 12 px
     ),
     extensions: [
       AppTokens(
