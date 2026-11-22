@@ -22,6 +22,7 @@ import 'package:preekverwerker/features/playlists/playlists_screen.dart';
 import 'package:preekverwerker/features/settings/settings_screen.dart';
 import 'package:preekverwerker/features/setup/setup_screen.dart';
 import 'package:preekverwerker/core/tools.dart';
+import 'package:preekverwerker/features/settings/system_status.dart';
 import 'package:preekverwerker/features/sermons/sermons_screen.dart';
 import 'package:preekverwerker/features/work/work_screen.dart';
 import 'package:preekverwerker/features/review/review_controller.dart';
@@ -305,6 +306,8 @@ void main() {
     }
     testWidgets('stelsel ${b.name}', (t) async {
       await _fonts();
+      // The encoder probe runs two processes in turn; probe in real async so no timer outlives the test.
+      await t.runAsync(videoEncoder);
       t.view.physicalSize = const Size(1100, 720);
       t.view.devicePixelRatio = 1;
       final key = GlobalKey();
@@ -337,6 +340,37 @@ void main() {
         File(p.join(shots.path, 'stelsel-${b.name}.png'))
             .writeAsBytesSync(bytes!.buffer.asUint8List());
       });
+    });
+  }
+
+  for (final b in Brightness.values) {
+    testWidgets('stelsel-rye ${b.name}', (t) async {
+      await _fonts();
+      t.view.physicalSize = const Size(1100, 420);
+      t.view.devicePixelRatio = 1;
+      final key = GlobalKey();
+      await t.pumpWidget(
+        _app(
+          b,
+          RepaintBoundary(
+            key: key,
+            child: Scaffold(
+              body: SystemStatus(
+                probe: () async => const [
+                  ToolStatus('yt-dlp', true, '2026.08.19'),
+                  ToolStatus('ffmpeg', true, '9.0.2'),
+                  ToolStatus('ffprobe', true, '9.0.2'),
+                  ToolStatus('ollama', true, '0.12 · qwen3:8b'),
+                  ToolStatus('encoder', true, 'h264_nvenc'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull);
+      await _shot(t, key, 'stelsel-rye-${b.name}');
     });
   }
 

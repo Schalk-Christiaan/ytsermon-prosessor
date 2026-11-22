@@ -135,6 +135,24 @@ abstract class L {
   /// **'Stelsel'**
   String get settingsSystem;
 
+  /// No description provided for @encoderLabel.
+  ///
+  /// In af, this message translates to:
+  /// **'Video-enkodering'**
+  String get encoderLabel;
+
+  /// No description provided for @encoderGpu.
+  ///
+  /// In af, this message translates to:
+  /// **'GPU (NVENC)'**
+  String get encoderGpu;
+
+  /// No description provided for @encoderCpu.
+  ///
+  /// In af, this message translates to:
+  /// **'CPU (libx264)'**
+  String get encoderCpu;
+
   /// No description provided for @toolReady.
   ///
   /// In af, this message translates to:

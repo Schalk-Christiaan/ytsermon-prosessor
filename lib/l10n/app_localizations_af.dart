@@ -31,6 +31,15 @@ class LAf extends L {
   String get settingsSystem => 'Stelsel';
 
   @override
+  String get encoderLabel => 'Video-enkodering';
+
+  @override
+  String get encoderGpu => 'GPU (NVENC)';
+
+  @override
+  String get encoderCpu => 'CPU (libx264)';
+
+  @override
   String get toolReady => 'Gereed';
 
   @override

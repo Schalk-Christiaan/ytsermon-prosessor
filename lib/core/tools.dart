@@ -258,10 +258,11 @@ Future<void> startOllama() async {
   await Process.start(exe, ['serve'], mode: ProcessStartMode.detached);
 }
 
-/// Probes yt-dlp, ffmpeg, ffprobe and Ollama (with [kModel]); order is the display order.
+/// Probes yt-dlp, ffmpeg, ffprobe, Ollama (with [kModel]) and the video encoder (`detail` = its name); order is the display order.
 Future<List<ToolStatus>> probeAll({String? path}) => Future.wait([
   _probe('yt-dlp', ['--version'], path: path),
   _probe('ffmpeg', ['-version'], path: path),
   _probe('ffprobe', ['-version'], path: path),
   probeOllama(),
+  videoEncoder().then((e) => ToolStatus('encoder', true, e)),
 ]);

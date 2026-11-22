@@ -7,6 +7,9 @@
   "navWerk": "Werk",
   "navSnitlyste": "Snitlyste",
   "settingsSystem": "Stelsel",
+  "encoderLabel": "Video-enkodering",
+  "encoderGpu": "GPU (NVENC)",
+  "encoderCpu": "CPU (libx264)",
   "toolReady": "Gereed",
   "toolReadyVersion": "Gereed · {version}",
   "@toolReadyVersion": {

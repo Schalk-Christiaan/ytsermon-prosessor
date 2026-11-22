@@ -3,7 +3,7 @@
 //   wanneer: Instellings → Stelsel
 //   groep: features | Skerms
 //   skryf: —
-//   doel: wys yt-dlp/ffmpeg/ffprobe/Ollama met ikoon + woord (Gereed / Ontbreek); "Werk yt-dlp by"
+//   doel: wys yt-dlp/ffmpeg/ffprobe/Ollama en die video-enkodeerder (GPU/CPU) met ikoon + woord (Gereed / Ontbreek); "Werk yt-dlp by"
 //   status: bou
 import '../../app/motion.dart';
 
@@ -33,16 +33,22 @@ Future<void> updateYtDlpSnack(BuildContext context) async {
 
 /// Shows yt-dlp, ffmpeg, ffprobe and Ollama as green or red; sized to its content so the page above scrolls as one.
 class SystemStatus extends StatefulWidget {
-  const SystemStatus({super.key});
+  const SystemStatus({super.key, this.probe = probeAll});
+
+  /// Test seam: the real probes run processes, which a widget test cannot await.
+  final Future<List<ToolStatus>> Function() probe;
 
   @override
   State<SystemStatus> createState() => _SystemStatusState();
 }
 
 class _SystemStatusState extends State<SystemStatus> {
-  late final Future<List<ToolStatus>> _f = probeAll();
+  late final Future<List<ToolStatus>> _f = widget.probe();
 
   String _text(L l, ToolStatus s) {
+    if (s.name == 'encoder') {
+      return s.detail == 'h264_nvenc' ? l.encoderGpu : l.encoderCpu;
+    }
     if (s.ok) return l.toolReadyVersion(s.detail);
     if (s.notRunning) return l.ollamaNotRunning;
     if (s.missingModel != null) return l.modelMissing(s.missingModel!);
@@ -83,8 +89,11 @@ class _SystemStatusState extends State<SystemStatus> {
                         ),
                         const SizedBox(width: 16),
                         SizedBox(
-                          width: 120,
-                          child: Text(s.name, style: th.textTheme.titleMedium),
+                          width: 160,
+                          child: Text(
+                            s.name == 'encoder' ? l.encoderLabel : s.name,
+                            style: th.textTheme.titleMedium,
+                          ),
                         ),
                         Expanded(child: Text(_text(l, s))),
                       ],
