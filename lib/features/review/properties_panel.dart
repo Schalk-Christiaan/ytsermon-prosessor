@@ -4,8 +4,7 @@
 //   groep: features | Skerms
 //   skryf: <werkmap>/<id>/plan.json (via die beheerder), instellings.json (uitvoere)
 //   doel: eienskappe in oortjies (Preek, Shorts, Uitgeknip, Uitvoer, Transkripsie): titel, beskrywing (preekgrense: hakies in die diensbaan), elke Short-slider met 'n syferveld, uitvoere en Herstel na die KI-voorstel
-//   status: klaar
-//   bewys: 7236634
+//   status: bou
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
