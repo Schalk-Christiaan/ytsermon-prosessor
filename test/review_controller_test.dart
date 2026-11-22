@@ -298,15 +298,11 @@ void main() {
       );
     });
 
-    test('nothing to reset before the first edit; volume stays in 0-100', () {
+    test('nothing to reset before the first edit', () {
       final (c, _, _) = _ready((m, {onProgress}) async => File('v.mp4'), null);
       expect(c.canReset, isFalse);
       c.resetToProposal();
       expect(c.plan!.sermonStart, 0);
-      c.setVolume(150);
-      expect(c.volume.value, 100);
-      c.setVolume(-3);
-      expect(c.volume.value, 0);
     });
 
     test('typing the title is one undo step', () {

@@ -110,14 +110,6 @@ class ReviewController extends ChangeNotifier {
   /// Loudness per second (dB) for the waveform; empty when the service was analysed before levels were kept.
   List<double> levels = [];
 
-  /// Preview volume 0-100 (the player only; the cut is not changed).
-  final volume = ValueNotifier<double>(100);
-
-  void setVolume(double v) {
-    volume.value = v.clamp(0, 100);
-    if (videoReady) player.setVolume(volume.value);
-  }
-
   SermonPlan? plan;
   double duration = 0;
 
@@ -625,7 +617,6 @@ class ReviewController extends ChangeNotifier {
     position.removeListener(_skipCuts);
     jobs.removeListener(_onJobs);
     _pos?.cancel();
-    volume.dispose();
     if (videoReady) player.dispose();
     super.dispose();
   }

@@ -744,15 +744,6 @@ class LAf extends L {
   String get tabOutput => 'Uitvoer';
 
   @override
-  String get sermonBegin => 'Begin';
-
-  @override
-  String get sermonEndLabel => 'Einde';
-
-  @override
-  String get volume => 'Klankvolume (voorskou)';
-
-  @override
   String get properties => 'Eienskappe';
 
   @override

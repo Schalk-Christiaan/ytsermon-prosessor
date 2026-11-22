@@ -1353,24 +1353,6 @@ abstract class L {
   /// **'Uitvoer'**
   String get tabOutput;
 
-  /// No description provided for @sermonBegin.
-  ///
-  /// In af, this message translates to:
-  /// **'Begin'**
-  String get sermonBegin;
-
-  /// No description provided for @sermonEndLabel.
-  ///
-  /// In af, this message translates to:
-  /// **'Einde'**
-  String get sermonEndLabel;
-
-  /// No description provided for @volume.
-  ///
-  /// In af, this message translates to:
-  /// **'Klankvolume (voorskou)'**
-  String get volume;
-
   /// No description provided for @properties.
   ///
   /// In af, this message translates to:

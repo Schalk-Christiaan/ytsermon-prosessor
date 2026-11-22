@@ -165,7 +165,7 @@ void main() {
       );
     });
 
-    testWidgets('zoom, sermon sliders, volume and Herstel', (t) async {
+    testWidgets('zoom and Herstel', (t) async {
       final c = await hersien(t);
       await typeKey(t, 'hersien.zoom-field', '3');
       expect(t.widget<Slider>(key('hersien.zoom')).value, 3);
@@ -174,23 +174,8 @@ void main() {
       await t.pump();
       expect(t.widget<Slider>(key('hersien.zoom')).value, greaterThan(8));
       cover(['hersien.zoom']);
-      await typeKey(t, 'hersien.sermon-start-field', '25:00');
-      expect(c.plan!.sermonStart, 1500);
-      await t.drag(key('hersien.sermon-start'), const Offset(-30, 0));
+      c.setSermon(1500, 3000);
       await t.pump();
-      expect(c.plan!.sermonStart, lessThan(1500));
-      cover(['hersien.sermon-start']);
-      await typeKey(t, 'hersien.sermon-end-field', '50:00');
-      expect(c.plan!.sermonEnd, 3000);
-      await t.drag(key('hersien.sermon-end'), const Offset(-20, 0));
-      await t.pump();
-      expect(c.plan!.sermonEnd, lessThan(3000));
-      cover(['hersien.sermon-end']);
-      await typeKey(t, 'hersien.volume-field', '40');
-      expect(c.volume.value, 40);
-      await t.drag(key('hersien.volume'), const Offset(30, 0));
-      expect(c.volume.value, greaterThan(40));
-      cover(['hersien.volume']);
       await tapKey(t, 'hersien.reset');
       expect(c.plan!.sermonStart, 1384);
       expect(c.plan!.sermonEnd, 3210);

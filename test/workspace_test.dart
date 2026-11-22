@@ -27,37 +27,6 @@ Future<void> open(
 }
 
 void main() {
-  testWidgets(
-    'sermon start: slider drives the field, the field drives the slider',
-    (t) async {
-      await open(t, 1400, 800);
-      expect(
-        t.widget<TextField>(k('sermon-start-field')).controller!.text,
-        '23:04',
-      );
-      await t.enterText(k('sermon-start-field'), '25:00');
-      await t.testTextInput.receiveAction(TextInputAction.done);
-      await t.pump();
-      expect(t.widget<Slider>(k('sermon-start')).value, 1500);
-      await t.drag(k('sermon-start'), const Offset(-40, 0));
-      await t.pump();
-      expect(t.widget<Slider>(k('sermon-start')).value, lessThan(1500));
-      expect(
-        t.widget<TextField>(k('sermon-start-field')).controller!.text,
-        isNot('25:00'),
-      );
-    },
-  );
-
-  testWidgets('a bad time shows an error and changes nothing', (t) async {
-    await open(t, 1400, 800);
-    await t.enterText(k('sermon-start-field'), 'abc');
-    await t.testTextInput.receiveAction(TextInputAction.done);
-    await t.pump();
-    expect(find.textContaining('Ongeldig'), findsOneWidget);
-    expect(t.widget<Slider>(k('sermon-start')).value, 1384);
-  });
-
   testWidgets('zoom field and slider agree; jumps move the playhead by 5 s', (
     t,
   ) async {
@@ -92,16 +61,12 @@ void main() {
   testWidgets('Herstel returns the plan to the proposal', (t) async {
     await open(t, 1400, 800);
     expect(t.widget<OutlinedButton>(k('reset')).onPressed, isNull);
-    await t.enterText(k('sermon-start-field'), '25:00');
-    await t.testTextInput.receiveAction(TextInputAction.done);
+    await t.drag(k('handle-start'), const Offset(40, 0));
     await t.pump();
     expect(t.widget<OutlinedButton>(k('reset')).onPressed, isNotNull);
     await t.tap(k('reset'));
     await t.pump();
-    expect(
-      t.widget<TextField>(k('sermon-start-field')).controller!.text,
-      '23:04',
-    );
+    expect(t.widget<OutlinedButton>(k('reset')).onPressed, isNull);
   });
 
   testWidgets('under 1280 the properties are behind a toggle', (t) async {

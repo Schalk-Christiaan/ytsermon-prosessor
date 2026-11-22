@@ -208,8 +208,6 @@ void main() {
             'ctl.hersien.push',
             'ctl.hersien.go-to-boundary',
             'ctl.hersien.title',
-            'ctl.hersien.sermon-start',
-            'ctl.hersien.sermon-start-field',
             'ctl.hersien.zoom',
             'ctl.hersien.reset',
           ]),

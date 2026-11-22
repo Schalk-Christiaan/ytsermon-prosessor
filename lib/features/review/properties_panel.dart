@@ -3,7 +3,7 @@
 //   wanneer: Hersien-skerm (regs; onder 1280 breed in 'n laai)
 //   groep: features | Skerms
 //   skryf: <werkmap>/<id>/plan.json (via die beheerder), instellings.json (uitvoere)
-//   doel: eienskappe in oortjies (Preek, Shorts, Uitgeknip, Uitvoer, Transkripsie): titel, beskrywing, elke slider met 'n syferveld, uitvoere en Herstel na die KI-voorstel
+//   doel: eienskappe in oortjies (Preek, Shorts, Uitgeknip, Uitvoer, Transkripsie): titel, beskrywing (preekgrense: hakies in die diensbaan), elke Short-slider met 'n syferveld, uitvoere en Herstel na die KI-voorstel
 //   status: klaar
 //   bewys: 7236634
 import 'package:flutter/material.dart';
@@ -181,49 +181,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
             border: const OutlineInputBorder(),
           ),
           onChanged: c.setDescription,
-        ),
-      ),
-      const SizedBox(height: 12),
-      SliderField(
-        id: 'sermon-start',
-        label: l.sermonBegin,
-        value: plan.sermonStart,
-        min: 0,
-        max: plan.sermonEnd - 1,
-        format: formatTime,
-        parse: parseClock,
-        onChanged: (v) {
-          c.setSermon(v, plan.sermonEnd, save: false);
-          c.seek(v);
-        },
-        onCommit: c.commit,
-      ),
-      SliderField(
-        id: 'sermon-end',
-        label: l.sermonEndLabel,
-        value: plan.sermonEnd,
-        min: plan.sermonStart + 1,
-        max: c.duration,
-        format: formatTime,
-        parse: parseClock,
-        onChanged: (v) {
-          c.setSermon(plan.sermonStart, v, save: false);
-          c.seek(v);
-        },
-        onCommit: c.commit,
-      ),
-      ValueListenableBuilder<double>(
-        valueListenable: c.volume,
-        builder: (context, v, _) => SliderField(
-          id: 'volume',
-          label: l.volume,
-          value: v,
-          min: 0,
-          max: 100,
-          fieldWidth: 64,
-          format: (x) => x.round().toString(),
-          parse: parseClock,
-          onChanged: c.setVolume,
         ),
       ),
     ],
