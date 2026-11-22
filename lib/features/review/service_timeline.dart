@@ -174,16 +174,30 @@ class _ServiceTimelineState extends State<ServiceTimeline>
     super.dispose();
   }
 
+  /// The handle's time when the current drag began, and the pointer travel since then.
+  double? _dragFrom;
+  double _dragDx = 0;
+
+  /// Moves a handle to where the pointer is: drag start + total travel, not the (stale until the
+  /// next frame) widget value + this event's delta, which loses moves when events outpace frames.
   void _drag(bool isStart, double dx, double w) {
-    final dt = dx / w * widget.duration;
     var s = widget.sermonStart, e = widget.sermonEnd;
+    _dragFrom ??= isStart ? s : e;
+    _dragDx += dx;
+    final t = _dragFrom! + _dragDx / w * widget.duration;
     if (isStart) {
-      s = (s + dt).clamp(0, e - 1);
+      s = t.clamp(0, e - 1);
     } else {
-      e = (e + dt).clamp(s + 1, widget.duration);
+      e = t.clamp(s + 1, widget.duration);
     }
     widget.onSermonChanged(s, e);
     widget.onSeek(isStart ? s : e);
+  }
+
+  void _dragEnd() {
+    _dragFrom = null;
+    _dragDx = 0;
+    widget.onSermonCommit();
   }
 
   @override
@@ -253,7 +267,7 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                                   ? l.sermonHandleStart(time)
                                   : l.sermonHandleEnd(time),
                               onDrag: (dx) => _drag(isStart, dx, w),
-                              onEnd: widget.onSermonCommit,
+                              onEnd: _dragEnd,
                               onNudge: (secs) => widget.onNudge(isStart, secs),
                             ),
                           );

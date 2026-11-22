@@ -119,6 +119,27 @@ void main() {
       expect(t.takeException(), isNull);
     });
 
+    testWidgets('handle follows the pointer when moves outpace frames', (
+      t,
+    ) async {
+      final c = await hersien(t);
+      final w = t.getSize(key('hersien.timeline')).width;
+      final before = c.plan!.sermonStart;
+      final g = await t.startGesture(t.getCenter(key('hersien.handle-start')));
+      await g.moveBy(const Offset(20, 0)); // past the drag slop
+      await t.pump();
+      final atStart = c.plan!.sermonStart;
+      for (var i = 0; i < 10; i++) {
+        await g.moveBy(
+          const Offset(10, 0),
+        ); // no pump: several events per frame
+      }
+      await g.up();
+      await t.pump();
+      expect(c.plan!.sermonStart, greaterThan(before));
+      expect(c.plan!.sermonStart - atStart, closeTo(100 / w * c.duration, 0.5));
+    });
+
     testWidgets('timeline seeks, handles and Short blocks move', (t) async {
       final c = await hersien(t);
       final tl = t.getTopLeft(key('hersien.timeline'));
