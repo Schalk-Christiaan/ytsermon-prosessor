@@ -10,6 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:preekverwerker/core/channel.dart';
 import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/models.dart';
+import 'package:preekverwerker/core/suggest.dart';
+import 'package:preekverwerker/core/playlists.dart';
 import 'package:preekverwerker/core/service_info.dart';
 import 'package:preekverwerker/core/settings.dart';
 import 'package:preekverwerker/core/store.dart';
@@ -1035,6 +1037,87 @@ void main() {
       await tapKey(t, 'snitlyste.group-delete-yes');
       expect(set.groups, isEmpty);
       expect(AppSettings.load(st.root).groups, isEmpty);
+      await t.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('group suggestions: progress, accept ticked, ignore, error', (
+      t,
+    ) async {
+      await loadFonts();
+      setView(t, 1100, 1400);
+      final st = playlistStore();
+      final set = AppSettings.load(st.root)
+        ..groups.add(PlaylistGroup('1', 'Romeine', description: 'Die brief'));
+      var mode = 'ok';
+      final gate = Completer<List<Suggestion>>();
+      await t.pumpWidget(
+        appWrap(
+          Brightness.light,
+          Scaffold(
+            body: PlaylistsScreen(
+              store: st,
+              settings: set,
+              suggest: (g) => switch (mode) {
+                'ok' => gate.future,
+                'none' => Future.value(const <Suggestion>[]),
+                _ => Future.error(const SocketException('weg')),
+              },
+            ),
+          ),
+        ),
+      );
+      await t.pump();
+      await tapKey(t, 'snitlyste.group-suggest.0');
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      gate.complete([
+        (id: 'aaaaaaaaaaa', reason: 'Romeine 5'),
+        (id: 'bbbbbbbbbbb', reason: 'Romeine 8'),
+      ]);
+      await t.pumpAndSettle();
+      expect(find.text('Romeine 8'), findsOneWidget);
+      await tapKey(t, 'snitlyste.group-suggestion.1'); // untick the second
+      await tapKey(t, 'snitlyste.group-accept');
+      await t.pumpAndSettle();
+      expect(set.groups.single.sermons, ['aaaaaaaaaaa']);
+      expect(AppSettings.load(st.root).groups.single.sermons, ['aaaaaaaaaaa']);
+      // ignore changes nothing
+      mode = 'ok2';
+      await tapKey(t, 'snitlyste.group-suggest.0');
+      await t.pumpAndSettle();
+      expect(find.textContaining('Ollama het nie geantwoord'), findsOneWidget);
+      await tapKey(t, 'snitlyste.group-suggest-close');
+      await t.pumpAndSettle();
+      mode = 'none';
+      await tapKey(t, 'snitlyste.group-suggest.0');
+      await t.pumpAndSettle();
+      expect(
+        find.text('Geen preke pas by hierdie snitlys nie.'),
+        findsOneWidget,
+      );
+      await tapKey(t, 'snitlyste.group-suggest-close');
+      await t.pumpAndSettle();
+      expect(set.groups.single.sermons, ['aaaaaaaaaaa']);
+      // the ignore button of a non-empty list
+      final again = Completer<List<Suggestion>>()
+        ..complete([(id: 'ccccccccccc', reason: '')]);
+      await t.pumpWidget(
+        appWrap(
+          Brightness.light,
+          Scaffold(
+            body: PlaylistsScreen(
+              store: st,
+              settings: set,
+              suggest: (g) => again.future,
+            ),
+          ),
+        ),
+      );
+      await t.pump();
+      await tapKey(t, 'snitlyste.group-suggest.0');
+      await t.pumpAndSettle();
+      await tapKey(t, 'snitlyste.group-ignore');
+      await t.pumpAndSettle();
+      expect(set.groups.single.sermons, ['aaaaaaaaaaa']);
       await t.pumpWidget(const SizedBox());
     });
   });

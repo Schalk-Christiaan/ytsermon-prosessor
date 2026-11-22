@@ -639,5 +639,20 @@
         "type": "String"
       }
     }
+  },
+  "groupSuggest": "Stel preke voor",
+  "suggestTitle": "Voorgestel vir \"{name}\"",
+  "suggestWorking": "Ollama kyk deur die preke. Dit kan 'n minuut of twee neem.",
+  "suggestNone": "Geen preke pas by hierdie snitlys nie.",
+  "suggestAccept": "Aanvaar gekose",
+  "suggestIgnore": "Ignoreer",
+  "suggestClose": "Maak toe",
+  "suggestOllamaDown": "Ollama het nie geantwoord nie. Maak Ollama oop en probeer weer.",
+  "@suggestTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

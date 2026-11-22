@@ -1664,6 +1664,54 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Preke in \"{name}\"'**
   String groupSermonsTitle(String name);
+
+  /// No description provided for @groupSuggest.
+  ///
+  /// In af, this message translates to:
+  /// **'Stel preke voor'**
+  String get groupSuggest;
+
+  /// No description provided for @suggestTitle.
+  ///
+  /// In af, this message translates to:
+  /// **'Voorgestel vir \"{name}\"'**
+  String suggestTitle(String name);
+
+  /// No description provided for @suggestWorking.
+  ///
+  /// In af, this message translates to:
+  /// **'Ollama kyk deur die preke. Dit kan \'n minuut of twee neem.'**
+  String get suggestWorking;
+
+  /// No description provided for @suggestNone.
+  ///
+  /// In af, this message translates to:
+  /// **'Geen preke pas by hierdie snitlys nie.'**
+  String get suggestNone;
+
+  /// No description provided for @suggestAccept.
+  ///
+  /// In af, this message translates to:
+  /// **'Aanvaar gekose'**
+  String get suggestAccept;
+
+  /// No description provided for @suggestIgnore.
+  ///
+  /// In af, this message translates to:
+  /// **'Ignoreer'**
+  String get suggestIgnore;
+
+  /// No description provided for @suggestClose.
+  ///
+  /// In af, this message translates to:
+  /// **'Maak toe'**
+  String get suggestClose;
+
+  /// No description provided for @suggestOllamaDown.
+  ///
+  /// In af, this message translates to:
+  /// **'Ollama het nie geantwoord nie. Maak Ollama oop en probeer weer.'**
+  String get suggestOllamaDown;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

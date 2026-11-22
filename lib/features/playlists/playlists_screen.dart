@@ -3,7 +3,7 @@
 //   wanneer: Snitlyste (rail)
 //   groep: features | Skerms
 //   skryf: <werkmap>/settings.json | reëls, groepe en jabloon
-//   doel: snitlysreëls aan/af en in volgorde, eie snitlysgroepe (skep, wysig, preke by, uitvee), voorskou hoeveel preke in elke snitlys val, beskrywingsjabloon, WhatsApp-sjabloon met voorskou
+//   doel: snitlysreëls aan/af en in volgorde, eie snitlysgroepe (skep, wysig, preke by, uitvee, KI stel preke voor), voorskou hoeveel preke in elke snitlys val, beskrywingsjabloon, WhatsApp-sjabloon met voorskou
 //   status: bou
 import 'package:flutter/material.dart';
 
@@ -11,6 +11,7 @@ import '../../core/cutter.dart';
 import '../../core/playlists.dart';
 import '../../core/service_info.dart';
 import '../../core/settings.dart';
+import '../../core/suggest.dart';
 import '../../core/store.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -20,9 +21,13 @@ class PlaylistsScreen extends StatefulWidget {
     super.key,
     required this.store,
     required this.settings,
+    this.suggest,
   });
   final SermonStore store;
   final AppSettings settings;
+
+  /// Test seam for Ollama: which sermons fit the group; null = the real call.
+  final Future<List<Suggestion>> Function(PlaylistGroup g)? suggest;
 
   @override
   State<PlaylistsScreen> createState() => _PlaylistsScreenState();
@@ -247,6 +252,11 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
         ),
         const SizedBox(width: 8),
         TextButton(
+          key: ValueKey('ctl.snitlyste.group-suggest.$i'),
+          onPressed: () => _suggest(g),
+          child: Text(l.groupSuggest),
+        ),
+        TextButton(
           key: ValueKey('ctl.snitlyste.group-sermons.$i'),
           onPressed: () => _pickSermons(g),
           child: Text(l.groupSermons),
@@ -371,6 +381,25 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
     );
   }
 
+  /// One Ollama call on request; the answer is a list to tick, accept or ignore.
+  Future<void> _suggest(PlaylistGroup g) async {
+    final run = widget.suggest ?? _ask;
+    final found = Future(() => run(g))
+      ..ignore(); // the dialog reports the error
+    final picked = await showDialog<List<String>>(
+      context: context,
+      builder: (context) =>
+          _SuggestDialog(group: g, found: found, store: widget.store),
+    );
+    if (picked == null || picked.isEmpty) return;
+    g.sermons.addAll(picked.where((id) => !g.sermons.contains(id)));
+    _saveGroups();
+  }
+
+  Future<List<Suggestion>> _ask(PlaylistGroup g) => suggestSermons(g, [
+    for (final s in widget.store.sorted) briefOf(s, widget.store.root),
+  ]);
+
   Future<void> _delete(PlaylistGroup g) async {
     final l = L.of(context);
     final yes = await showDialog<bool>(
@@ -424,4 +453,106 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
           ],
         ),
       );
+}
+
+/// Waits for Ollama, then lists the suggested sermons with their reasons.
+class _SuggestDialog extends StatefulWidget {
+  const _SuggestDialog({
+    required this.group,
+    required this.found,
+    required this.store,
+  });
+  final PlaylistGroup group;
+  final Future<List<Suggestion>> found;
+  final SermonStore store;
+
+  @override
+  State<_SuggestDialog> createState() => _SuggestDialogState();
+}
+
+class _SuggestDialogState extends State<_SuggestDialog> {
+  List<Suggestion>? _list;
+  String? _error;
+  final _off = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    widget.found.then(
+      (v) => mounted ? setState(() => _list = v) : null,
+      onError: (Object e) {
+        if (!mounted) return;
+        setState(
+          () => _error = e is SuggestException
+              ? e.message
+              : L.of(context).suggestOllamaDown,
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final list = _list;
+    return AlertDialog(
+      title: Text(l.suggestTitle(widget.group.name)),
+      content: SizedBox(
+        width: 520,
+        child: _error != null
+            ? Text(_error!)
+            : list == null
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l.suggestWorking),
+                  const SizedBox(height: 16),
+                  const LinearProgressIndicator(),
+                ],
+              )
+            : list.isEmpty
+            ? Text(l.suggestNone)
+            : SizedBox(
+                height: 360,
+                child: ListView(
+                  children: [
+                    for (final (i, s) in list.indexed)
+                      CheckboxListTile(
+                        key: ValueKey('ctl.snitlyste.group-suggestion.$i'),
+                        value: !_off.contains(s.id),
+                        title: Text(widget.store.byId(s.id)?.title ?? s.id),
+                        subtitle: s.reason.isEmpty ? null : Text(s.reason),
+                        onChanged: (on) => setState(
+                          () => on == true ? _off.remove(s.id) : _off.add(s.id),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+      ),
+      actions: [
+        if (list != null && list.isNotEmpty) ...[
+          TextButton(
+            key: const ValueKey('ctl.snitlyste.group-ignore'),
+            onPressed: () => Navigator.pop(context),
+            child: Text(l.suggestIgnore),
+          ),
+          FilledButton(
+            key: const ValueKey('ctl.snitlyste.group-accept'),
+            onPressed: () => Navigator.pop(context, [
+              for (final s in list)
+                if (!_off.contains(s.id)) s.id,
+            ]),
+            child: Text(l.suggestAccept),
+          ),
+        ] else
+          TextButton(
+            key: const ValueKey('ctl.snitlyste.group-suggest-close'),
+            onPressed: () => Navigator.pop(context),
+            child: Text(l.suggestClose),
+          ),
+      ],
+    );
+  }
 }

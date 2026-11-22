@@ -935,4 +935,32 @@ class LAf extends L {
   String groupSermonsTitle(String name) {
     return 'Preke in \"$name\"';
   }
+
+  @override
+  String get groupSuggest => 'Stel preke voor';
+
+  @override
+  String suggestTitle(String name) {
+    return 'Voorgestel vir \"$name\"';
+  }
+
+  @override
+  String get suggestWorking =>
+      'Ollama kyk deur die preke. Dit kan \'n minuut of twee neem.';
+
+  @override
+  String get suggestNone => 'Geen preke pas by hierdie snitlys nie.';
+
+  @override
+  String get suggestAccept => 'Aanvaar gekose';
+
+  @override
+  String get suggestIgnore => 'Ignoreer';
+
+  @override
+  String get suggestClose => 'Maak toe';
+
+  @override
+  String get suggestOllamaDown =>
+      'Ollama het nie geantwoord nie. Maak Ollama oop en probeer weer.';
 }
