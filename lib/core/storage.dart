@@ -19,6 +19,14 @@ Future<int> dirSize(Directory d) async {
   return n;
 }
 
+/// Size of each sermon's work folder (`<root>/<id>`: source, output, Shorts, audio); missing = 0.
+Future<Map<String, int>> sermonSizes(
+  Directory root,
+  Iterable<String> ids,
+) async => {
+  for (final id in ids) id: await dirSize(Directory(p.join(root.path, id))),
+};
+
 /// "1,42 GB", "86 MB", "12 KB": decimal comma and a no-break space (South African style).
 String formatBytes(int b) {
   const nbsp = ' ';
