@@ -779,21 +779,27 @@ void main() {
       GroupSuggestions? suggestions,
     }) async {
       await loadFonts();
-      setView(t, 1100, 900);
+      setView(t, 1100, 1500);
       await t.pumpWidget(const SizedBox());
       await t.pumpWidget(
         appWrap(
           Brightness.light,
-          Scaffold(
-            body: WorkScreen(
-              key: UniqueKey(),
-              store: st,
-              jobs: q,
-              onBack: onBack ?? () {},
-              pickDir: pickDir ?? () async => null,
-              suggestions: suggestions,
-              open: (path, {select = false}) async =>
-                  opened?.add('${select ? 'show:' : 'play:'}$path'),
+          // the walking sheep of a running job would keep pumpAndSettle busy
+          Builder(
+            builder: (c) => MediaQuery(
+              data: MediaQuery.of(c).copyWith(disableAnimations: true),
+              child: Scaffold(
+                body: WorkScreen(
+                  key: UniqueKey(),
+                  store: st,
+                  jobs: q,
+                  onBack: onBack ?? () {},
+                  pickDir: pickDir ?? () async => null,
+                  suggestions: suggestions,
+                  open: (path, {select = false}) async =>
+                      opened?.add('${select ? 'show:' : 'play:'}$path'),
+                ),
+              ),
             ),
           ),
         ),
@@ -1384,6 +1390,8 @@ void main() {
         await tapKey(t, 'skulp.nav-$i');
         expect(find.byType(type), findsOneWidget, reason: 'nav-$i');
       }
+      await tapKey(t, 'skulp.sheep');
+      expect(find.byType(WorkScreen), findsOneWidget);
       await t.pumpWidget(const SizedBox());
       await t.pump(const Duration(seconds: 5));
     });

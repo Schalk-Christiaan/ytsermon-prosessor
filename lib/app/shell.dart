@@ -44,6 +44,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
+import 'pixel_art.dart';
 import '../core/channel.dart';
 import '../core/jobs.dart';
 import '../core/settings.dart';
@@ -329,6 +330,20 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
             ),
           ),
           const Spacer(),
+          // The walking sheep: a task runs (click: Werk); it lies down when nothing runs.
+          ListenableBuilder(
+            listenable: widget.jobs,
+            builder: (_, _) => InkWell(
+              key: const ValueKey('ctl.skulp.sheep'),
+              onTap: () => _go(2),
+              child: PixelSprite(
+                sheep,
+                scale: 2,
+                animate: widget.jobs.current != null,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
           if (_disk != null) Text(_disk!, style: th.textTheme.labelMedium),
         ],
       ),

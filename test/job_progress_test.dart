@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preekverwerker/app/job_progress.dart';
+import 'package:preekverwerker/app/pixel_art.dart';
 import 'package:preekverwerker/core/jobs.dart';
 
 import 'screen_kit.dart';
@@ -40,6 +41,7 @@ void main() {
     expect(find.text('Preek soek'), findsOneWidget);
     expect(find.text('42%'), findsOneWidget);
     expect(find.text('01:05 verloop'), findsOneWidget);
+    expect(find.byType(PixelScene), findsOneWidget); // the scene of the phase
   });
 
   testWidgets('every job kind lists its own steps', (t) async {

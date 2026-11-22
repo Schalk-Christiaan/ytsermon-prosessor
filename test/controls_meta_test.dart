@@ -347,7 +347,7 @@ void main() {
         );
         final keys = controlKeys(t, find.byType(Scaffold).first);
         expect(keys.where((k) => k == null), isEmpty);
-        expect(keys.where((k) => k!.startsWith('ctl.skulp.')), hasLength(6));
+        expect(keys.where((k) => k!.startsWith('ctl.skulp.')), hasLength(7));
       });
     });
   }

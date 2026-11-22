@@ -5,6 +5,8 @@
 //   skryf: —
 //   doel: gedeelde vorderingswyer: stappelys van die taak se fases (huidige vet), balk met persentasie, detailreël, tyd sedert begin, onbepaald-met-woorde en uitvoubare besonderhede (laaste 20 reëls)
 //   status: bou
+import 'pixel_scenes.dart';
+
 import 'package:flutter/material.dart';
 
 import '../core/captions.dart' show formatTime;
@@ -66,6 +68,12 @@ class _JobProgressState extends State<JobProgress> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            phaseScene(
+              steps[at],
+              progress: v,
+              shorts: q.detail.value?.startsWith('Short') ?? false,
+            ),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 16,
               children: [

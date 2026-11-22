@@ -8,6 +8,9 @@
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
+
+import '../../app/pixel_scenes.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -182,12 +185,26 @@ class _WorkScreenState extends State<WorkScreen> {
                     ),
                   ),
                 const SizedBox(height: 16),
-                if (jobs.jobs.isEmpty && groups.values.every((g) => g.isEmpty))
+                if (jobs.jobs.isEmpty &&
+                    groups.values.every((g) => g.isEmpty)) ...[
+                  restScene(),
+                  const SizedBox(height: 8),
                   Text(l.workEmpty),
+                ] else if (cur == null &&
+                    waiting.isEmpty &&
+                    failed.isEmpty &&
+                    jobs.jobs.any((j) => j.status == JobStatus.klaar))
+                  doneScene(),
                 if (cur != null) _current(l, th, cur),
-                if (waiting.isNotEmpty) _section(l.workWaiting, th),
+                if (waiting.isNotEmpty) ...[
+                  _section(l.workWaiting, th),
+                  queueScene(waiting.length),
+                ],
                 for (final j in waiting) _line(l, th, j),
-                if (failed.isNotEmpty) _section(l.workFailed, th),
+                if (failed.isNotEmpty) ...[
+                  _section(l.workFailed, th),
+                  errorScene(),
+                ],
                 for (final j in failed) _failed(l, th, j),
                 ..._suggested(l, th),
                 for (final g in WorkGroup.values)

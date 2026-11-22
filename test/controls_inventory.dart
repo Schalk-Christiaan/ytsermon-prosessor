@@ -4,6 +4,7 @@
 // or `-<name>`; numbers are stripped before the lookup.
 const kControls = <String, Set<String>>{
   'skulp': {
+    'ctl.skulp.sheep',
     'ctl.skulp.nav-0',
     'ctl.skulp.nav-1',
     'ctl.skulp.nav-2',

@@ -9,6 +9,8 @@ import 'dart:io';
 
 import '../../app/job_progress.dart';
 
+import '../../app/pixel_scenes.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
@@ -124,6 +126,8 @@ class _SetupScreenState extends State<SetupScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            restScene(),
+            const SizedBox(height: 8),
             Text(l.navSetup, style: th.textTheme.headlineMedium),
             const SizedBox(height: 8),
             Text(l.setupIntro, style: th.textTheme.bodyLarge),

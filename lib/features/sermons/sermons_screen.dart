@@ -8,6 +8,9 @@
 import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
+
+import '../../app/pixel_scenes.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
@@ -652,8 +655,11 @@ class _SermonsScreenState extends State<SermonsScreen> {
               Icon(Icons.error_rounded, color: th.colorScheme.error, size: 32),
               const SizedBox(height: 12),
               Text(l.listError(_error!), textAlign: TextAlign.center),
-            ] else
+            ] else ...[
+              sowerScene(),
+              const SizedBox(height: 8),
               Text(l.noSermons, style: th.textTheme.titleMedium),
+            ],
             const SizedBox(height: 16),
             Row(
               mainAxisSize: MainAxisSize.min,
