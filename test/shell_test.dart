@@ -9,6 +9,28 @@ import 'helpers.dart';
 import 'screen_kit.dart';
 
 void main() {
+  testWidgets('tearing the Shell down leaves no listener behind', (t) async {
+    await loadFonts();
+    setView(t, 1100, 720);
+    final tc = testController(seed: false);
+    await t.pumpWidget(
+      appWrap(
+        Brightness.light,
+        Shell(
+          store: tc.$2,
+          jobs: tc.$3,
+          list: () async => [],
+          settings: AppSettings.load(tc.$2.root)..setupDone = true,
+        ),
+      ),
+    );
+    await t.pump(const Duration(milliseconds: 10));
+    await t.pumpWidget(const SizedBox());
+    // a job finishing after the teardown must not reach the shell's disposed parts
+    tc.$3.notifyListeners();
+    expect(t.takeException(), isNull);
+  });
+
   for (final b in Brightness.values) {
     testWidgets(
       'shell ${b.name}: rail and content are panels, selection in river',

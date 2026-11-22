@@ -183,6 +183,26 @@ void main() {
       },
     );
 
+    test('after dispose a finished cut asks nothing', () async {
+      final jobs = queue();
+      var asked = 0;
+      final sug = GroupSuggestions(
+        settings,
+        store,
+        chat: (b) async {
+          asked++;
+          return {
+            'message': {'content': '{"groups":[],"new_name":"Nuut"}'},
+          };
+        },
+      )..attach(jobs);
+      sug.dispose();
+      jobs.enqueue('aaaaaaaaaaa', JobKind.cut);
+      await jobs.idle;
+      await Future<void>.delayed(Duration.zero);
+      expect(asked, 0);
+    });
+
     test('an existing klaar job at start is not re-suggested; the render never waits for Ollama', () async {
       final jobs = queue();
       jobs.enqueue('aaaaaaaaaaa', JobKind.cut);

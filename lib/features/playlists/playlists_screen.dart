@@ -285,48 +285,12 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
 
   /// Name and description of a new ([g] null) or existing group.
   Future<void> _edit(PlaylistGroup? g) async {
-    final l = L.of(context);
-    final name = TextEditingController(text: g?.name);
-    final description = TextEditingController(text: g?.description);
-    final ok = await showDialog<bool>(
+    final r = await showDialog<(String, String)>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l.groupEditTitle),
-        content: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                key: const ValueKey('ctl.snitlyste.group-name'),
-                controller: name,
-                autofocus: true,
-                decoration: InputDecoration(labelText: l.groupNameLabel),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                key: const ValueKey('ctl.snitlyste.group-description'),
-                controller: description,
-                minLines: 2,
-                maxLines: 4,
-                decoration: InputDecoration(labelText: l.groupDescriptionLabel),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          FilledButton(
-            key: const ValueKey('ctl.snitlyste.group-save'),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l.groupSave),
-          ),
-        ],
-      ),
+      builder: (context) => _GroupDialog(g),
     );
-    final n = name.text.trim();
-    final d = description.text.trim();
-    // not disposed: the dialog is still animating out; an unlistened controller is just garbage
-    if (ok != true || n.isEmpty) return;
+    if (r == null || r.$1.isEmpty) return;
+    final (n, d) = r;
     if (g == null) {
       widget.settings.groups.add(
         PlaylistGroup(
@@ -558,6 +522,69 @@ class _SuggestDialogState extends State<_SuggestDialog> {
             onPressed: () => Navigator.pop(context),
             child: Text(l.suggestClose),
           ),
+      ],
+    );
+  }
+}
+
+/// The name/description dialog; owns its controllers so they are disposed with the route.
+class _GroupDialog extends StatefulWidget {
+  const _GroupDialog(this.group);
+  final PlaylistGroup? group;
+
+  @override
+  State<_GroupDialog> createState() => _GroupDialogState();
+}
+
+class _GroupDialogState extends State<_GroupDialog> {
+  late final _name = TextEditingController(text: widget.group?.name);
+  late final _description = TextEditingController(
+    text: widget.group?.description,
+  );
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _description.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    return AlertDialog(
+      title: Text(l.groupEditTitle),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              key: const ValueKey('ctl.snitlyste.group-name'),
+              controller: _name,
+              autofocus: true,
+              decoration: InputDecoration(labelText: l.groupNameLabel),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const ValueKey('ctl.snitlyste.group-description'),
+              controller: _description,
+              minLines: 2,
+              maxLines: 4,
+              decoration: InputDecoration(labelText: l.groupDescriptionLabel),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        FilledButton(
+          key: const ValueKey('ctl.snitlyste.group-save'),
+          onPressed: () => Navigator.pop(context, (
+            _name.text.trim(),
+            _description.text.trim(),
+          )),
+          child: Text(l.groupSave),
+        ),
       ],
     );
   }

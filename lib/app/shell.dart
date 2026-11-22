@@ -180,6 +180,7 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
     _fade.dispose();
     _switch.dispose();
     _review.dispose();
+    _suggestions.dispose();
     super.dispose();
   }
 

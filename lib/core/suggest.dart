@@ -230,18 +230,31 @@ class GroupSuggestions extends ChangeNotifier {
 
   /// Starts asking for every cut that finishes from now on; never makes the render wait.
   void attach(JobQueue jobs) {
+    _jobs = jobs;
     _handled.addAll(jobs.jobs.where((j) => j.status == JobStatus.klaar));
-    jobs.addListener(() {
-      for (final j in jobs.jobs) {
-        if (j.kind == JobKind.cut &&
-            j.status == JobStatus.klaar &&
-            _handled.add(j)) {
-          final f = request(j.sermon);
-          _inflight.add(f);
-          f.whenComplete(() => _inflight.remove(f));
-        }
+    jobs.addListener(_onJobs);
+  }
+
+  JobQueue? _jobs;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _jobs?.removeListener(_onJobs);
+    super.dispose();
+  }
+
+  void _onJobs() {
+    for (final j in _jobs!.jobs) {
+      if (j.kind == JobKind.cut &&
+          j.status == JobStatus.klaar &&
+          _handled.add(j)) {
+        final f = request(j.sermon);
+        _inflight.add(f);
+        f.whenComplete(() => _inflight.remove(f));
       }
-    });
+    }
   }
 
   /// Asks once per sermon; any failure just means no suggestion.
@@ -261,7 +274,7 @@ class GroupSuggestions extends ChangeNotifier {
         ],
         chat: chat,
       );
-      if (r.groupIds.isEmpty && r.newName == null) return;
+      if (_disposed || (r.groupIds.isEmpty && r.newName == null)) return;
       pending[sermonId] = r;
       notifyListeners();
     } on Object {
