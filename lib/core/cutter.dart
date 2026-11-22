@@ -3,9 +3,8 @@
 //   wanneer: by 'Keur goed en sny' en 'Klank vir WhatsApp'
 //   groep: core | Kern
 //   skryf: out/<jaar>/<diens>/ | Volle preek.mp4, Net die woord.mp4, Sang/*.mp3, Shorts
-//   doel: gids per diens (serviceDir), sny Volle preek en Net die woord (herkodeer net die stuk, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif), elke lied as mp3 en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg; skryf die WhatsApp-teks
-//   status: klaar
-//   bewys: 7236634
+//   doel: gids per diens (serviceDir), sny Volle preek en Net die woord (herkodeer net die stuk met NVENC of libx264 (val terug by 'n NVENC-fout), of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif), elke lied as mp3 en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg; skryf die WhatsApp-teks
+//   status: bou
 import 'dart:convert';
 import 'dart:io';
 
@@ -19,8 +18,23 @@ import 'tools.dart';
 /// ffmpeg flags that make progress readable on stdout (see `parseFfmpegProgress`).
 const _progress = ['-nostats', '-progress', 'pipe:1'];
 
-/// The video encoder settings of the sermon cut and the join.
-const _x264 = ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20'];
+/// The video encoder settings of the sermon cut, the join and the Shorts; [enc] is from `videoEncoder()`.
+List<String> videoArgs(String enc) => enc == 'h264_nvenc'
+    ? [
+        '-c:v',
+        'h264_nvenc',
+        '-preset',
+        'p5',
+        '-tune',
+        'hq',
+        '-rc',
+        'vbr',
+        '-cq',
+        '21',
+        '-b:v',
+        '0',
+      ]
+    : ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20'];
 
 String _sec(double s) => s.toStringAsFixed(3);
 
@@ -32,7 +46,13 @@ String sermonFileName(String date, String title, {String ext = 'mp4'}) =>
 
 /// ffmpeg arguments that re-encode exactly [start, end] (a stream copy can only start at a keyframe,
 /// up to seconds off the prayer); `-ss` before `-i` seeks fast and stays frame-accurate when re-encoding.
-List<String> sermonArgs(String video, double start, double end, String out) => [
+List<String> sermonArgs(
+  String video,
+  double start,
+  double end,
+  String out, {
+  String enc = 'libx264',
+}) => [
   '-y',
   '-ss',
   _sec(start),
@@ -40,7 +60,7 @@ List<String> sermonArgs(String video, double start, double end, String out) => [
   _sec(end),
   '-i',
   video,
-  ..._x264,
+  ...videoArgs(enc),
   '-pix_fmt',
   'yuv420p',
   '-c:a',
@@ -77,8 +97,9 @@ List<String> shortArgs(
   String srt,
   double start,
   double end,
-  String out,
-) => [
+  String out, {
+  String enc = 'libx264',
+}) => [
   '-y',
   '-ss',
   _sec(start),
@@ -89,10 +110,7 @@ List<String> shortArgs(
   '-vf',
   "crop=ih*9/16:ih,scale=1080:1920,subtitles=$srt:fontsdir=fonts:"
       "force_style='FontName=Source Sans 3,FontSize=14,Alignment=2,MarginV=70'",
-  '-c:v',
-  'libx264',
-  '-crf',
-  '20',
+  ...videoArgs(enc),
   '-pix_fmt',
   'yuv420p',
   '-c:a',
@@ -169,7 +187,12 @@ typedef JoinPiece = ({String path, MediaInfo info, Span? part});
 
 /// ffmpeg arguments that join [pieces] into one file the size and frame rate of [target]: each piece
 /// is scaled and padded (no stretching), a piece without sound gets silence, then `concat`.
-List<String> joinArgs(List<JoinPiece> pieces, MediaInfo target, String out) {
+List<String> joinArgs(
+  List<JoinPiece> pieces,
+  MediaInfo target,
+  String out, {
+  String enc = 'libx264',
+}) {
   final inputs = <String>[], filters = <String>[], labels = <String>[];
   var n = 0;
   for (final (k, pc) in pieces.indexed) {
@@ -209,7 +232,7 @@ List<String> joinArgs(List<JoinPiece> pieces, MediaInfo target, String out) {
     '[v]',
     '-map',
     '[a]',
-    ..._x264,
+    ...videoArgs(enc),
     '-c:a',
     'aac',
     '-b:a',
@@ -235,7 +258,7 @@ Future<void> _ffmpeg(
   Future<void>? cancel,
   void Function(String line)? log,
 }) => runTool(
-  'ffmpeg',
+  ffmpegTool,
   args,
   cwd: cwd,
   cancel: cancel,
@@ -247,6 +270,35 @@ Future<void> _ffmpeg(
     }
   },
 );
+
+/// Runs a video-encoding ffmpeg built by [args] with the chosen encoder; when NVENC fails (not cancelled)
+/// the same cut is retried once with libx264 and libx264 is used from then on.
+Future<void> _encode(
+  List<String> Function(String enc) args, {
+  String? cwd,
+  double? duration,
+  void Function(double frac)? onProgress,
+  Future<void>? cancel,
+  void Function(String line)? log,
+}) async {
+  Future<void> run(String enc) => _ffmpeg(
+    args(enc),
+    cwd: cwd,
+    duration: duration,
+    onProgress: onProgress,
+    cancel: cancel,
+    log: log,
+  );
+  final enc = await videoEncoder();
+  try {
+    await run(enc);
+  } on ProcessException {
+    if (enc != 'h264_nvenc') rethrow;
+    log?.call('NVENC het misluk; probeer weer met libx264');
+    resetVideoEncoder(to: 'libx264');
+    await run('libx264');
+  }
+}
 
 // stap: preekgrense 2 Herkodeer | libx264 presies op die grense (nie -c copy nie, wat net op 'n sleutelraam sny)
 /// Cuts [parts] of [video] into [out] (its folder is made); returns it. One part and no clips = one re-encode
@@ -263,8 +315,14 @@ Future<File> cutParts(
 }) async {
   out.parent.createSync(recursive: true);
   if (parts.length == 1 && intro == null && outro == null) {
-    await _ffmpeg(
-      sermonArgs(video.path, parts.single.start, parts.single.end, out.path),
+    await _encode(
+      (enc) => sermonArgs(
+        video.path,
+        parts.single.start,
+        parts.single.end,
+        out.path,
+        enc: enc,
+      ),
       duration: parts.single.end - parts.single.start,
       onProgress: onProgress,
       cancel: cancel,
@@ -280,8 +338,8 @@ Future<File> cutParts(
     for (final s in parts) (path: video.path, info: main, part: s),
     if (outro != null) await clip(outro),
   ];
-  await _ffmpeg(
-    joinArgs(pieces, main, out.path),
+  await _encode(
+    (enc) => joinArgs(pieces, main, out.path, enc: enc),
     duration: pieces.fold<double>(
       0,
       (a, pc) =>
@@ -320,8 +378,9 @@ Future<File> cutShort(
     outDir.absolute.path,
     '$date Short $n ${_clean(s.title)}.mp4',
   );
-  await _ffmpeg(
-    shortArgs(p.basename(video.path), srt, s.start, s.end, out),
+  await _encode(
+    (enc) =>
+        shortArgs(p.basename(video.path), srt, s.start, s.end, out, enc: enc),
     cwd: work.path,
     duration: s.end - s.start,
     onProgress: onProgress,

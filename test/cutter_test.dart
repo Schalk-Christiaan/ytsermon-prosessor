@@ -214,4 +214,69 @@ void main() {
     expect((r.stdout as String).trim().split('\n').length, 1);
     d.deleteSync(recursive: true);
   }, skip: findExecutable('ffmpeg') == null ? 'ffmpeg ontbreek' : null);
+
+  test('videoArgs: nvenc and libx264 settings', () {
+    expect(videoArgs('libx264'), [
+      '-c:v',
+      'libx264',
+      '-preset',
+      'veryfast',
+      '-crf',
+      '20',
+    ]);
+    expect(videoArgs('h264_nvenc'), [
+      '-c:v',
+      'h264_nvenc',
+      '-preset',
+      'p5',
+      '-tune',
+      'hq',
+      '-rc',
+      'vbr',
+      '-cq',
+      '21',
+      '-b:v',
+      '0',
+    ]);
+    expect(
+      sermonArgs('v.mp4', 1, 2, 'o.mp4', enc: 'h264_nvenc'),
+      containsAllInOrder(['-c:v', 'h264_nvenc']),
+    );
+  });
+
+  test(
+    'cutParts: a failing NVENC encode is retried with libx264 and cached',
+    () async {
+      final d = Directory.systemTemp.createTempSync('nv');
+      resetVideoEncoder();
+      // fake ffmpeg: probe passes, but the real cut with nvenc fails
+      final f = File(p.join(d.path, 'ffmpeg'))
+        ..writeAsStringSync('''#!/bin/sh
+echo "\$@" >> "${d.path}/runs"
+case "\$*" in
+  *-encoders*) echo " V....D h264_nvenc";;
+  *lavfi*) exit 0;;
+  *h264_nvenc*) echo "boom" >&2; exit 1;;
+esac
+exit 0
+''');
+      Process.runSync('chmod', ['+x', f.path]);
+      ffmpegTool = f.path;
+      expect(await videoEncoder(), 'h264_nvenc');
+      await cutParts(File('in.mp4'), [
+        Span(1.0, 5.0),
+      ], File(p.join(d.path, 'o', 'x.mp4')));
+      final runs = File(p.join(d.path, 'runs')).readAsLinesSync();
+      expect(
+        runs.where((l) => l.contains('h264_nvenc') && l.contains('in.mp4')),
+        hasLength(1),
+      );
+      expect(runs.last, contains('libx264'));
+      expect(await videoEncoder(), 'libx264');
+      ffmpegTool = 'ffmpeg';
+      resetVideoEncoder();
+      d.deleteSync(recursive: true);
+    },
+    skip: Platform.isWindows ? 'sh' : null,
+  );
 }

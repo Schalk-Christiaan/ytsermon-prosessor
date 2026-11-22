@@ -3,7 +3,7 @@
 //   wanneer: by oopmaak van Instellings en voor elke aflaai/KI-oproep
 //   groep: core | Kern
 //   skryf: —
-//   doel: vind yt-dlp/ffmpeg/ffprobe/ollama (langs die exe, Ollama se gids, PATH), loop eksterne prosesse (runTool), toets Ollama + qwen3:8b, laai die model af, begin Ollama; wys qjs.exe (QuickJS) as JS-looptyd aan yt-dlp as dit langs die exe lê
+//   doel: kies video-enkodeerder (videoEncoder: NVENC as dit werk, anders libx264); vind yt-dlp/ffmpeg/ffprobe/ollama (langs die exe, Ollama se gids, PATH), loop eksterne prosesse (runTool), toets Ollama + qwen3:8b, laai die model af, begin Ollama; wys qjs.exe (QuickJS) as JS-looptyd aan yt-dlp as dit langs die exe lê
 //   status: bou
 //   bewys: 7236634
 import 'dart:async';
@@ -13,6 +13,49 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 const kModel = 'qwen3:8b';
+
+/// The ffmpeg to run; tests point it at a fake script.
+String ffmpegTool = 'ffmpeg';
+
+Future<String>? _encoder;
+
+/// The H.264 encoder ffmpeg uses: `h264_nvenc` when it is listed and a 5-frame trial encode works
+/// (a listed encoder still fails without an NVIDIA GPU), else `libx264`. Probed once per session.
+Future<String> videoEncoder() => _encoder ??= _pickEncoder();
+
+/// Forgets the probe result (tests) or, with [to], forces it (after an NVENC failure mid-job).
+void resetVideoEncoder({String? to}) =>
+    _encoder = to == null ? null : Future.value(to);
+
+Future<String> _pickEncoder() async {
+  final exe =
+      findExecutable(ffmpegTool) ??
+      (p.isAbsolute(ffmpegTool) ? ffmpegTool : null);
+  if (exe == null) return 'libx264';
+  try {
+    final list = await Process.run(exe, ['-hide_banner', '-encoders']);
+    if (!(list.stdout as String).contains('h264_nvenc')) return 'libx264';
+    final trial = await Process.run(exe, [
+      '-hide_banner',
+      '-v',
+      'error',
+      '-f',
+      'lavfi',
+      '-i',
+      'color=c=black:s=256x256',
+      '-frames:v',
+      '5',
+      '-c:v',
+      'h264_nvenc',
+      '-f',
+      'null',
+      '-',
+    ]);
+    return trial.exitCode == 0 ? 'h264_nvenc' : 'libx264';
+  } on ProcessException {
+    return 'libx264';
+  }
+}
 
 /// Base URL of the Ollama server (`OLLAMA_HOST` or the local default).
 Uri ollamaBase() {

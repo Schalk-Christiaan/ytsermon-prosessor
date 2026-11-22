@@ -30,6 +30,7 @@ void main() {
     pathDir.deleteSync(recursive: true);
   });
   runToolTests();
+  videoEncoderTests();
 
   group('pullModel against a fake Ollama', () {
     late HttpServer server;
@@ -133,4 +134,51 @@ void runToolTests() {
       ),
     );
   }, skip: sh == null);
+}
+
+/// A fake ffmpeg script: lists `h264_nvenc` when [listed]; encoding with it fails unless [works]. Counts runs in `<dir>/runs`.
+String fakeFfmpeg(Directory d, {required bool listed, required bool works}) {
+  final f = File(p.join(d.path, 'ffmpeg'));
+  f.writeAsStringSync('''#!/bin/sh
+echo "\$@" >> "${d.path}/runs"
+case "\$*" in
+  *-encoders*) ${listed ? 'echo " V....D h264_nvenc NVIDIA NVENC"' : 'echo " V....D libx264"'};;
+  *h264_nvenc*) ${works ? 'exit 0' : 'echo "No NVENC capable devices" >&2; exit 1'};;
+esac
+exit 0
+''');
+  Process.runSync('chmod', ['+x', f.path]);
+  return f.path;
+}
+
+void videoEncoderTests() {
+  late Directory d;
+  setUp(() {
+    d = Directory.systemTemp.createTempSync('enc');
+    resetVideoEncoder();
+  });
+  tearDown(() {
+    ffmpegTool = 'ffmpeg';
+    resetVideoEncoder();
+    d.deleteSync(recursive: true);
+  });
+  final skip = Platform.isWindows ? 'sh' : null;
+
+  for (final c in [
+    (true, true, 'h264_nvenc'),
+    (true, false, 'libx264'),
+    (false, true, 'libx264'),
+  ]) {
+    test('videoEncoder: listed=${c.$1} works=${c.$2} -> ${c.$3}', () async {
+      ffmpegTool = fakeFfmpeg(d, listed: c.$1, works: c.$2);
+      expect(await videoEncoder(), c.$3);
+    }, skip: skip);
+  }
+
+  test('videoEncoder: the answer is cached (one probe per session)', () async {
+    ffmpegTool = fakeFfmpeg(d, listed: true, works: true);
+    await videoEncoder();
+    await videoEncoder();
+    expect(File(p.join(d.path, 'runs')).readAsLinesSync(), hasLength(2));
+  }, skip: skip);
 }
