@@ -3,13 +3,12 @@
 //   wanneer: Werk-skerm, Hersien-laai, Opstel en oral waar iets wag
 //   groep: app | App-raam
 //   skryf: —
-//   doel: gedeelde vorderingswyer: stappelys van die taak se fases (huidige vet), balk met persentasie, detailreël, tyd sedert begin, onbepaald-met-woorde en uitvoubare besonderhede (laaste 20 reëls)
+//   doel: gedeelde vorderingswyer: stappelys van die taak se fases (huidige vet), balk met persentasie, detailreël, begintyd, onbepaald-met-woorde en uitvoubare besonderhede (laaste 20 reëls)
 //   status: bou
 import 'pixel_scenes.dart';
 
 import 'package:flutter/material.dart';
 
-import '../core/captions.dart' show formatTime;
 import '../core/jobs.dart';
 import '../l10n/app_localizations.dart';
 
@@ -42,7 +41,14 @@ String _step(L l, JobPhase p) => switch (p) {
   JobPhase.upload => l.stepUpload,
 };
 
-/// Shows the running job of [jobs]: steps, bar, detail, elapsed time and the output.
+/// "begin 14:02": the clock time a job began (no ticking timer, so nothing rebuilds each second).
+String startedLabel(L l, DateTime? t) {
+  final d = t ?? DateTime.now();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return l.startedAt('${two(d.hour)}:${two(d.minute)}');
+}
+
+/// Shows the running job of [jobs]: steps, bar, detail, start time and the output.
 class JobProgress extends StatefulWidget {
   const JobProgress({super.key, required this.jobs});
   final JobQueue jobs;
@@ -109,20 +115,7 @@ class _JobProgressState extends State<JobProgress> {
             if (q.detail.value != null) Text(q.detail.value!),
             if (v == null)
               Text(l.progressSlow, style: th.textTheme.labelMedium),
-            StreamBuilder<int>(
-              stream: Stream.periodic(const Duration(seconds: 1), (i) => i),
-              builder: (context, _) => Text(
-                l.elapsed(
-                  formatTime(
-                    DateTime.now()
-                        .difference(q.started ?? DateTime.now())
-                        .inSeconds
-                        .toDouble(),
-                  ),
-                ),
-                style: th.textTheme.labelMedium,
-              ),
-            ),
+            Text(startedLabel(l, q.started), style: th.textTheme.labelMedium),
             TextButton(
               key: const ValueKey('ctl.werk.details'),
               onPressed: () => setState(() => _open = !_open),

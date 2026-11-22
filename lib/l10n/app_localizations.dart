@@ -189,11 +189,11 @@ abstract class L {
   /// **'Sny…'**
   String get stageCut;
 
-  /// No description provided for @elapsed.
+  /// No description provided for @startedAt.
   ///
   /// In af, this message translates to:
-  /// **'{time} verloop'**
-  String elapsed(String time);
+  /// **'begin {time}'**
+  String startedAt(String time);
 
   /// No description provided for @errorGeneric.
   ///

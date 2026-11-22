@@ -13,7 +13,6 @@ import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../app/theme.dart';
-import '../../core/captions.dart';
 import '../../core/jobs.dart';
 import '../../core/models.dart';
 import '../../core/planner.dart';
@@ -497,38 +496,33 @@ class _Loading extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = L.of(context);
     final th = Theme.of(context);
-    return StreamBuilder<int>(
-      stream: Stream.periodic(const Duration(seconds: 1), (i) => i),
-      builder: (context, _) {
-        final text = switch (c.stage) {
-          LoadStage.meta => l.stageMeta,
-          LoadStage.plan => l.stagePlan,
-          LoadStage.cut => l.stageCut,
-        };
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 320,
-              child: ProgressLine(
-                value: c.stage == LoadStage.cut ? c.cutFraction : null,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              c.stage == LoadStage.cut
-                  ? l.stageCutPct((c.cutFraction * 100).round())
-                  : text,
-              style: th.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l.elapsed(formatTime(c.stopwatch.elapsed.inSeconds.toDouble())),
-              style: th.textTheme.labelMedium,
-            ),
-          ],
-        );
-      },
+    final text = switch (c.stage) {
+      LoadStage.meta => l.stageMeta,
+      LoadStage.plan => l.stagePlan,
+      LoadStage.cut => l.stageCut,
+    };
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 320,
+          child: ProgressLine(
+            value: c.stage == LoadStage.cut ? c.cutFraction : null,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          c.stage == LoadStage.cut
+              ? l.stageCutPct((c.cutFraction * 100).round())
+              : text,
+          style: th.textTheme.titleMedium,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          startedLabel(l, DateTime.now().subtract(c.stopwatch.elapsed)),
+          style: th.textTheme.labelMedium,
+        ),
+      ],
     );
   }
 }

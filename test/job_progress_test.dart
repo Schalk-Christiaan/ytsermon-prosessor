@@ -35,12 +35,14 @@ void main() {
   testWidgets('plan job: the current step is bold, done steps are ticked', (
     t,
   ) async {
-    await show(t, JobKind.plan, JobPhase.download, progress: 0.42);
+    final q = await show(t, JobKind.plan, JobPhase.download, progress: 0.42);
     expect(find.text('✓ Inligting'), findsOneWidget);
     expect(styleOf(t, '● Aflaai')?.fontWeight, FontWeight.w700);
     expect(find.text('Preek soek'), findsOneWidget);
     expect(find.text('42%'), findsOneWidget);
-    expect(find.text('01:05 verloop'), findsOneWidget);
+    final b = q.started!;
+    String two(int n) => n.toString().padLeft(2, '0');
+    expect(find.text('begin ${two(b.hour)}:${two(b.minute)}'), findsOneWidget);
     expect(find.byType(PixelScene), findsOneWidget); // the scene of the phase
   });
 

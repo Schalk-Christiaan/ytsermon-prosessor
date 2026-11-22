@@ -37,8 +37,8 @@
   "stagePlan": "Soek die preek…",
   "stageDownload": "Laai video af…",
   "stageCut": "Sny…",
-  "elapsed": "{time} verloop",
-  "@elapsed": {
+  "startedAt": "begin {time}",
+  "@startedAt": {
     "placeholders": {
       "time": {
         "type": "String"

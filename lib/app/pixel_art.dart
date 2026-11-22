@@ -119,14 +119,29 @@ class _PixelSceneState extends State<PixelScene>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // The ticker follows TickerMode by itself (muted when hidden).
+  // The ticker follows TickerMode by itself (muted when hidden); start/stop here, never in build.
+  void _sync() {
     final run = widget.animate && !MediaQuery.disableAnimationsOf(context);
     if (run != _ticker.isActive) {
       run ? _ticker.start() : _ticker.stop();
       if (!run) _frame = 0;
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(PixelScene old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return CustomPaint(
       size: Size(
         widget.width * widget.scale.toDouble(),

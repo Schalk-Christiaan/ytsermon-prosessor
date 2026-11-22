@@ -64,8 +64,8 @@ class LAf extends L {
   String get stageCut => 'Sny…';
 
   @override
-  String elapsed(String time) {
-    return '$time verloop';
+  String startedAt(String time) {
+    return 'begin $time';
   }
 
   @override

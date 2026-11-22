@@ -88,7 +88,7 @@ class WorkScreen extends StatefulWidget {
 
 class _WorkScreenState extends State<WorkScreen> {
   final _sel = <String>{};
-  final _sizes = <String, int>{};
+  var _sizes = <String, int>{};
   late final _settings = widget.settings ?? AppSettings.load(store.root);
   String? _reported;
 
@@ -125,13 +125,49 @@ class _WorkScreenState extends State<WorkScreen> {
     return m;
   }
 
-  int _size(String path) => _sizes.putIfAbsent(path, () {
-    try {
-      return File(path).lengthSync();
-    } on FileSystemException {
-      return 0;
+  /// Size of an output file; 0 until [_loadSizes] has read it.
+  int _size(String path) => _sizes[path] ?? 0;
+
+  /// Reads every output's size once (at load and after a job ends); never in build.
+  Future<void> _loadSizes() async {
+    await null; // never touch the context synchronously from initState
+    final paths = [for (final g in _items().values) ...g.map((i) => i.path)];
+    final sizes = <String, int>{};
+    for (final path in paths) {
+      try {
+        sizes[path] = await File(path).length();
+      } on FileSystemException {
+        sizes[path] = 0;
+      }
     }
-  });
+    if (!mounted) return;
+    setState(() => _sizes = sizes);
+    _report();
+  }
+
+  bool _wasBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSizes();
+    jobs.addListener(_jobsChanged);
+  }
+
+  @override
+  void dispose() {
+    jobs.removeListener(_jobsChanged);
+    super.dispose();
+  }
+
+  void _jobsChanged() {
+    final busy = jobs.jobs.any(
+      (j) => j.status == JobStatus.besig || j.status == JobStatus.wag,
+    );
+    if (_wasBusy && !busy) _loadSizes();
+    _wasBusy = busy;
+    _report();
+  }
 
   String _groupName(L l, WorkGroup g) => switch (g) {
     WorkGroup.full => l.groupFull,
@@ -139,9 +175,11 @@ class _WorkScreenState extends State<WorkScreen> {
     WorkGroup.audio => l.whatsappAudio,
   };
 
-  /// Tells the shell's status bar what is selected in total.
-  void _report(L l, Map<WorkGroup, List<WorkItem>> all) {
-    final items = [for (final g in all.values) ...g];
+  /// Tells the shell's status bar what is selected in total (called when the selection, the outputs or the sizes change).
+  void _report() {
+    final l = L.of(context);
+    final items = [for (final g in _items().values) ...g];
+    _sel.retainAll(items.map((i) => i.path));
     final sel = items.where((i) => _sel.contains(i.path)).toList();
     final text = sel.isEmpty
         ? null
@@ -152,9 +190,7 @@ class _WorkScreenState extends State<WorkScreen> {
           );
     if (text == _reported) return;
     _reported = text;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) widget.onSelection?.call(text);
-    });
+    widget.onSelection?.call(text);
   }
 
   @override
@@ -178,10 +214,6 @@ class _WorkScreenState extends State<WorkScreen> {
                   j.status == JobStatus.gekanselleer,
             );
             final groups = _items();
-            _sel.retainAll([
-              for (final g in groups.values) ...g.map((i) => i.path),
-            ]);
-            _report(l, groups);
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [
@@ -354,6 +386,7 @@ class _WorkScreenState extends State<WorkScreen> {
                           n == items.length
                               ? _sel.removeAll(ids)
                               : _sel.addAll(ids);
+                          _report();
                         }),
                 ),
               ),
@@ -506,6 +539,7 @@ class _WorkScreenState extends State<WorkScreen> {
                       value: _sel.contains(it.path),
                       onChanged: (v) => setState(() {
                         v == true ? _sel.add(it.path) : _sel.remove(it.path);
+                        _report();
                       }),
                     ),
                   ),
@@ -565,6 +599,7 @@ class _WorkScreenState extends State<WorkScreen> {
               value: _sel.contains(it.path),
               onChanged: (v) => setState(() {
                 v == true ? _sel.add(it.path) : _sel.remove(it.path);
+                _report();
               }),
             ),
           ),
