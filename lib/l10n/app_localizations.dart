@@ -1478,6 +1478,18 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Grootte'**
   String get colSize;
+
+  /// No description provided for @statusSelected.
+  ///
+  /// In af, this message translates to:
+  /// **'{n} van {total} gekies · {size}'**
+  String statusSelected(int n, int total, String size);
+
+  /// No description provided for @selectAll.
+  ///
+  /// In af, this message translates to:
+  /// **'Kies alles'**
+  String get selectAll;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

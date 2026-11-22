@@ -56,6 +56,7 @@ class SermonsScreen extends StatefulWidget {
     this.importFile,
     this.settings,
     this.sizes,
+    this.onSelection,
   });
   final SermonStore store;
   final JobQueue jobs;
@@ -74,6 +75,9 @@ class SermonsScreen extends StatefulWidget {
   /// Test seam: folder sizes by sermon ID (default: [sermonSizes] under the store's root).
   final Future<Map<String, int>> Function(List<String> ids)? sizes;
 
+  /// Status-bar text for the selection ("3 van 7 gekies · 4,31 GB"), null when nothing is selected.
+  final void Function(String?)? onSelection;
+
   /// The shell's one [AppSettings]; a second instance would overwrite the other screens' saves.
   final AppSettings? settings;
 
@@ -90,6 +94,9 @@ class _SermonsScreenState extends State<SermonsScreen> {
   final _filter = <SermonState>{};
   bool _notUploaded = false;
   final _selected = <String>{};
+  List<Sermon> _rows = []; // the filtered, sorted list on screen: select-all and ranges work on it
+  String? _anchor; // last clicked row, the start of a Shift range
+  String? _reported;
   bool _loading = false;
   bool _importing = false;
   bool _dragging = false;
@@ -316,6 +323,9 @@ class _SermonsScreenState extends State<SermonsScreen> {
             _searchFocus.requestFocus(),
         const SingleActivator(LogicalKeyboardKey.enter, control: true):
             _processNext,
+        const SingleActivator(LogicalKeyboardKey.keyA, control: true): () {
+          if (_allState != true) _toggleAll();
+        },
       },
       child: Focus(
         autofocus: true,
@@ -324,6 +334,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
           child: ListenableBuilder(
             listenable: Listenable.merge([widget.store, widget.jobs]),
             builder: (context, _) {
+              final l = L.of(context);
               final all = widget.store.sorted;
               final q = _search.text.trim().toLowerCase();
               final rows = [
@@ -339,6 +350,8 @@ class _SermonsScreenState extends State<SermonsScreen> {
                     s,
               ];
               _sortRows(rows);
+              _rows = rows;
+              _report(l);
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -360,6 +373,67 @@ class _SermonsScreenState extends State<SermonsScreen> {
         ),
       ),
     );
+  }
+
+  /// Tells the shell's status bar how many of the visible rows are selected and their size.
+  void _report(L l) {
+    final sel = _rows.where((s) => _selected.contains(s.id)).toList();
+    final text = sel.isEmpty
+        ? null
+        : l.statusSelected(
+            sel.length,
+            _rows.length,
+            formatBytes(sel.fold(0, (a, s) => a + (_sizes[s.id] ?? 0))),
+          );
+    if (text == _reported) return;
+    _reported = text;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.onSelection?.call(text);
+    });
+  }
+
+  /// Tri-state over the visible rows: all, some (null) or none.
+  bool? get _allState {
+    final n = _rows.where((s) => _selected.contains(s.id)).length;
+    return n == 0 ? false : (n == _rows.length ? true : null);
+  }
+
+  /// Selects every visible row, or clears them when all are selected.
+  void _toggleAll() => setState(() {
+    final ids = _rows.map((s) => s.id);
+    _allState == true ? _selected.removeAll(ids) : _selected.addAll(ids);
+  });
+
+  Widget _selectAll() => Checkbox(
+    key: const ValueKey('ctl.preke.select-all'),
+    tristate: true,
+    value: _allState,
+    onChanged: (_) => _toggleAll(),
+  );
+
+  /// Row click: Ctrl toggles it, Shift selects from the last click to here, plain opens it in Hersien.
+  void _tap(Sermon s) {
+    final k = HardwareKeyboard.instance;
+    if (k.isShiftPressed && _anchor != null) {
+      final a = _rows.indexWhere((r) => r.id == _anchor);
+      final b = _rows.indexWhere((r) => r.id == s.id);
+      if (a >= 0 && b >= 0) {
+        setState(() {
+          for (var i = a < b ? a : b; i <= (a < b ? b : a); i++) {
+            _selected.add(_rows[i].id);
+          }
+        });
+        return;
+      }
+    }
+    if (k.isControlPressed) {
+      setState(() {
+        _selected.contains(s.id) ? _selected.remove(s.id) : _selected.add(s.id);
+        _anchor = s.id;
+      });
+      return;
+    }
+    widget.onOpen(s.id);
   }
 
   void _sortRows(List<Sermon> rows) {
@@ -424,7 +498,8 @@ class _SermonsScreenState extends State<SermonsScreen> {
     color: th.colorScheme.surfaceContainer,
     child: Row(
       children: [
-        const SizedBox(width: 40 + 64 + 12),
+        SizedBox(width: 40, child: _selectAll()),
+        const SizedBox(width: 64 + 12),
         Expanded(child: _sortHead(th, 'title', l.title)),
         SizedBox(width: 104, child: _sortHead(th, 'date', l.colDate)),
         SizedBox(width: 72, child: _sortHead(th, 'length', l.colLength)),
@@ -609,31 +684,45 @@ class _SermonsScreenState extends State<SermonsScreen> {
       );
     }
     if (_settings.sermonGrid) {
-      return GridView.builder(
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 300,
-          // Thumbnail + text block; the text block grows with the text scale so the card never overflows.
-          mainAxisExtent: _thumbH + MediaQuery.textScalerOf(context).scale(112),
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemCount: rows.length,
-        itemBuilder: (context, i) => _card(l, th, rows[i]),
+      return Column(
+        children: [
+          Row(
+            children: [
+              _selectAll(),
+              Text(l.selectAll, style: th.textTheme.labelMedium),
+            ],
+          ),
+          Expanded(child: _grid(l, th, rows)),
+        ],
       );
     }
-    return Column(
-      children: [
-        _tableHead(l, th),
-        Expanded(
-          child: ListView.builder(
-            itemCount: rows.length,
-            itemExtent: 48,
-            itemBuilder: (context, i) => _row(l, th, rows[i]),
-          ),
-        ),
-      ],
-    );
+    return _table(l, th, rows);
   }
+
+  Widget _grid(L l, ThemeData th, List<Sermon> rows) => GridView.builder(
+    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+      maxCrossAxisExtent: 300,
+      // Thumbnail + text block; the text block grows with the text scale so the card never overflows.
+      mainAxisExtent: _thumbH + MediaQuery.textScalerOf(context).scale(112),
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+    ),
+    itemCount: rows.length,
+    itemBuilder: (context, i) => _card(l, th, rows[i]),
+  );
+
+  Widget _table(L l, ThemeData th, List<Sermon> rows) => Column(
+    children: [
+      _tableHead(l, th),
+      Expanded(
+        child: ListView.builder(
+          itemCount: rows.length,
+          itemExtent: 48,
+          itemBuilder: (context, i) => _row(l, th, rows[i]),
+        ),
+      ),
+    ],
+  );
 
   Widget _status(L l, ThemeData th, Sermon s) {
     final queued = widget.jobs.hasPending(s.id);
@@ -656,6 +745,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
     value: _selected.contains(s.id),
     onChanged: (v) => setState(() {
       v == true ? _selected.add(s.id) : _selected.remove(s.id);
+      _anchor = s.id;
     }),
   );
 
@@ -665,7 +755,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
     margin: EdgeInsets.zero,
     child: InkWell(
       key: const ValueKey('ctl.preke.row'),
-      onTap: () => widget.onOpen(s.id),
+      onTap: () => _tap(s),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -710,7 +800,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
   // stap: v2 2 Kies die ou preek | klik die ry → Hersien; nog nie beplan nie → Hersien beplan dit eers (laaistap)
   Widget _row(L l, ThemeData th, Sermon s) => InkWell(
     key: const ValueKey('ctl.preke.row'),
-    onTap: () => widget.onOpen(s.id),
+    onTap: () => _tap(s),
     child: Row(
       children: [
         _select(s),

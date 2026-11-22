@@ -531,5 +531,20 @@
   "colDate": "Datum",
   "colLength": "Lengte",
   "colState": "Stand",
-  "colSize": "Grootte"
+  "colSize": "Grootte",
+  "statusSelected": "{n} van {total} gekies · {size}",
+  "@statusSelected": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "selectAll": "Kies alles"
 }

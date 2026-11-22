@@ -550,6 +550,21 @@ void main() {
       },
     );
 
+    testWidgets('select-all box and Ctrl+A', (t) async {
+      final (st, _, _) = await preke(t);
+      await tapKey(t, 'preke.select-all');
+      expect(t.widget<Checkbox>(key('preke.select-all')).value, isTrue);
+      await tapKey(t, 'preke.select-all');
+      expect(t.widget<Checkbox>(key('preke.select-all')).value, isFalse);
+      await t.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await t.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await t.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await t.pump();
+      expect(t.widget<Checkbox>(key('preke.select-all')).value, isTrue);
+      expect(st.sorted, isNotEmpty);
+      shortcutsCovered.add('preke: Ctrl+A');
+    });
+
     testWidgets('column headers sort the table', (t) async {
       final (st, _, _) = await preke(t);
       String first() => t

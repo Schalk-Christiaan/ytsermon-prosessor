@@ -813,4 +813,12 @@ class LAf extends L {
 
   @override
   String get colSize => 'Grootte';
+
+  @override
+  String statusSelected(int n, int total, String size) {
+    return '$n van $total gekies · $size';
+  }
+
+  @override
+  String get selectAll => 'Kies alles';
 }

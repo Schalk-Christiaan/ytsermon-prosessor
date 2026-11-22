@@ -134,8 +134,11 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
         write: (v) async => _memToken = v,
       );
 
-  /// Text for the left of the status bar (selection count and size); screens fill it.
-  final selection = ValueNotifier<String?>(null);
+  /// Status-bar text for the selection of each screen (0 Preke, 2 Werk); only the visible screen's shows.
+  final selection = {
+    0: ValueNotifier<String?>(null),
+    2: ValueNotifier<String?>(null),
+  };
   String? _disk;
   bool _wasBusy = false;
 
@@ -169,7 +172,9 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
   @override
   void dispose() {
     widget.jobs.removeListener(_jobsChanged);
-    selection.dispose();
+    for (final n in selection.values) {
+      n.dispose();
+    }
     _fade.dispose();
     _switch.dispose();
     _review.dispose();
@@ -236,6 +241,7 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
                                   jobs: widget.jobs,
                                   list: widget.list,
                                   settings: _settings,
+                                  onSelection: (v) => selection[0]!.value = v,
                                   onOpen: (id) {
                                     _review.open(id);
                                     _go(1);
@@ -307,10 +313,12 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
       color: th.colorScheme.surfaceContainer,
       child: Row(
         children: [
-          ValueListenableBuilder<String?>(
-            valueListenable: selection,
-            builder: (_, v, _) =>
-                Text(v ?? '', style: th.textTheme.labelMedium),
+          ListenableBuilder(
+            listenable: Listenable.merge(selection.values.toList()),
+            builder: (_, _) => Text(
+              selection[_i]?.value ?? '',
+              style: th.textTheme.labelMedium,
+            ),
           ),
           const Spacer(),
           if (_disk != null) Text(_disk!, style: th.textTheme.labelMedium),

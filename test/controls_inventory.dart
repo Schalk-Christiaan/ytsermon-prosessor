@@ -29,6 +29,7 @@ const kControls = <String, Set<String>>{
     'ctl.preke.update-ytdlp',
     'ctl.preke.row',
     'ctl.preke.select',
+    'ctl.preke.select-all',
     'ctl.preke.view',
     'ctl.preke.sort-title',
     'ctl.preke.sort-date',
@@ -165,6 +166,7 @@ const kShortcuts = <String>{
   'hersien: Shift+Right',
   'preke: Ctrl+F',
   'preke: Ctrl+Enter',
+  'preke: Ctrl+A',
   'werk: Escape',
 };
 
