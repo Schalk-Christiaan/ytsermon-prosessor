@@ -60,6 +60,25 @@ void main() {
     expect(parseProgress('[download] 100% of 1.20GiB in 00:03:00'), 100);
     expect(parseProgress('[info] something else'), isNull);
   });
+  test('downloadDetail turns yt-dlp lines into plain words', () {
+    expect(
+      downloadDetail('[download]  42.3% of  1.20GiB at  5.20MiB/s ETA 01:02'),
+      '42 % van 1,29\u00a0GB \u00b7 5\u00a0MB/s \u00b7 nog 01:02',
+    );
+    expect(
+      downloadDetail(
+        '[download]   7.0% of ~ 220.50MiB at Unknown B/s ETA Unknown',
+      ),
+      '7 % van 231\u00a0MB',
+    );
+    expect(
+      downloadDetail('[download] 100% of  120.00MiB in 00:00:23 at 5.2MiB/s'),
+      '100 % van 126\u00a0MB',
+    );
+    expect(downloadDetail('[download] Destination: video.f137.mp4'), isNull);
+    expect(downloadDetail('[info] x'), isNull);
+  });
+
   test(
     'parseChannel keeps list order, merges tabs on id, date stays unknown',
     () {

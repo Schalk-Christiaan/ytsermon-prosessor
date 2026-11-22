@@ -11,6 +11,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import 'service_info.dart';
+import 'storage.dart' show formatBytes;
 import 'tools.dart';
 
 /// The church channel (see CONTEXT.md, Name).
@@ -95,6 +96,24 @@ double? parseProgress(String line) {
   return m == null ? null : double.parse(m.group(1)!);
 }
 
+/// Plain-words progress from a yt-dlp download line ("42 % van 1,2 GB · 5,5 MB/s · nog 01:02"); null for other lines. "Unknown" and "~" are handled.
+String? downloadDetail(String line) {
+  final m = RegExp(
+    r'^\[download\]\s+(\d+(?:\.\d+)?)% of\s+~?\s*([\d.]+)(Ki|Mi|Gi)B(?:\s+at\s+(?:([\d.]+)(Ki|Mi|Gi)B/s|Unknown B/s)\s+ETA\s+(\S+))?',
+  ).firstMatch(line);
+  if (m == null) return null;
+  int bytes(String n, String u) =>
+      (double.parse(n) *
+              const {'Ki': 1024, 'Mi': 1048576, 'Gi': 1073741824}[u]!)
+          .round();
+  final parts = [
+    '${double.parse(m[1]!).round()} % van ${formatBytes(bytes(m[2]!, m[3]!))}',
+  ];
+  if (m[4] != null) parts.add('${formatBytes(bytes(m[4]!, m[5]!))}/s');
+  if (m[6] != null && m[6] != 'Unknown') parts.add('nog ${m[6]}');
+  return parts.join(' \u00b7 ');
+}
+
 /// What `fetchMeta` leaves in the work directory.
 class FetchedMeta {
   FetchedMeta(this.id, this.dir, this.info);
@@ -161,6 +180,7 @@ Future<File> downloadVideo(
   void Function(double pct)? onProgress,
   Future<void>? cancel,
   void Function(String line)? log,
+  void Function(String text)? onDetail,
 }) async {
   if (meta.video.existsSync()) {
     onProgress?.call(100);
@@ -183,6 +203,8 @@ Future<File> downloadVideo(
       log?.call(l);
       final v = parseProgress(l);
       if (v != null) onProgress?.call(v);
+      final d = downloadDetail(l);
+      if (d != null) onDetail?.call(d);
     },
     cancel: cancel,
   );

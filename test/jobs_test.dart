@@ -37,6 +37,34 @@ void main() {
         upload: upload,
       );
 
+  test(
+    'detail and the output ring are set while a job runs, cleared after',
+    () async {
+      final seen = <Object?>[];
+      late final JobQueue q;
+      q = queue(
+        cut: (c) async {
+          c.detail('Short 1 van 2');
+          seen.add(q.detail.value);
+          for (var i = 0; i < 25; i++) {
+            c.log('reël $i');
+          }
+          seen.add(q.output.value.length);
+          seen.add(q.output.value.first);
+        },
+      );
+      q.enqueue('aaaaaaaaaaa', JobKind.cut);
+      await q.idle;
+      expect(seen, ['Short 1 van 2', 20, 'reël 5']);
+      expect(q.detail.value, isNull);
+      expect(q.output.value, isEmpty);
+      expect(
+        q.jobs.single.log.length,
+        25,
+      ); // the full log stays for the log view
+    },
+  );
+
   test('runs in order, one at a time, sets states', () async {
     final log = <String>[];
     var running = 0;

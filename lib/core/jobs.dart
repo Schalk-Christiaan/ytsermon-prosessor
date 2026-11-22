@@ -98,11 +98,21 @@ class JobCtx {
   final JobQueue _queue;
   void phase(JobPhase p) => _queue.phase.value = p;
   void progress(double? v) => _queue.progress.value = v;
-  void log(String line) => _queue.current?.addLog([line]);
+  void log(String line) {
+    _queue.current?.addLog([line]);
+    _queue.output.value = [..._queue.output.value, line].takeLast(20);
+  }
+
+  /// Plain-words line under the progress bar (e.g. "Short 2 van 3").
+  void detail(String? text) => _queue.detail.value = text;
 
   /// The running job's upload options (see [Job.privacy], [Job.only]).
   String? get privacy => _queue.current?.privacy;
   List<String>? get only => _queue.current?.only;
+}
+
+extension _Last<T> on List<T> {
+  List<T> takeLast(int n) => length <= n ? this : sublist(length - n);
 }
 
 typedef JobRun = Future<void> Function(JobCtx ctx);
@@ -179,6 +189,10 @@ class JobQueue extends ChangeNotifier {
   final progress = ValueNotifier<double?>(null);
   final phase = ValueNotifier<JobPhase?>(null);
 
+  /// What the running job says it is doing, and its last 20 output lines.
+  final detail = ValueNotifier<String?>(null);
+  final output = ValueNotifier<List<String>>(const []);
+
   Completer<void>? _cancel;
   Future<void>? _loop;
 
@@ -232,6 +246,8 @@ class JobQueue extends ChangeNotifier {
         job.status = JobStatus.besig;
         progress.value = null;
         phase.value = null;
+        detail.value = null;
+        output.value = const [];
         _persist();
         final cancel = _cancel = Completer<void>();
         s = store.byId(job.sermon);
@@ -271,6 +287,8 @@ class JobQueue extends ChangeNotifier {
       }
       current = null;
       _cancel = null;
+      detail.value = null;
+      output.value = const [];
       try {
         if (s != null) store.save(s);
         _persist();
@@ -331,12 +349,14 @@ JobRun planJob(SermonStore store) => (c) async {
   final video = await downloadVideo(
     m,
     onProgress: (v) => c.progress(v / 100),
+    onDetail: c.detail,
     cancel: c.cancel,
     log: c.log,
   );
   c.progress(null);
   final sound = await soundBlocks(m.dir, video, cancel: c.cancel);
   c.phase(JobPhase.plan);
+  c.detail('Die KI lees die transkripsie');
   final speech = blocks(segs, sound);
   final a = await _abandonable(
     Planner().analyse(
@@ -380,6 +400,7 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   final video = await downloadVideo(
     m,
     onProgress: (v) => c.progress(v / 100),
+    onDetail: c.detail,
     cancel: c.cancel,
     log: c.log,
   );
@@ -402,6 +423,7 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
       store.save(store.byId(c.id)!..outputs = [for (final f in files) f.path]);
   c.phase(JobPhase.cut);
   c.progress(null);
+  c.detail('Die volle preek');
   if (settings.exports.contains('full')) {
     files.add(
       await cutParts(
@@ -418,6 +440,7 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
     saveOutputs();
     for (var i = 0; i < plan.shorts.length; i++) {
       c.progress(i / plan.shorts.length);
+      c.detail('Short ${i + 1} van ${plan.shorts.length}');
       files.add(
         await cutShort(
           video,
@@ -437,6 +460,7 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   }
   if (settings.exports.contains('word') && word.isNotEmpty) {
     c.progress(null);
+    c.detail('Die Woord-gedeelte');
     files.add(
       await cutParts(
         video,
@@ -455,6 +479,7 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
   if (settings.exports.contains('songs')) {
     for (final (i, s) in songs.indexed) {
       c.progress(i / songs.length);
+      c.detail('Lied ${i + 1} van ${songs.length}');
       songFiles[s.n] = await cutSong(
         video,
         s,
@@ -498,6 +523,7 @@ JobRun audioJob(SermonStore store) => (c) async {
   }
   final plan = _plan(store, c.id);
   c.phase(JobPhase.audio);
+  c.detail('Klank vir WhatsApp');
   c.progress(0);
   final out = await cutAudio(
     File(video),
@@ -589,6 +615,7 @@ JobRun uploadJob(
     if (store.byId(c.id)!.uploads.containsKey(path)) continue;
     if (c.only != null && !c.only!.contains(path)) continue;
     final title = _videoTitle(plan, i);
+    c.detail('Video ${i + 1} van ${videos.length}');
     final session = File(p.join(store.root.path, c.id, 'upload-$i.json'));
     // A resumed session was already counted when it started.
     if (!session.existsSync()) quota.take();
