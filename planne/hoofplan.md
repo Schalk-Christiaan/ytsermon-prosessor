@@ -105,6 +105,7 @@ Navigasie: `NavigationRail` links (vier bestemmings) + Instellings onder in die 
 
 ## Buite bestek (vir nou)
 Whisper, outomatiese weeklikse verwerking sonder om die app oop te maak (Windows-taakskeduleerder), podcast/RSS, webwerf-preeklys, kodeondertekening, Engelse vertaling.
+- Later (Schalk, 2026-11-22): NVENC (`h264_nvenc`) op die kerk-PC se RTX 3050 met terugval na `libx264` in `lib/core/cutter.dart`; eers meet op die skootrekenaar.
 
 ## Vrae
 - Wie gebruik die app op die kerk-PC (een persoon of meer)? Bepaal of die Opstelling-lys moet verduidelik wat 'n Short is.

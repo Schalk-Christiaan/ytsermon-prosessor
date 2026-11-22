@@ -62,6 +62,6 @@ Windows-VM (`omarchy-windows`): Windows 11 is geïnstalleer; wyser onbruikbaar, 
 2026-11-22 Pixel-kuns uit Bybelverhale as ekstra grafika (vorderingstonele per fase, leë toestande, klein karakters), as kode-roosters met tema-kleure, sonder afbeelding van God of Christus (aanname: Gereformeerde gemeente); elke wag sê wat besig is (want Schalk weet nie wat gebeur terwyl dit laai nie)
 ## Name
 die kanaal = https://www.youtube.com/@gereformeerdekerkoranjeriv5791
-die kerk-PC = die kerk se Windows 11-rekenaar waar dit finaal loop
+die kerk-PC = die kerk se Windows 11-skootrekenaar waar dit finaal loop: Ryzen 7 5800H, RTX 3050 (skootrekenaar, waarskynlik 4 GB VRAM), 16 GB DDR4
 die preekredigeerder = Hersien-skerm as volle redigeerder (hakies, segmente, transkripsie, Shorts, ontdoen)
 die intro/outro = Schalk se eie videoklippies voor en ná elke volle preek (nie op Shorts nie, aanname)
