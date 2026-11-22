@@ -1,13 +1,15 @@
 status: oop
 
-# Desktop-poleer: Windows-styl, Karoo-wit, Werk-rooster, stoorspasie, snitlysgroepe met KI
+# Desktop-poleer: Windows-styl, Karoo-wit, Werk-rooster, stoorspasie, snitlysgroepe met KI, pixel-kuns uit Bybelverhale
 
 ## Doel
 Die app voel steeds soos 'n foon-app. Dit is 'n Windows-program vir die kerk-PC. Schalk het op 2026-11-22 gekies (artefak "Preekverwerker-style", https://claude.ai/artifact/BVzU66uJQknTgmvWi5uSyx):
 - **Styl A (Verkenner)** as basis.
 - **Styl C** se groepe per afdeling, met 'n Oplaai-aftreklys, op die Werk-skerm.
 - 'n **Karoo-wit, aardse kleurskema**.
-- **Animasies** tussen skerm- en paneelverskuiwings.
+- **Animasies** tussen skerm- en paneelverskuiwings, in elke deel van die app.
+- **Pixel-kuns uit Bybelverhale** as ekstra grafika: laai- en vorderingstonele, leë toestande en klein karakters.
+- **Duidelike vordering:** Schalk weet nou nie wat besig is terwyl dit laai nie. Elke wag moet sê wat gebeur, hoe ver dit is en wat volgende kom.
 
 Hierdie plan sluit ook `planne/hersien-paneel.md` in (Hersien-paneel volg die keuse; daardie plan is `stop`), plus die res van Schalk se lys:
 - 0,8 px-oorloop in die rooster;
@@ -56,6 +58,64 @@ Lettertipes bly Source Serif 4 (opskrifte, preektitels) en Source Sans 3 (UI).
 - **Verminderde beweging:** as `MediaQuery.disableAnimations` aan is, is alle duurtes 0 of net 'n kort vervaag.
 - **Geen** beweging op die speelkop, vorderingsbalke of die diensbaan-sleep nie.
 
+**Pixel-kuns** (nuwe lêer `lib/app/pixel_art.dart`; geen beeldlêers en geen nuwe pakket nie):
+- *Tegniek:* elke sprite is 'n klein rooster van karakters in Dart (bv. 16×16 of 32×24, een string per ry, `.` = deursigtig) met 'n palet van 4–6 kleure. Elke kleur is 'n tema-rol, sodat die kuns vanself in Karoo-wit en Karoo-nag werk. Animasie is 2–6 rame.
+- *Weergawe:* 'n `PixelSprite`-wyer teken die rooster met `CustomPainter` as skerp vierkante, op 'n heelgetal-skaal (×3, ×4, ×6), sonder anti-aliasing. 'n `PixelScene` lê 'n paar sprites en 'n grondlyn saam.
+- *Animasie:* hoogstens 8 rame per sekonde, uit een `Ticker` wat net loop terwyl die toneel sigbaar is (`TickerMode`) en die taak besig is. Met verminderde beweging, of as die toneel klaar is, wys dit net een stil raam.
+- *Hoekom so:* die kuns word kode wat 'n agent kan skryf, in 'n toets kan nagaan en in 'n diff kan hersien. Dit herkleur vanself met die tema, en die installeerder groei nie.
+
+**Wat dit wys:**
+- **Geen afbeelding van God of Christus nie.** Dit is 'n Gereformeerde gemeente; respekteer die tweede gebod. Wys mense uit die verhale (klein, sonder gesigsdetail), diere, voorwerpe en simbole.
+- Die toon is warm en eerbiedig, nie snaaks nie, en nooit by 'n fout of verlore werk nie.
+
+**Toneel per fase** (`JobPhase` in `lib/core/jobs.dart`), elk met die teks wat sê wat gebeur:
+
+| Fase / toestand | Toneel | Hoekom dié verhaal | Vordering in die toneel |
+|---|---|---|---|
+| `meta` (inligting haal) | Abraham kyk na die sterre | tel en kyk, voor die reis | sterre verskyn een vir een |
+| `download` | Noag se duif vlieg met die olyftak terug ark toe | iets word teruggebring | die duif vlieg van links na regs volgens die persentasie |
+| `plan` (KI soek die preek) | die wyse manne volg die ster | soek die regte plek | kameelkaravaan stap; onbekende duur, so die ster flikker sag |
+| `cut` (volle preek) | Nehemia bou die muur | steen vir steen saamgestel | stene word gelê volgens die persentasie |
+| `cut` (Shorts) | Dawid kies vyf gladde klippe uit die spruit | klein, uitgesoekte stukke | een klip per Short wat klaar is |
+| `audio` | Dawid speel die harp vir Saul | klank | note sweef op |
+| `upload` | Jakob se leer | iets gaan op | 'n figuur klim sport vir sport volgens die persentasie |
+| wag in die ry | skape agter die herder | wag hul beurt | een skaap per item in die ry |
+| klaar | Noag se reënboog oor die ark | belofte nagekom | eenmalig, dan stil |
+| fout | Jona op die strand, uitgespoeg | 'n tweede kans | stil; die teks sê wat fout is en "Probeer weer" |
+| leeg (geen preke) | die saaier saai | begin hier | stil; die knoppie "Laai preke" staan langsaan |
+| leeg (geen werk) | herder by die kraal, skape rus | niks te doen nie | stil |
+
+**Karakters elders** (spaarsaam: hoogstens een per skerm, nooit in die pad van 'n taak nie):
+- 'n klein skaap in die statusbalk wat stap terwyl 'n taak loop (kliek → Werk-skerm), en lê as niks loop nie;
+- die herder by die eerste-gebruik-opstelling (`setup_screen.dart`) wat elke stap "toon" (stil rame);
+- 'n duif by die oplaai-bevestiging;
+- by "Gestoor" in Hersien nie, want dit gebeur te dikwels (ui-ux: persoonlikheid net waar dit verdien word).
+
+**Vordering wat sê wat gebeur** (die eintlike probleem):
+- Elke taak wys 'n stappelys van sy fases met die huidige een vet: ✓ Inligting · ✓ Aflaai · ● Preek soek · Sny · Shorts · Klank. Die volgorde kom uit die job se soort (`JobKind`), sodat Schalk sien wat nog voorlê.
+- Onder die toneel staan 'n reël met die konkrete stand, uit 'n nuwe `detail`-`ValueNotifier<String?>` langs `progress` en `phase` in `jobs.dart`, wat die runners vul. Voorbeelde:
+  - "Laai af: 312 MB van 1,2 GB · 4,1 MB/s · ±3 min oor" (uit yt-dlp se uitset);
+  - "KI lees die transkripsie (dit neem 1–3 min)";
+  - "Short 2 van 3 · 58 s";
+  - "Laai op: 41 %".
+- Die tyd sedert die begin ("besig vir 2:14") tik saam met die toneel se Ticker, sonder 'n ekstra timer.
+- Onbekende duur (`progress == null`) wys 'n onbepaalde balk plus 'n tipiese duur in woorde, nooit net 'n draaiende sirkel nie.
+- 'n Uitvoubare "Wys besonderhede" toon die laaste 20 reëls van yt-dlp/ffmpeg/Ollama se uitset (al gelees deur die runners; net in die geheue, nie op skyf nie).
+- Waar dit verskyn:
+  - die Werk-skerm se huidige taak (groot, met toneel);
+  - die Preke-ry of -kaart van 'n besige preek (klein: fase, persentasie en die skaap);
+  - Hersien se laai-oorleg en die opstelskerm se aflaaie (dieselfde wyer, hergebruik; `review_screen.dart` r. 408/457/509, `setup_screen.dart` r. 169, `sermons_screen.dart` r. 373 en `work_screen.dart` r. 133 gebruik nou elk hul eie `ProgressIndicator`).
+
+**Animasie oral** (bo-op Beweging hierbo):
+- knoppies krimp effens by druk (0,97);
+- blokkies se regmerkie teken in;
+- rye skuif in wanneer hulle bykom;
+- 'n Short- of snit-blok in die diensbaan vervaag in na skep;
+- die statusbalk se getalle tel op na die nuwe waarde (150 ms);
+- 'n suksesmerk kom in met 'n skaal van 0,9 na 1.
+
+Alles gaan deur die bewegingskonstantes en `disableAnimations`.
+
 ## Lêers (hoofsaaklik)
 - `lib/app/theme.dart`: palet, desktop-tema, bewegingskonstantes.
 - `lib/app/shell.dart`: sybalk, statusbalk (stoorspasie), skermwissel-animasie.
@@ -74,6 +134,8 @@ Lettertipes bly Source Serif 4 (opskrifte, preektitels) en Source Sans 3 (UI).
 - `lib/core/settings.dart` / `lib/core/store.dart`: groepe stoor.
 - `lib/core/jobs.dart`: ná 'n render, vra voorstelle.
 - Bestaande Ollama-oproep (grep `ollama`/`qwen3` in `lib/core/planner.dart`): hergebruik dit vir die voorstelle.
+- `lib/app/pixel_art.dart` (nuut): `PixelSprite`, `PixelScene`, sprite-roosters; `lib/app/job_progress.dart` (nuut): die gedeelde vorderingswyer (toneel, stappelys, detailreël, besonderhede).
+- `lib/core/jobs.dart`: `detail` en die laaste uitsetreëls by die runners; `lib/core/tools.dart`/`youtube.dart`: geef yt-dlp se grootte en spoed deur.
 - `lib/l10n/app_af.arb`: alle nuwe teks.
 - Toetse: `test/controls_test.dart`, `test/controls_inventory.dart`, `test/controls_meta_test.dart`, `test/workspace_test.dart`, `test/screens_test.dart`, plus nuwe eenheidstoetse vir grootte en groepe.
 
@@ -153,13 +215,29 @@ Elke stap: skryf eers die toets of kontrole en sien dit **rooi**, bou dan tot gr
     - die render wag nooit vir Ollama nie; faal Ollama, is daar net geen voorstel nie.
     - kontrole: toets met 'n vervalste job en Ollama: ná klaar is daar 'n voorstel, Aanvaar voeg die preek by die groep, en 'n Ollama-fout breek die job nie.
 
-### G. Afsluiting
-16. **Poleer en kiekies** (skills `projekkonteks:ui-ux`, `impeccable`):
-    - `SHOTS=<gids> flutter test test/screens_test.dart` vir elke skerm: Preke as rooster en as tabel met 'n keuse, Werk met groepe en 'n oop Oplaai-aftreklys, Hersien (niks gekies, Short gekies), Snitlyste met 'n groep en voorstelle, Instellings;
+### G. Vordering en pixel-kuns
+16. **Vordering sê wat gebeur** (`jobs.dart`):
+    - voeg `detail` (teks) en 'n ring van die laaste 20 uitsetreëls by;
+    - die runners vul dit vir aflaai (MB, spoed en tyd oor, uit yt-dlp se `--progress`-reëls), plan, sny (Short n van m), klank en oplaai.
+    - kontrole: eenheidstoets vir die yt-dlp-vorderingsontleder met regte voorbeeldreëls (ook "Unknown" en "~"), en dat `detail` per fase gestel en ná die job leeg gemaak word.
+17. **Gedeelde vorderingswyer** `job_progress.dart`: stappelys, detailreël, tyd sedert begin, onbepaald-met-woorde en "Wys besonderhede". Vervang die vyf los `ProgressIndicator`s wat in die Lêers genoem word. — kontrole: widget-toets per fase (die regte stap is vet, die detail word gewys, besonderhede vou oop); grep wys geen los `LinearProgressIndicator` meer buite die wyer nie (die skuifbalke uitgesluit).
+18. **Pixel-enjin** `pixel_art.dart`: `PixelSprite` en `PixelScene`, palet uit tema-rolle, heelgetal-skaal, Ticker net wanneer sigbaar, en stil raam met `disableAnimations`. — kontrole:
+    - eenheidstoets dat elke sprite se rye ewe lank is en net palet-karakters bevat;
+    - goue toets (`matchesGoldenFile`) van een sprite op ×4 in lig en donker;
+    - toets dat die Ticker stop as die wyer weg is of `TickerMode` af is.
+19. **Tonele en karakters** volgens die tabel en die karakterlys hierbo, in die vorderingswyer, die leë toestande, die statusbalk-skaap en die opstelskerm. Geen afbeelding van God of Christus nie. — kontrole:
+    - widget-toets dat elke `JobPhase` sy toneel kry;
+    - kiekies van elke toneel in lig en donker, bekyk vir leesbaarheid op ×3 en ×4;
+    - Oom Koos-deurloop: weet hy op elke vorderingskerm sonder om te raai wat besig is en hoe lank dit nog vat?
+20. **Animasie oral** volgens "Animasie oral" hierbo. — kontrole: widget-toetse vir die druk-skaal en die ry-inskuif, en dieselfde toetse met `disableAnimations` (geen animasie nie).
+
+### H. Afsluiting
+21. **Poleer en kiekies** (skills `projekkonteks:ui-ux`, `impeccable`):
+    - `SHOTS=<gids> flutter test test/screens_test.dart` vir elke skerm: Preke as rooster en as tabel met 'n keuse, Werk met groepe en 'n oop Oplaai-aftreklys, Hersien (niks gekies, Short gekies), Snitlyste met 'n groep en voorstelle, Instellings, die Werk-skerm tydens elke fase (met vervalste jobs) en die leë toestande;
     - lig en donker, 1100 en 1600 breed;
     - kritiseer volgens die ui-ux-skill se Kritiek (een sekonde, eerste blik, Oom Koos-deurloop) en herstel die top 3;
     - kopieer die kiekies na `docs/kiekies/desktop-poleer/` (in die hoofgids, buite die worktree, sodat hulle nie saam met die worktree verdwyn nie) en noem hulle in die Verslag.
-17. **Kontrole:**
+22. **Kontrole:**
     - `dart format`, `dart analyze` skoon, `flutter test` groen;
     - `flutter build linux --debug` slaag, en die app begin sonder uitsonderings of oorloop-waarskuwings in die terminaal (`flutter run -d linux`, 20 s);
     - `@stelsel`-blokke en funksie-kommentaar van geraakte lêers bygewerk (`status: bou`);
@@ -179,10 +257,13 @@ Elke stap: skryf eers die toets of kontrole en sien dit **rooi**, bou dan tot gr
 - Werk: groepe per afdeling met eie kies-alles en 'n Oplaai-aftreklys met die regte plekke per afdeling.
 - Hersien: klankskuifbalk by die transport; die paneel volg die keuse (Aanvaarding van `hersien-paneel.md`).
 - Snitlyste: groepe skep, wysig en uitvee; KI stel preke vir 'n groep voor; ná 'n render word snitlyste voorgestel. Niks word sonder Schalk se Aanvaar toegepas nie.
+- Elke wag in die app wys wat besig is (fase in 'n stappelys), hoe ver (persentasie of 'n tipiese duur in woorde) en die konkrete stand; besonderhede is uitvoubaar.
+- Pixel-kuns uit Bybelverhale by vordering, leë toestande en spaarsaam elders; geen afbeelding van God of Christus nie; herkleur met die tema; stil met verminderde beweging.
+- Animasie in elke deel van die app (druk, inskuif, regmerk, telling, oorgange), almal met die gedeelde konstantes.
 - `flutter test` groen, `dart analyze` skoon, `kaart.py --check` 0 FOUT.
 
 ## Prestasie-begroting
-- Geen nuwe agtergrondprosesse, timers of polling nie.
+- Geen nuwe agtergrondprosesse, timers of polling nie. Die enigste uitsondering: die pixel-toneel se `Ticker` (≤ 8 rame/s, net sigbaar en net terwyl 'n taak loop), wat ook die "besig vir"-tyd voed.
 - Lêergroottes en vrye spasie word op versoek bereken (laai, ná 'n taak), asinkroon, nie in `build` nie.
 - Hoogstens een Ollama-oproep per knoppiedruk en een per voltooide render.
 - Animasies net op transform en opacity; geen herteken van die diensbaan per raam nie.
@@ -195,6 +276,7 @@ Elke stap: skryf eers die toets of kontrole en sien dit **rooi**, bou dan tot gr
 - `fluent_ui` of 'n ander UI-pakket.
 - Nuwe lettertipes.
 - Wolkberging.
+- Beeldlêers of 'n sprite-redigeerder; klank-effekte.
 - Outomatiese toepassing van KI-voorstelle.
 
 ## Ingryp
@@ -202,6 +284,7 @@ Elke stap: skryf eers die toets of kontrole en sien dit **rooi**, bou dan tot gr
 ## Vrae
 
 ## Log
+- 2026-11-22: pixel-kuns uit Bybelverhale, duidelike vordering en animasie oral bygevoeg (stappe 16–20).
 - 2026-11-22: plan geskryf ná Schalk se keuse (styl A + C se Werk-groepe, Karoo-wit aards, animasies). Neem `hersien-paneel.md` op.
 
 ## Verslag

@@ -14,7 +14,7 @@ Alles plaaslik: yt-dlp, ffmpeg, Ollama. Ontwikkel en toets op Linux, verskeep na
 ## Status
 `nagskof-poleer` gemerge en gepush (095995d); Windows-CI groen (44983908373, Setup.exe met `qjs.exe` vir yt-dlp se JS). `/bewys` ná die merge nog nie gedoen nie; nog op die kerk-PC ongetoets.
 Ná die merge, nog nie gepush nie: `3f7f88f` (diensbaan-hakies volg die muis: sleep = begin + totale afstand), `9ac4e14` (preek-tydskuifbalke en klankvolume uit die Hersien-paneel).
-Nuwe plan `planne/desktop-poleer.md` (status `oop`, 17 stappe): Windows-styl A + Werk-groepe, Karoo-wit, animasies, kies-alles, stoorspasie, klankskuifbalk, snitlysgroepe met KI; neem `hersien-paneel.md` (nou `stop`) op.
+Nuwe plan `planne/desktop-poleer.md` (status `oop`, 22 stappe): Windows-styl A + Werk-groepe, Karoo-wit, animasies, kies-alles, stoorspasie, klankskuifbalk, snitlysgroepe met KI, pixel-kuns uit Bybelverhale en duidelike vordering; neem `hersien-paneel.md` (nou `stop`) op.
 VM-toets van die nuwe Setup.exe (aflaai met qjs, sny, klank) nog oop; daarna eers USB (stap 21 van nagskof-poleer). Kiekies van nagskof is verlore saam met die worktree (PNG's is gitignored).
 Oop vrae in `planne/nagskof-poleer.md` `## Vrae`: store.merge vee ou-kanaal-preke uit?, kChurch as instelling, ReviewController opdeel, kanaal sonder /videos, lBMw-begin ná aankondigings.
 Windows-VM (`omarchy-windows`): Windows 11 is geïnstalleer; wyser onbruikbaar, dryf met QEMU-monitor `sendkey`. Kiekie: `docker exec omarchy-windows sh -c 'printf "screendump /shared/scr.ppm\n" | nc -q1 -U /run/shm/monitor.sock'` → `~/Windows/scr.ppm`.
@@ -59,6 +59,7 @@ Windows-VM (`omarchy-windows`): Windows 11 is geïnstalleer; wyser onbruikbaar, 
 2026-11-22 Hersien-paneel volg die keuse in die diensbaan (niks: titel/beskrywing/uitvoer; Short- of snit-blok: daardie item), plus oortjie Transkripsie; preek-tydskuifbalke en klankvolume verwyder (want hakies in die diensbaan doen dit; Schalk hou nie van die chip-oortjies nie)
 
 2026-11-22 Desktop-styl: styl A (Verkenner: vaste sybalk, opdragbalk, statusbalk, digte tabelle, 32 px-knoppies, radius 4) met styl C se groepe per afdeling en Oplaai-aftreklys op die Werk-skerm; Karoo-wit aardse palet (kalkwit #F4F0E8, Oranje bly, karoobos-groen #5A6B47 vervang rivier-teal) en animasies tussen skerms (want dit is 'n Windows-app, nie 'n foon-app nie; Schalk se keuse uit artefak Preekverwerker-style)
+2026-11-22 Pixel-kuns uit Bybelverhale as ekstra grafika (vorderingstonele per fase, leë toestande, klein karakters), as kode-roosters met tema-kleure, sonder afbeelding van God of Christus (aanname: Gereformeerde gemeente); elke wag sê wat besig is (want Schalk weet nie wat gebeur terwyl dit laai nie)
 ## Name
 die kanaal = https://www.youtube.com/@gereformeerdekerkoranjeriv5791
 die kerk-PC = die kerk se Windows 11-rekenaar waar dit finaal loop
