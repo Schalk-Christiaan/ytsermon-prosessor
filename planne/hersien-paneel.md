@@ -1,4 +1,4 @@
-status: oop
+status: stop
 
 # Hersien-paneel volg die keuse in die diensbaan
 
@@ -51,6 +51,7 @@ Nuwe kenmerke vir Shorts of snitte (byvoeg met sleep, meer velde), die transport
 ## Vrae
 
 ## Log
+- 2026-11-22: opgeneem as stap 12 in `planne/desktop-poleer.md`; hierdie plan bly as ontwerpverwysing.
 - 2026-11-22: plan geskryf ná Schalk se keuse "Volg die keuse".
 
 ## Verslag

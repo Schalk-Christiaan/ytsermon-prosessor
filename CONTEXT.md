@@ -14,12 +14,12 @@ Alles plaaslik: yt-dlp, ffmpeg, Ollama. Ontwikkel en toets op Linux, verskeep na
 ## Status
 `nagskof-poleer` gemerge en gepush (095995d); Windows-CI groen (44983908373, Setup.exe met `qjs.exe` vir yt-dlp se JS). `/bewys` ná die merge nog nie gedoen nie; nog op die kerk-PC ongetoets.
 Ná die merge, nog nie gepush nie: `3f7f88f` (diensbaan-hakies volg die muis: sleep = begin + totale afstand), `9ac4e14` (preek-tydskuifbalke en klankvolume uit die Hersien-paneel).
-Nuwe plan `planne/hersien-paneel.md` (status `oop`): Hersien-paneel volg die keuse in die diensbaan (besluit 2026-11-22).
+Nuwe plan `planne/desktop-poleer.md` (status `oop`, 17 stappe): Windows-styl A + Werk-groepe, Karoo-wit, animasies, kies-alles, stoorspasie, klankskuifbalk, snitlysgroepe met KI; neem `hersien-paneel.md` (nou `stop`) op.
 VM-toets van die nuwe Setup.exe (aflaai met qjs, sny, klank) nog oop; daarna eers USB (stap 21 van nagskof-poleer). Kiekies van nagskof is verlore saam met die worktree (PNG's is gitignored).
 Oop vrae in `planne/nagskof-poleer.md` `## Vrae`: store.merge vee ou-kanaal-preke uit?, kChurch as instelling, ReviewController opdeel, kanaal sonder /videos, lBMw-begin ná aankondigings.
 Windows-VM (`omarchy-windows`): Windows 11 is geïnstalleer; wyser onbruikbaar, dryf met QEMU-monitor `sendkey`. Kiekie: `docker exec omarchy-windows sh -c 'printf "screendump /shared/scr.ppm\n" | nc -q1 -U /run/shm/monitor.sock'` → `~/Windows/scr.ppm`.
 **Laaste sessie:** 2026-11-22
-**Volgende:** `/bou hersien-paneel`; daarna push, VM-toets van Setup.exe, `/bewys`.
+**Volgende:** `/bou desktop-poleer`; daarna push, VM-toets van Setup.exe, `/bewys`.
 
 ## Gebruikers
 - **Schalk**: tegnies; sleutelbord (I/O, ←/→, Shift, spasie, Ctrl+Z), spoed en die log. Struikel oor: stadige herhaalwerk, muis-net-paaie.
@@ -58,6 +58,7 @@ Windows-VM (`omarchy-windows`): Windows 11 is geïnstalleer; wyser onbruikbaar, 
 2026-11-21 Die kanaal-URL word 'n instelling met die kerk se kanaal as verstek (want ander gemeentes/kanale)
 2026-11-22 Hersien-paneel volg die keuse in die diensbaan (niks: titel/beskrywing/uitvoer; Short- of snit-blok: daardie item), plus oortjie Transkripsie; preek-tydskuifbalke en klankvolume verwyder (want hakies in die diensbaan doen dit; Schalk hou nie van die chip-oortjies nie)
 
+2026-11-22 Desktop-styl: styl A (Verkenner: vaste sybalk, opdragbalk, statusbalk, digte tabelle, 32 px-knoppies, radius 4) met styl C se groepe per afdeling en Oplaai-aftreklys op die Werk-skerm; Karoo-wit aardse palet (kalkwit #F4F0E8, Oranje bly, karoobos-groen #5A6B47 vervang rivier-teal) en animasies tussen skerms (want dit is 'n Windows-app, nie 'n foon-app nie; Schalk se keuse uit artefak Preekverwerker-style)
 ## Name
 die kanaal = https://www.youtube.com/@gereformeerdekerkoranjeriv5791
 die kerk-PC = die kerk se Windows 11-rekenaar waar dit finaal loop
