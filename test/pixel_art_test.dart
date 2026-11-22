@@ -106,6 +106,27 @@ void main() {
     }
   });
 
+  testWidgets('meta stars appear one by one; the setup flock grows per step', (
+    t,
+  ) async {
+    await loadFonts();
+    int count(Widget w, String name) {
+      final sc = t.widget<PixelScene>(find.byType(PixelScene));
+      return sc.layers.where((l) => l.sprite.name == name).length;
+    }
+
+    for (final (p, n) in [(0.1, 1), (0.5, 2), (1.0, 4), (null, 4)]) {
+      await t.pumpWidget(
+        appWrap(Brightness.light, phaseScene(JobPhase.meta, progress: p)),
+      );
+      expect(count(const SizedBox(), 'star'), n, reason: '$p');
+    }
+    for (final n in [0, 2, 4]) {
+      await t.pumpWidget(appWrap(Brightness.light, flockScene(n)));
+      expect(count(const SizedBox(), 'sheep'), n);
+    }
+  });
+
   testWidgets('scenes of every state, golden at x3', (t) async {
     await loadFonts();
     setView(t, 800, 300);

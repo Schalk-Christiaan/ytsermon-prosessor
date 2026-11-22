@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 /// Radius of every panel, button and field (Windows desktop style; dialogs use 8).
 const kPanelRadius = 4.0;
 
-/// A flat panel on the ground (DESIGN.md): panel fill, radius 16, content clipped to it.
+/// A flat panel on the ground (DESIGN.md): panel fill, kPanelRadius, content clipped to it.
 Widget appPanel(
   BuildContext context,
   Widget child, {

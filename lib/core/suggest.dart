@@ -67,6 +67,40 @@ Brief briefOf(Sermon s, Directory root) {
   return Brief(s.id, s.title, s.scripture, s.date, excerpt);
 }
 
+const _badAnswer = 'Die KI het nie \'n bruikbare antwoord gegee nie.';
+
+/// One Ollama call with a JSON [schema]; the decoded answer, or a [SuggestException] when it is not JSON.
+Future<Object?> _ask(
+  ChatFn? chat, {
+  required String system,
+  required String user,
+  required Map<String, dynamic> schema,
+  required int ctx,
+  required int predict,
+}) async {
+  final res = await (chat ?? ollamaChat)({
+    'model': kModel,
+    'stream': false,
+    'think': false,
+    'format': schema,
+    'options': {
+      'num_ctx': ctx,
+      'temperature': 0,
+      'num_predict': predict,
+      'seed': 1,
+    },
+    'messages': [
+      {'role': 'system', 'content': system},
+      {'role': 'user', 'content': user},
+    ],
+  });
+  try {
+    return jsonDecode(res['message']['content'] as String);
+  } on Object {
+    throw SuggestException(_badAnswer);
+  }
+}
+
 const _groupPrompt = '''Jy help 'n Gereformeerde kerk om sy preke in snitlyste (reekse) te ordent.
 Jy kry die naam en beskrywing van 'n snitlys, en 'n lys preke (ID, titel, Skriflesing, datum, begin van die transkripsie).
 Kies net die preke wat werklik by die snitlys se naam en beskrywing pas, en gee by elk 'n kort rede in Afrikaans (hoogstens 12 woorde). Gebruik net ID's uit die lys. Pas niks, gee 'n leë lys. Antwoord net met JSON volgens die skema.''';
@@ -87,11 +121,14 @@ Future<List<Suggestion>> suggestSermons(
     for (final b in pool)
       'ID: ${b.id}\nTitel: ${b.title}\nSkriflesing: ${b.scripture ?? '-'}\nDatum: ${b.date ?? '-'}\nTeks: ${cutWords(b.excerpt, n)}',
   ].join('\n\n');
-  final res = await (chat ?? ollamaChat)({
-    'model': kModel,
-    'stream': false,
-    'think': false,
-    'format': {
+  final j = await _ask(
+    chat,
+    system: _groupPrompt,
+    user:
+        'Snitlys: ${group.name}\nBeskrywing: ${group.description}\n\nPreke:\n\n$list',
+    ctx: 16384,
+    predict: 1024,
+    schema: {
       'type': 'object',
       'properties': {
         'suggestions': {
@@ -108,27 +145,7 @@ Future<List<Suggestion>> suggestSermons(
       },
       'required': ['suggestions'],
     },
-    'options': {
-      'num_ctx': 16384,
-      'temperature': 0,
-      'num_predict': 1024,
-      'seed': 1,
-    },
-    'messages': [
-      {'role': 'system', 'content': _groupPrompt},
-      {
-        'role': 'user',
-        'content':
-            'Snitlys: ${group.name}\nBeskrywing: ${group.description}\n\nPreke:\n\n$list',
-      },
-    ],
-  });
-  final Object? j;
-  try {
-    j = jsonDecode(res['message']['content'] as String);
-  } on Object {
-    throw SuggestException('Die KI het nie \'n bruikbare antwoord gegee nie.');
-  }
+  );
   final known = {for (final b in pool) b.id};
   return [
     if (j is Map && j['suggestions'] is List)
@@ -154,11 +171,14 @@ Future<SermonSuggestion> suggestGroupsFor(
   List<String> otherTitles, {
   ChatFn? chat,
 }) async {
-  final res = await (chat ?? ollamaChat)({
-    'model': kModel,
-    'stream': false,
-    'think': false,
-    'format': {
+  final j = await _ask(
+    chat,
+    system: _sermonPrompt,
+    user:
+        'Preek: ${b.title}\nSkriflesing: ${b.scripture ?? '-'}\nDatum: ${b.date ?? '-'}\nTeks: ${cutWords(b.excerpt, 300)}\n\nSnitlyste:\n${[for (final g in groups) '${g.id}: ${g.name} - ${g.description}'].join('\n')}\n\nAnder preke:\n${otherTitles.take(60).join('\n')}',
+    ctx: 8192,
+    predict: 256,
+    schema: {
       'type': 'object',
       'properties': {
         'groups': {
@@ -169,29 +189,8 @@ Future<SermonSuggestion> suggestGroupsFor(
       },
       'required': ['groups', 'new_name'],
     },
-    'options': {
-      'num_ctx': 8192,
-      'temperature': 0,
-      'num_predict': 256,
-      'seed': 1,
-    },
-    'messages': [
-      {'role': 'system', 'content': _sermonPrompt},
-      {
-        'role': 'user',
-        'content':
-            'Preek: ${b.title}\nSkriflesing: ${b.scripture ?? '-'}\nDatum: ${b.date ?? '-'}\nTeks: ${cutWords(b.excerpt, 300)}\n\nSnitlyste:\n${[for (final g in groups) '${g.id}: ${g.name} - ${g.description}'].join('\n')}\n\nAnder preke:\n${otherTitles.take(60).join('\n')}',
-      },
-    ],
-  });
-  final Object? j;
-  try {
-    j = jsonDecode(res['message']['content'] as String);
-  } on Object {
-    throw SuggestException('Die KI het nie \'n bruikbare antwoord gegee nie.');
-  }
-  if (j is! Map)
-    throw SuggestException('Die KI het nie \'n bruikbare antwoord gegee nie.');
+  );
+  if (j is! Map) throw SuggestException(_badAnswer);
   final known = {for (final g in groups) g.id};
   final ids = [
     for (final id in (j['groups'] is List ? j['groups'] as List : const []))

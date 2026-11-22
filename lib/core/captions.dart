@@ -76,9 +76,12 @@ List<Word> _words(List<(double, String)> parts, double lineEnd) {
   return out;
 }
 
-/// `mm:ss` (minutes may exceed 59), the format of the captions and the timeline labels.
-String formatTime(double s) {
-  final t = s.floor();
+/// `mm:ss` (minutes may exceed 59), the format of the captions and the timeline labels; with [hours], `h:mm:ss` from one hour (sermon lengths).
+String formatTime(double s, {bool hours = false}) {
+  final t = hours ? s.round() : s.floor();
+  if (hours && t >= 3600) {
+    return '${t ~/ 3600}:${(t % 3600 ~/ 60).toString().padLeft(2, '0')}:${(t % 60).toString().padLeft(2, '0')}';
+  }
   return '${(t ~/ 60).toString().padLeft(2, '0')}:${(t % 60).toString().padLeft(2, '0')}';
 }
 

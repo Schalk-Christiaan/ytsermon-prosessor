@@ -128,7 +128,8 @@ class _SetupScreenState extends State<SetupScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            restScene(),
+            // one sheep gathered per finished step (all four when nothing is open)
+            flockScene(first == 0 ? 4 : first - 1),
             const SizedBox(height: 8),
             Text(l.navSetup, style: th.textTheme.headlineMedium),
             const SizedBox(height: 8),

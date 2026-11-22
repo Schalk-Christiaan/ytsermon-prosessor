@@ -88,4 +88,10 @@ void main() {
     }
     expect(parseClock(formatTime(1384)), 1384);
   });
+
+  test('formatTime with hours is the sermon length format', () {
+    expect(formatTime(1384.4, hours: true), '23:04');
+    expect(formatTime(3725, hours: true), '1:02:05');
+    expect(formatTime(3725), '62:05');
+  });
 }

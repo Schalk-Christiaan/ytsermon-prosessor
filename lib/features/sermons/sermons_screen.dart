@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
+import '../../core/captions.dart' show formatTime;
 import '../../core/channel.dart';
 import '../../core/jobs.dart';
 import '../../core/recording.dart';
@@ -113,21 +114,13 @@ class _SermonsScreenState extends State<SermonsScreen> {
 
   // Size of each sermon's work folder; read at load and after the queue runs empty, kept only here.
   Map<String, int> _sizes = {};
-  bool _wasBusy = false;
+  late final VoidCallback _idle;
 
   @override
   void initState() {
     super.initState();
     _refresh(); // once per start, and again on "Probeer weer"
-    widget.jobs.addListener(_jobsChanged);
-  }
-
-  void _jobsChanged() {
-    final busy = widget.jobs.jobs.any(
-      (j) => j.status == JobStatus.besig || j.status == JobStatus.wag,
-    );
-    if (_wasBusy && !busy) _loadSizes();
-    _wasBusy = busy;
+    _idle = widget.jobs.onIdle(_loadSizes);
   }
 
   Future<void> _loadSizes() async {
@@ -139,7 +132,7 @@ class _SermonsScreenState extends State<SermonsScreen> {
 
   @override
   void dispose() {
-    widget.jobs.removeListener(_jobsChanged);
+    widget.jobs.removeListener(_idle);
     _search.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -847,7 +840,10 @@ class _SermonsScreenState extends State<SermonsScreen> {
         ),
         SizedBox(
           width: 72,
-          child: Text(_len(s.duration), style: th.textTheme.labelMedium),
+          child: Text(
+            formatTime(s.duration, hours: true),
+            style: th.textTheme.labelMedium,
+          ),
         ),
         SizedBox(width: 140, child: _status(l, th, s)),
         SizedBox(
@@ -862,16 +858,6 @@ class _SermonsScreenState extends State<SermonsScreen> {
       ],
     ),
   );
-
-  /// `m:ss` or `h:mm:ss` for a sermon length in seconds.
-  static String _len(double sec) {
-    final t = sec.round();
-    final h = t ~/ 3600, m = (t % 3600) ~/ 60, s = t % 60;
-    final ss = s.toString().padLeft(2, '0');
-    return h > 0
-        ? '$h:${m.toString().padLeft(2, '0')}:$ss'
-        : '${m.toString().padLeft(2, '0')}:$ss';
-  }
 }
 
 /// The YouTube thumbnail of a sermon; no network, a local recording or a failed load shows

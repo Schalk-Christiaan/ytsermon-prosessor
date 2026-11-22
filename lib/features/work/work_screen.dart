@@ -145,28 +145,21 @@ class _WorkScreenState extends State<WorkScreen> {
     _report();
   }
 
-  bool _wasBusy = false;
+  late final VoidCallback _idle;
 
   @override
   void initState() {
     super.initState();
     _loadSizes();
-    jobs.addListener(_jobsChanged);
+    _idle = jobs.onIdle(_loadSizes);
+    jobs.addListener(_report);
   }
 
   @override
   void dispose() {
-    jobs.removeListener(_jobsChanged);
+    jobs.removeListener(_idle);
+    jobs.removeListener(_report);
     super.dispose();
-  }
-
-  void _jobsChanged() {
-    final busy = jobs.jobs.any(
-      (j) => j.status == JobStatus.besig || j.status == JobStatus.wag,
-    );
-    if (_wasBusy && !busy) _loadSizes();
-    _wasBusy = busy;
-    _report();
   }
 
   String _groupName(L l, WorkGroup g) => switch (g) {

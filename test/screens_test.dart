@@ -766,6 +766,70 @@ void main() {
     }
   }
 
+  // Round 2 shots: Werk as cards, Preke with a busy sermon, Hersien with a selected Short (panel after its slide-in).
+  testWidgets('werk rooster skermkiekie', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 900);
+    t.view.devicePixelRatio = 1;
+    final key = GlobalKey();
+    final (st, q) = workQueue(audio: true);
+    final s = AppSettings.load(st.root)..sermonGrid = true;
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        RepaintBoundary(
+          key: key,
+          child: Scaffold(
+            body: WorkScreen(store: st, jobs: q, settings: s, onBack: () {}),
+          ),
+        ),
+      ),
+    );
+    await t.pump(const Duration(seconds: 1));
+    expect(t.takeException(), isNull);
+    await _shot(t, key, 'werk-rooster-light-1100');
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('preke besig skermkiekie', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1100, 720);
+    t.view.devicePixelRatio = 1;
+    final key = GlobalKey();
+    final (st, q) = seeded();
+    q.current = Job(st.sorted.first.id, JobKind.cut, status: JobStatus.besig);
+    q.phase.value = JobPhase.cut;
+    q.progress.value = 0.6;
+    await t.pumpWidget(
+      _app(Brightness.light, RepaintBoundary(key: key, child: preke(st, q))),
+    );
+    await t.pump(const Duration(seconds: 1));
+    expect(t.takeException(), isNull);
+    await _shot(t, key, 'preke-besig-light-1100');
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('hersien keuse skermkiekie', (t) async {
+    await _fonts();
+    t.view.physicalSize = const Size(1400, 800);
+    t.view.devicePixelRatio = 1;
+    final c = ready();
+    c.selectShort(c.plan!.shorts.first);
+    final key = GlobalKey();
+    await t.pumpWidget(
+      _app(
+        Brightness.light,
+        RepaintBoundary(
+          key: key,
+          child: Scaffold(body: ReviewScreen(controller: c)),
+        ),
+      ),
+    );
+    await t.pump(const Duration(seconds: 1));
+    expect(t.takeException(), isNull);
+    await _shot(t, key, 'hersien-keuse-light-1400');
+  });
+
   testWidgets('shell: rail reaches Hersien (empty hint) and Werk', (t) async {
     await _fonts();
     t.view.physicalSize = const Size(1100, 720);

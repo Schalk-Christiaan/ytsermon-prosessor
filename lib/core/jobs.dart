@@ -209,6 +209,21 @@ class JobQueue extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Calls [f] each time the queue goes from busy to empty (a task has just finished). Returns the listener to remove.
+  VoidCallback onIdle(VoidCallback f) {
+    var was = false;
+    void l() {
+      final busy = jobs.any(
+        (j) => j.status == JobStatus.besig || j.status == JobStatus.wag,
+      );
+      if (was && !busy) f();
+      was = busy;
+    }
+
+    addListener(l);
+    return l;
+  }
+
   /// True while [sermon] has a waiting or running job (of [kind], if given).
   bool hasPending(String sermon, [JobKind? kind]) => jobs.any(
     (j) =>

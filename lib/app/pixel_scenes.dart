@@ -141,7 +141,13 @@ Widget phaseScene(
     // Abraham counts the stars
     JobPhase.meta => [
       _stand(_person, 6),
-      for (var i = 0; i < 4; i++) Placed(_star, 14 + i * 6, 1 + (i * 3) % 5),
+      // one star per quarter of the progress (all four when it is unknown)
+      for (
+        var i = 0;
+        i < (progress == null ? 4 : (p * 4).ceil().clamp(1, 4));
+        i++
+      )
+        Placed(_star, 14 + i * 6, 1 + (i * 3) % 5),
     ],
     // Noah's dove brings the olive branch back to the ark
     JobPhase.download => [
@@ -183,15 +189,18 @@ Widget phaseScene(
   });
 }
 
-/// Sheep behind the shepherd, one per waiting item (at most 6).
-Widget queueScene(int waiting) {
-  final n = waiting.clamp(1, 6);
-  return _scene(width: 14 + n * 13, animate: false, [
+/// The shepherd with [n] sheep behind him (0 to 6), still.
+Widget flockScene(int n) {
+  n = n.clamp(0, 6);
+  return _scene(width: 14 + (n < 1 ? 1 : n) * 13, animate: false, [
     _stand(_person, 4),
     Placed(_staff, 8, _gy - 7),
     for (var i = 0; i < n; i++) _stand(sheep, 14 + i * 13),
   ]);
 }
+
+/// Sheep behind the shepherd, one per waiting item (at most 6).
+Widget queueScene(int waiting) => flockScene(waiting.clamp(1, 6));
 
 /// Noah's rainbow over the finished work: once, then still.
 Widget doneScene() =>

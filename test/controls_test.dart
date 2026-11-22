@@ -855,6 +855,46 @@ void main() {
       await t.pump();
     }
 
+    testWidgets('each group menu offers its own places (no real upload)', (
+      t,
+    ) async {
+      final (st, q) = workQueue(audio: true);
+      await werk(t, st, q);
+      const all = [
+        'upload-public',
+        'upload-unlisted',
+        'audio',
+        'copy',
+        'copy-to',
+        'show',
+      ];
+      // audio (WhatsApp) never goes to YouTube; Full and Shorts do; only Full can make the audio
+      final expected = {
+        'full': [
+          'upload-public',
+          'upload-unlisted',
+          'audio',
+          'copy-to',
+          'show',
+        ],
+        'shorts': ['upload-public', 'upload-unlisted', 'copy-to', 'show'],
+        'audio': ['copy', 'copy-to', 'show'],
+      };
+      for (final e in expected.entries) {
+        await tapKey(t, 'werk.menu-${e.key}');
+        for (final k in all) {
+          expect(
+            find.byKey(ValueKey('ctl.werk.$k')),
+            e.value.contains(k) ? findsOneWidget : findsNothing,
+            reason: '${e.key}: $k',
+          );
+        }
+        await t.tapAt(const Offset(5, 5)); // close the menu
+        await t.pumpAndSettle();
+      }
+      expect(q.jobs.where((j) => j.kind == JobKind.upload), isEmpty);
+    });
+
     testWidgets('view toggle switches Werk to cards', (t) async {
       final (st, q) = workQueue(audio: true);
       await werk(t, st, q);

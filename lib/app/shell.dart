@@ -67,6 +67,9 @@ import '../l10n/app_localizations.dart';
 import 'theme.dart';
 
 /// The app frame: navigation rail and the five screens; starts on Opstelling until setup is done.
+/// Rail indexes of the screens that report a selection to the status bar.
+const _kPreke = 0, _kWerk = 2;
+
 class Shell extends StatefulWidget {
   const Shell({
     super.key,
@@ -141,28 +144,21 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
         write: (v) async => _memToken = v,
       );
 
-  /// Status-bar text for the selection of each screen (0 Preke, 2 Werk); only the visible screen's shows.
-  final selection = {
-    0: ValueNotifier<String?>(null),
-    2: ValueNotifier<String?>(null),
+  /// Status-bar text for the selection of each screen; only the visible screen's shows.
+  final selection = <int, ValueNotifier<String?>>{
+    _kPreke: ValueNotifier<String?>(null),
+    _kWerk: ValueNotifier<String?>(null),
   };
   (int, int?)? _disk; // bytes used by the work folder, bytes free
-  bool _wasBusy = false;
+  late final VoidCallback _idle;
 
   @override
   void initState() {
     super.initState();
     _readDisk();
-    widget.jobs.addListener(_jobsChanged);
-  }
-
-  // Refresh the disk figures once when the queue has just run empty (no polling).
-  void _jobsChanged() {
-    final busy = widget.jobs.jobs.any(
-      (j) => j.status == JobStatus.besig || j.status == JobStatus.wag,
-    );
-    if (_wasBusy && !busy) _readDisk();
-    _wasBusy = busy;
+    _idle = widget.jobs.onIdle(
+      _readDisk,
+    ); // refresh the disk figures when the queue runs empty (no polling)
   }
 
   Future<void> _readDisk() async {
@@ -173,7 +169,7 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
-    widget.jobs.removeListener(_jobsChanged);
+    widget.jobs.removeListener(_idle);
     for (final n in selection.values) {
       n.dispose();
     }
@@ -244,7 +240,8 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
                                   jobs: widget.jobs,
                                   list: widget.list,
                                   settings: _settings,
-                                  onSelection: (v) => selection[0]!.value = v,
+                                  onSelection: (v) =>
+                                      selection[_kPreke]!.value = v,
                                   onOpen: (id) {
                                     _review.open(id);
                                     _go(1);
@@ -253,14 +250,15 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
                                 ReviewScreen(
                                   controller: _review,
                                   settings: _settings,
-                                  onWork: () => _go(2),
+                                  onWork: () => _go(_kWerk),
                                 ),
                                 WorkScreen(
                                   store: widget.store,
                                   jobs: widget.jobs,
-                                  onBack: () => _go(0),
+                                  onBack: () => _go(_kPreke),
                                   quota: _quota,
-                                  onSelection: (v) => selection[2]!.value = v,
+                                  onSelection: (v) =>
+                                      selection[_kWerk]!.value = v,
                                   suggestions: _suggestions,
                                   settings: _settings,
                                 ),
@@ -284,7 +282,7 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
                                     auth: _auth,
                                     signIn: () => _auth.signIn(openPath),
                                     onSettings: () => _go(4),
-                                    onDone: () => _go(0),
+                                    onDone: () => _go(_kPreke),
                                   )
                                 else
                                   const SizedBox(),
@@ -333,7 +331,7 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
             listenable: widget.jobs,
             builder: (_, _) => InkWell(
               key: const ValueKey('ctl.skulp.sheep'),
-              onTap: () => _go(2),
+              onTap: () => _go(_kWerk),
               child: PixelSprite(
                 sheep,
                 scale: 2,
