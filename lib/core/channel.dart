@@ -3,7 +3,7 @@
 //   wanneer: as 'n preek-URL gelaai word
 //   groep: core | Kern
 //   skryf: werkmap/<id>/ (info.json, onderskrifte, video.mp4)
-//   doel: lys die kanaal (flat; URL uit instellings, normaliseer), video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af
+//   doel: lys die kanaal (flat; URL uit instellings, normaliseer), video-ID uit URL, haal metadata + af-orig-onderskrifte (ontbreek dit: geen fout, die plan transkribeer plaaslik), laai die video een keer af
 //   status: bou
 import 'dart:convert';
 import 'dart:io';
@@ -122,6 +122,12 @@ class FetchedMeta {
   final Map<String, dynamic> info;
 
   File get captions => File(p.join(dir.path, '$id.af-orig.json3'));
+
+  /// Whisper's transcript (see `transcribeLocal`), used when YouTube has no af-orig captions.
+  File get localCaptions => File(p.join(dir.path, '$id.local.json3'));
+
+  /// The transcript to read: YouTube's af-orig first, else the local one.
+  File get anyCaptions => captions.existsSync() ? captions : localCaptions;
   File get video => File(p.join(dir.path, 'video.mp4'));
 }
 
@@ -130,7 +136,7 @@ List<String> _ffmpegArgs() {
   return f == null ? [] : ['--ffmpeg-location', f];
 }
 
-/// Downloads info.json and the af-orig json3 captions to `<root>/<id>/`; skips what already exists.
+/// Downloads info.json and the af-orig json3 captions to `<root>/<id>/`; skips what already exists. Missing captions are no error: the plan job transcribes locally.
 Future<FetchedMeta> fetchMeta(
   String url,
   Directory root, {
@@ -143,7 +149,7 @@ Future<FetchedMeta> fetchMeta(
   final dir = Directory(p.join(root.path, id))..createSync(recursive: true);
   final infoFile = File(p.join(dir.path, '$id.info.json'));
   final meta = FetchedMeta(id, dir, {});
-  if (!infoFile.existsSync() || !meta.captions.existsSync()) {
+  if (!infoFile.existsSync() || !meta.anyCaptions.existsSync()) {
     await runTool(
       'yt-dlp',
       [
@@ -161,9 +167,6 @@ Future<FetchedMeta> fetchMeta(
       cancel: cancel,
       onLine: log,
     );
-  }
-  if (!meta.captions.existsSync()) {
-    throw StateError('Geen af-orig-onderskrifte vir $id nie');
   }
   return FetchedMeta(
     id,

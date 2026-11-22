@@ -3,7 +3,7 @@
 //   wanneer: "Verwerk volgende", "Keur goed en sny", "Beplan weer", "Klank vir WhatsApp", "Laai op" en by begin (hervat)
 //   groep: core | Kern
 //   skryf: <werkmap>/jobs.json | die ry; sermon.json van die preek wat verwerk word
-//   doel: een taak op 'n slag (plan: klank → blokke → etikette → grense → stilte-snap; sny: die gekose uitvoere in die diensgids met WhatsApp.txt en diens.json; klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
+//   doel: een taak op 'n slag (plan: (geen af-orig: plaaslike transkripsie met whisper) klank → blokke → etikette → grense → stilte-snap; sny: die gekose uitvoere in die diensgids met WhatsApp.txt en diens.json; klank of oplaai), hervat ná herbegin, kanselleer, probeer weer
 //   status: bou
 import 'dart:async';
 import 'dart:convert';
@@ -24,6 +24,7 @@ import 'playlists.dart';
 import 'settings.dart';
 import 'sound.dart';
 import 'store.dart';
+import 'transcribe.dart';
 import 'tools.dart';
 import 'youtube.dart';
 
@@ -349,11 +350,48 @@ class JobQueue extends ChangeNotifier {
 Future<T> _abandonable<T>(Future<T> work, Future<void> cancel) =>
     Future.any([work, cancel.then<T>((_) => throw JobCancelled())]);
 
+/// Throws a plain-language [StateError] (pointing to Instellings) when the speech model or whisper-cli is missing.
+void checkWhisper(File model, String? whisper) {
+  if ((whisper ?? findExecutable('whisper-cli')) == null ||
+      !model.existsSync()) {
+    throw StateError(
+      'Hierdie video het geen onderskrifte nie en die spraakmodel is nie geïnstalleer nie. Gaan na Instellings en kies "Laai spraakmodel af".',
+    );
+  }
+}
+
+/// The plan job's transcribe step: whisper writes `<id>.local.json3`, with the percentage from `-pp` as progress and detail.
+Future<void> transcribeStep(
+  JobCtx c,
+  FetchedMeta m,
+  File video,
+  File model,
+  String? whisper,
+) async {
+  checkWhisper(model, whisper);
+  c.phase(JobPhase.plan);
+  c.detail('Transkribeer plaaslik');
+  c.progress(0);
+  await transcribeLocal(
+    video,
+    m.localCaptions,
+    model: model,
+    whisper: whisper,
+    onProgress: (f) {
+      c.progress(f);
+      c.detail('Transkribeer plaaslik \u00b7 ${(f * 100).round()} %');
+    },
+    cancel: c.cancel,
+    log: c.log,
+  );
+  c.progress(null);
+}
+
 // stap: v1 2 Beplan | onderskrifte + video af; Ollama benoem die blokke, kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks
 // tak: Ollama af → "Ollama het nie geantwoord nie" met Probeer weer in Werkry
 /// Fetches meta, captions and video (the sound is needed for the blocks and the silence snap), has Ollama
 /// label the blocks, lets `findBounds` pick the cut from the labels and asks Ollama for the text; fills the sermon's date. An existing plan.json is kept as it is.
-JobRun planJob(SermonStore store) => (c) async {
+JobRun planJob(SermonStore store, {File? model, String? whisper}) => (c) async {
   c.phase(JobPhase.meta);
   final m = await fetchMeta(c.id, store.root, cancel: c.cancel, log: c.log);
   final s = store.byId(c.id)!
@@ -362,7 +400,9 @@ JobRun planJob(SermonStore store) => (c) async {
     ..duration = m.info.durationSeconds;
   store.save(s);
   if (File(p.join(m.dir.path, kPlanFile)).existsSync()) return;
-  final segs = parseJson3(m.captions.readAsStringSync());
+  final wmodel = model ?? whisperModelFile(store.root);
+  final needLocal = !m.anyCaptions.existsSync();
+  if (needLocal) checkWhisper(wmodel, whisper);
   c.phase(JobPhase.download);
   c.progress(0);
   final video = await downloadVideo(
@@ -373,6 +413,8 @@ JobRun planJob(SermonStore store) => (c) async {
     log: c.log,
   );
   c.progress(null);
+  if (needLocal) await transcribeStep(c, m, video, wmodel, whisper);
+  final segs = parseJson3(m.anyCaptions.readAsStringSync());
   final sound = await soundBlocks(m.dir, video, cancel: c.cancel);
   c.phase(JobPhase.plan);
   c.detail('Die KI lees die transkripsie');
@@ -424,7 +466,7 @@ JobRun cutJob(SermonStore store, {Directory? out, File? font}) => (c) async {
     log: c.log,
   );
   final plan = _plan(store, c.id);
-  final segs = parseJson3(m.captions.readAsStringSync());
+  final segs = parseJson3(m.anyCaptions.readAsStringSync());
   final settings = AppSettings.load(store.root);
   final saved = loadAnalysis(m.dir);
   final info = ServiceInfo.fromInfo(m.info)

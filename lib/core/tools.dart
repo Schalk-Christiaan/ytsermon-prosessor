@@ -14,6 +14,13 @@ import 'package:path/path.dart' as p;
 
 const kModel = 'qwen3:8b';
 
+/// The whisper.cpp model for local transcription (q5_0 turbo: fits 4 GB VRAM, see navorsing/2026-11-22).
+const kWhisperModel = 'ggml-large-v3-turbo-q5_0.bin';
+
+/// Where the whisper model lives: `models/` next to the work directory.
+File whisperModelFile(Directory work) =>
+    File(p.join(work.parent.path, 'models', kWhisperModel));
+
 /// The ffmpeg to run; tests point it at a fake script.
 String ffmpegTool = 'ffmpeg';
 

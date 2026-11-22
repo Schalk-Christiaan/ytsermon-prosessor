@@ -219,11 +219,11 @@ class ReviewController extends ChangeNotifier {
     error = null;
     plan = null;
     meta = null;
-    if (info.existsSync() && m.captions.existsSync()) {
+    if (info.existsSync() && m.anyCaptions.existsSync()) {
       final j = jsonDecode(info.readAsStringSync()) as Map<String, dynamic>;
       meta = FetchedMeta(id!, dir, j);
       duration = j.durationSeconds;
-      segments = parseJson3(m.captions.readAsStringSync());
+      segments = parseJson3(m.anyCaptions.readAsStringSync());
       sound = loadSound(dir);
       levels = loadLevels(dir);
       _loadService(meta!);
