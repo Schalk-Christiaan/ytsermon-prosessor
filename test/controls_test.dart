@@ -218,11 +218,11 @@ void main() {
       );
     });
 
-    testWidgets('Preek tab: title and description write to the plan', (
+    testWidgets('Inligting: title and description write to the plan', (
       t,
     ) async {
       final c = await hersien(t);
-      cover(['hersien.tab-sermon']);
+      cover(['hersien.tab-info']);
       await t.enterText(key('hersien.title'), 'Nuwe titel');
       expect(c.plan!.title, 'Nuwe titel');
       await t.enterText(key('hersien.description'), 'Nuwe beskrywing');
@@ -233,9 +233,10 @@ void main() {
       );
     });
 
-    testWidgets('Shorts tab: every control', (t) async {
+    testWidgets('selected Short: every control', (t) async {
       final c = await hersien(t);
-      await tapKey(t, 'hersien.tab-shorts');
+      c.selectShort(c.plan!.shorts.first);
+      await t.pump();
       await t.enterText(
         key('hersien.short-title.0.${c.planRevision}.${c.edits}'),
         'Nuwe Short',
@@ -268,9 +269,10 @@ void main() {
       );
     });
 
-    testWidgets('Uitgeknip tab: set ends, play, remove', (t) async {
+    testWidgets('selected cut: set ends, play, remove', (t) async {
       final c = await hersien(t);
-      await tapKey(t, 'hersien.tab-cuts');
+      c.selectCut(c.plan!.cuts.first);
+      await t.pump();
       final cut = c.plan!.cuts.first;
       c.position.value = 2060;
       await tapKey(t, 'hersien.cut-start');
@@ -287,9 +289,8 @@ void main() {
       );
     });
 
-    testWidgets('Uitvoer tab: chips, Aand and the service kind', (t) async {
+    testWidgets('Uitvoer: chips, Aand and the service kind', (t) async {
       final c = await hersien(t);
-      await tapKey(t, 'hersien.tab-output');
       final set = AppSettings.load(c.store.root);
       expect(set.exports, {'full', 'word', 'songs'});
       for (final e in ['full', 'word', 'songs']) {
@@ -306,6 +307,64 @@ void main() {
       await t.pumpAndSettle();
       expect(c.service.label, 'nagmaal');
       cover(['hersien.service-kind']);
+      await t.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+    });
+
+    testWidgets('selection follows the timeline and the lists', (t) async {
+      final c = await hersien(t);
+      final n = c.plan!.shorts.length;
+      expect(find.text('Short 1 van $n'), findsNothing);
+      // (a) a tap on a Short block shows that Short alone
+      await t.tap(key('hersien.short-block').first);
+      await t.pump();
+      expect(c.selected, same(c.plan!.shorts.first));
+      expect(find.text('Short 1 van $n'), findsOneWidget);
+      expect(find.byKey(const ValueKey('ctl.hersien.title')), findsNothing);
+      // (c) back button and Esc return to the overview
+      await tapKey(t, 'hersien.select-back');
+      expect(c.selected, isNull);
+      expect(find.byKey(const ValueKey('ctl.hersien.title')), findsOneWidget);
+      await t.tap(key('hersien.short-block').first);
+      await t.pump();
+      await t.sendKeyEvent(LogicalKeyboardKey.escape);
+      await t.pump();
+      expect(c.selected, isNull);
+      // (b) a tap on a cut piece in the Diens track shows that cut
+      final r = t.getRect(key('hersien.timeline'));
+      final cut = c.plan!.cuts.first;
+      final mid = (cut.start + cut.end) / 2 / c.duration;
+      await t.tapAt(Offset(r.left + r.width * mid, r.top + 60));
+      await t.pump();
+      expect(c.selected, same(cut));
+      expect(
+        find.text('Uitgeknip 1 van ${c.plan!.cuts.length}'),
+        findsOneWidget,
+      );
+      // a tap elsewhere seeks and clears
+      await t.tapAt(Offset(r.left + 4, r.top + 5));
+      await t.pump();
+      expect(c.selected, isNull);
+      // (e) the lists select too
+      await tapKey(t, 'hersien.select-short.0');
+      expect(c.selected, same(c.plan!.shorts.first));
+      await tapKey(t, 'hersien.select-back');
+      await tapKey(t, 'hersien.select-cut.0');
+      expect(c.selected, same(c.plan!.cuts.first));
+      // (d) removing the selected item returns to the overview
+      await tapKey(t, 'hersien.cut-remove');
+      expect(c.selected, isNull);
+      expect(find.byKey(const ValueKey('ctl.hersien.title')), findsOneWidget);
+      // picking an item while Transkripsie is open jumps to Inligting
+      await tapKey(t, 'hersien.tab-transcript');
+      c.selectShort(c.plan!.shorts.first);
+      await t.pumpAndSettle();
+      expect(find.text('Short 1 van $n'), findsOneWidget);
+      // undo drops a selection whose plan objects were replaced
+      c.undo();
+      await t.pump();
+      expect(c.selected, isNull);
       await t.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 100)),
       );

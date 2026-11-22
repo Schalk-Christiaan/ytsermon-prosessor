@@ -54,7 +54,7 @@ void main() {
       await t.tap(find.byKey(const ValueKey('ctl.hersien.properties-toggle')));
       await t.pump(const Duration(seconds: 1));
       expect(t.takeException(), isNull, reason: 'properties open');
-      for (final tab in ['shorts', 'cuts', 'output', 'transcript']) {
+      for (final tab in ['info', 'transcript']) {
         await t.tap(find.byKey(ValueKey('ctl.hersien.tab-$tab')));
         await t.pump(const Duration(seconds: 1));
         expect(t.takeException(), isNull, reason: tab);

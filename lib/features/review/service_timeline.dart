@@ -3,7 +3,7 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: —
-//   doel: bane met etiket (Klank = golfvorm uit sound.level.json, Diens = spraak/musiek, gebede, sleepbare preek-hakies (sleutels 1 s / Shift 0,1 s), uitgeknipte stukke gestreep; Shorts = sleepbaar, ongeldige met foutkleur) en een oranje speelkop deur almal; zoem rol horisontaal
+//   doel: bane met etiket (Klank = golfvorm uit sound.level.json, Diens = spraak/musiek, gebede, sleepbare preek-hakies (sleutels 1 s / Shift 0,1 s), uitgeknipte stukke gestreep en kiesbaar; Shorts = sleepbaar en kiesbaar, ongeldige met foutkleur; die gekose een kry dik buitelyn) en een oranje speelkop deur almal; zoem rol horisontaal
 //   status: bou
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
@@ -45,6 +45,10 @@ class ServiceTimeline extends StatefulWidget {
     required this.onSermonCommit,
     required this.onNudge,
     required this.onShortMove,
+    this.selected,
+    required this.onSelectShort,
+    required this.onSelectCut,
+    required this.onClearSelection,
   });
 
   final double duration;
@@ -78,6 +82,14 @@ class ServiceTimeline extends StatefulWidget {
 
   /// A Short dragged by [dt] seconds; the drag ends with [onSermonCommit].
   final void Function(Short s, double dt) onShortMove;
+
+  /// The Short or cut the panel shows alone: drawn with a thick outline (not colour alone).
+  final Object? selected;
+
+  /// A tap on a Short block or on a cut piece selects it; a tap elsewhere seeks and clears the selection.
+  final ValueChanged<Short> onSelectShort;
+  final ValueChanged<Span> onSelectCut;
+  final VoidCallback onClearSelection;
 
   @override
   State<ServiceTimeline> createState() => _ServiceTimelineState();
@@ -287,11 +299,31 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                                         'ctl.hersien.timeline',
                                       ),
                                       behavior: HitTestBehavior.opaque,
-                                      onTapUp: (d) => widget.onSeek(
-                                        d.localPosition.dx /
+                                      onTapUp: (d) {
+                                        final t =
+                                            d.localPosition.dx /
                                             w *
-                                            widget.duration,
-                                      ),
+                                            widget.duration;
+                                        final onService =
+                                            d.localPosition.dy >= _kServiceY &&
+                                            d.localPosition.dy <=
+                                                _kServiceY + _kServiceH;
+                                        final cut = onService
+                                            ? widget.cuts
+                                                  .where(
+                                                    (c) =>
+                                                        t >= c.start &&
+                                                        t <= c.end,
+                                                  )
+                                                  .firstOrNull
+                                            : null;
+                                        if (cut != null) {
+                                          widget.onSelectCut(cut);
+                                        } else {
+                                          widget.onClearSelection();
+                                          widget.onSeek(t);
+                                        }
+                                      },
                                       child: RepaintBoundary(
                                         child: CustomPaint(
                                           painter: TracksPainter(
@@ -304,6 +336,7 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                                             prayers: widget.prayers,
                                             songs: widget.songs,
                                             faulty: widget.faulty,
+                                            selected: widget.selected,
                                             cutLabel: l.cutOut,
                                             musicLabel: l.music,
                                             start: s,
@@ -340,6 +373,7 @@ class _ServiceTimelineState extends State<ServiceTimeline>
                                             'ctl.hersien.short-block',
                                           ),
                                           behavior: HitTestBehavior.opaque,
+                                          onTap: () => widget.onSelectShort(sh),
                                           onHorizontalDragUpdate: (d) =>
                                               widget.onShortMove(
                                                 sh,
@@ -529,6 +563,7 @@ class TracksPainter extends CustomPainter {
     required this.prayers,
     required this.songs,
     required this.faulty,
+    this.selected,
     required this.cutLabel,
     required this.musicLabel,
     required this.start,
@@ -560,6 +595,9 @@ class TracksPainter extends CustomPainter {
   final List<Span> cuts, prayers;
   final List<Song> songs;
   final Set<Short> faulty;
+
+  /// The selected Short or cut: an extra thick outline.
+  final Object? selected;
   final String cutLabel, musicLabel;
   final Color speech, music, sermon, wood, error, ink, ground;
   final TextStyle labelStyle;
@@ -692,6 +730,15 @@ class TracksPainter extends CustomPainter {
         tp.paint(canvas, Offset(r.left + 4, r.center.dy - tp.height / 2));
       }
       canvas.restore();
+      if (identical(selected, c)) {
+        canvas.drawRect(
+          r.deflate(1.5),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3
+            ..color = ink,
+        );
+      }
     }
 
     // Shorts
@@ -707,12 +754,12 @@ class TracksPainter extends CustomPainter {
         const Radius.circular(2),
       );
       canvas.drawRRect(r, Paint()..color = bad ? error : wood);
-      if (bad) {
+      if (bad || identical(selected, s)) {
         canvas.drawRRect(
           r,
           Paint()
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 2
+            ..strokeWidth = identical(selected, s) ? 3 : 2
             ..color = ink,
         );
       }
@@ -727,6 +774,7 @@ class TracksPainter extends CustomPainter {
       !identical(o.levels, levels) ||
       !identical(o.bars, bars) ||
       o._sig != _sig ||
+      !identical(o.selected, selected) ||
       o.duration != duration ||
       o.start != start ||
       o.end != end ||

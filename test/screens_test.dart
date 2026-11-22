@@ -231,7 +231,7 @@ void main() {
     await t.ensureVisible(line);
     await t.tap(line);
     expect(c.position.value, c.segments[2].start);
-    await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-cuts')));
+    c.selectCut(c.plan!.cuts.first);
     await t.pump();
     expect(find.text('Uitgeknip 1'), findsOneWidget);
     expect(find.text('34:10 – 35:40'), findsOneWidget);
@@ -413,7 +413,7 @@ void main() {
     FilledButton approve() => t.widget<FilledButton>(
       find.widgetWithText(FilledButton, 'Keur goed en sny'),
     );
-    await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-shorts')));
+    c.selectShort(c.plan!.shorts.first);
     await t.pump();
     expect(find.text('92 s; maks 90 s'), findsOneWidget);
     final key = GlobalKey();
@@ -427,7 +427,7 @@ void main() {
       ),
     );
     await t.pump(const Duration(seconds: 1));
-    await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-shorts')));
+    c.selectShort(c.plan!.shorts.first);
     await t.pump();
     final bytes = await t.runAsync(() async {
       final img =
@@ -1130,8 +1130,6 @@ void main() {
     );
     await t.pump(const Duration(seconds: 1));
     expect(AppSettings.load(c.store.root).exports, {'full', 'word', 'songs'});
-    await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-output')));
-    await t.pump();
     await t.tap(find.widgetWithText(FilterChip, 'Net die woord'));
     await t.pump();
     expect(AppSettings.load(c.store.root).exports, {'full', 'songs'});

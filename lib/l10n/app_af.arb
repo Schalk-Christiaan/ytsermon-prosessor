@@ -573,5 +573,42 @@
       }
     }
   },
-  "volume": "Klankvolume (voorskou)"
+  "volume": "Klankvolume (voorskou)",
+  "infoTab": "Inligting",
+  "shortOf": "Short {n} van {total}",
+  "cutOf": "Uitgeknip {n} van {total}",
+  "shortRow": "Short {n} · {time} · {secs} s",
+  "@shortOf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@cutOf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@shortRow": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      },
+      "secs": {
+        "type": "int"
+      }
+    }
+  }
 }

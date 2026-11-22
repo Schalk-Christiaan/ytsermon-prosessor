@@ -74,6 +74,25 @@ class ReviewController extends ChangeNotifier {
   late final video = VideoController(player);
   bool videoReady = false;
 
+  /// The Short or cut (a [Short] or a [Span] of the plan) the properties panel shows alone; null = the overview.
+  Object? selected;
+
+  void selectShort(Short s) {
+    selected = s;
+    notifyListeners();
+  }
+
+  void selectCut(Span c) {
+    selected = c;
+    notifyListeners();
+  }
+
+  void clearSelection() {
+    if (selected == null) return;
+    selected = null;
+    notifyListeners();
+  }
+
   /// Preview volume 0-100 (the player only; the cut is not changed), kept for the session.
   final volume = ValueNotifier<double>(100);
   double _beforeMute = 100;
@@ -193,6 +212,7 @@ class ReviewController extends ChangeNotifier {
   }
 
   void _load() {
+    selected = null;
     final dir = Directory(p.join(store.root.path, id!));
     final info = File(p.join(dir.path, '$id.info.json'));
     final m = FetchedMeta(id!, dir, {});
@@ -372,6 +392,7 @@ class ReviewController extends ChangeNotifier {
       jsonDecode(from.removeLast()) as Map<String, dynamic>,
     );
     _group = null;
+    selected = null; // the plan objects were replaced
     edits++;
     _save();
     notifyListeners();
@@ -401,6 +422,7 @@ class ReviewController extends ChangeNotifier {
     if (!canReset) return;
     _edit();
     plan = SermonPlan.fromJson(jsonDecode(_proposal!) as Map<String, dynamic>);
+    selected = null;
     edits++;
     _save();
     notifyListeners();
@@ -461,6 +483,7 @@ class ReviewController extends ChangeNotifier {
   void removeCut(Span c) {
     _edit();
     plan!.cuts.remove(c);
+    if (identical(selected, c)) selected = null;
     _save();
     notifyListeners();
   }
@@ -596,6 +619,7 @@ class ReviewController extends ChangeNotifier {
   void removeShort(Short s) {
     _edit();
     plan!.shorts.remove(s);
+    if (identical(selected, s)) selected = null;
     _save();
     notifyListeners();
   }

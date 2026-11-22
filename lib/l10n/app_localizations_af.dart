@@ -867,4 +867,22 @@ class LAf extends L {
 
   @override
   String get volume => 'Klankvolume (voorskou)';
+
+  @override
+  String get infoTab => 'Inligting';
+
+  @override
+  String shortOf(int n, int total) {
+    return 'Short $n van $total';
+  }
+
+  @override
+  String cutOf(int n, int total) {
+    return 'Uitgeknip $n van $total';
+  }
+
+  @override
+  String shortRow(int n, String time, int secs) {
+    return 'Short $n · $time · $secs s';
+  }
 }

@@ -47,6 +47,8 @@ List<String?> controlKeys(WidgetTester t, Finder root) {
     var nested = false;
     e.visitAncestorElements((a) {
       if (_isControl(a.widget) && a.widget is! InkWell) nested = true;
+      // the tabs of a TabBar are keyed on the Tab itself, not on Material's InkWell
+      if (a.widget is TabBar && e.widget is InkWell) nested = true;
       return !nested;
     });
     if (nested) continue;
@@ -79,6 +81,8 @@ Future<void> checkKeyboard(WidgetTester t, String screen) async {
     var nested = false;
     e.visitAncestorElements((a) {
       if (_isControl(a.widget) && a.widget is! InkWell) nested = true;
+      // the tabs of a TabBar are keyed on the Tab itself, not on Material's InkWell
+      if (a.widget is TabBar && e.widget is InkWell) nested = true;
       return !nested;
     });
     final k = e.widget.key;
@@ -214,13 +218,34 @@ void main() {
           ]),
         );
         for (final (tab, key) in [
-          ('shorts', 'ctl.hersien.short-length'),
-          ('cuts', 'ctl.hersien.cut-start'),
-          ('output', 'ctl.hersien.out-full'),
+          ('info', 'ctl.hersien.out-full'),
+          ('info', 'ctl.hersien.select-short'),
+          ('info', 'ctl.hersien.select-cut'),
           ('transcript', 'ctl.hersien.transcript-line'),
         ]) {
           await t.tap(find.byKey(ValueKey('ctl.hersien.tab-$tab')));
           await t.pump();
+          checkScreen(t, 'hersien');
+          expect(
+            controlKeys(
+              t,
+              find.byType(Scaffold).first,
+            ).any((k) => k!.startsWith(key)),
+            isTrue,
+            reason: key,
+          );
+        }
+        // a selected Short and a selected cut show their own controls
+        for (final (pick, key) in [
+          (
+            () => c.selectShort(c.plan!.shorts.first),
+            'ctl.hersien.short-length',
+          ),
+          (() => c.selectCut(c.plan!.cuts.first), 'ctl.hersien.cut-start'),
+        ]) {
+          pick();
+          await t.pump();
+          await t.pump(const Duration(milliseconds: 400));
           checkScreen(t, 'hersien');
           expect(
             controlKeys(

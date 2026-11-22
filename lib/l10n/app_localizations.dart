@@ -1550,6 +1550,30 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Klankvolume (voorskou)'**
   String get volume;
+
+  /// No description provided for @infoTab.
+  ///
+  /// In af, this message translates to:
+  /// **'Inligting'**
+  String get infoTab;
+
+  /// No description provided for @shortOf.
+  ///
+  /// In af, this message translates to:
+  /// **'Short {n} van {total}'**
+  String shortOf(int n, int total);
+
+  /// No description provided for @cutOf.
+  ///
+  /// In af, this message translates to:
+  /// **'Uitgeknip {n} van {total}'**
+  String cutOf(int n, int total);
+
+  /// No description provided for @shortRow.
+  ///
+  /// In af, this message translates to:
+  /// **'Short {n} · {time} · {secs} s'**
+  String shortRow(int n, String time, int secs);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

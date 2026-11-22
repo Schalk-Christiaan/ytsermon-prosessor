@@ -190,6 +190,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
       _c.markOut();
     } else if (key == LogicalKeyboardKey.space) {
       _c.playPause();
+    } else if (key == LogicalKeyboardKey.escape && _c.selected != null) {
+      _c.clearSelection();
     } else {
       return KeyEventResult.ignored;
     }
@@ -263,6 +265,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 _c.seek(start ? plan.sermonStart : plan.sermonEnd);
               },
               onShortMove: (s, d) => _c.moveShort(s, d, save: false),
+              selected: _c.selected,
+              onSelectShort: _c.selectShort,
+              onSelectCut: _c.selectCut,
+              onClearSelection: _c.clearSelection,
             ),
           ],
         ),

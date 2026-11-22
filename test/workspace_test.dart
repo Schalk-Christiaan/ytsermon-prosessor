@@ -82,7 +82,7 @@ void main() {
     for (final (w, h) in [(1100.0, 720.0), (1280.0, 720.0), (1920.0, 1080.0)]) {
       testWidgets('no overflow at $w x $h ${b.name}', (t) async {
         await open(t, w, h, b: b);
-        for (final tab in ['shorts', 'cuts', 'output', 'transcript']) {
+        for (final tab in ['info', 'transcript']) {
           if (w >= 1280) {
             await t.tap(k('tab-$tab'));
             await t.pump();
