@@ -1490,6 +1490,60 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Kies alles'**
   String get selectAll;
+
+  /// No description provided for @groupFull.
+  ///
+  /// In af, this message translates to:
+  /// **'Volle preke'**
+  String get groupFull;
+
+  /// No description provided for @groupShorts.
+  ///
+  /// In af, this message translates to:
+  /// **'Shorts'**
+  String get groupShorts;
+
+  /// No description provided for @workGroupCount.
+  ///
+  /// In af, this message translates to:
+  /// **'{n, plural, =1{1 lêer} other{{n} lêers}} · {size}'**
+  String workGroupCount(int n, String size);
+
+  /// No description provided for @uploadPublic.
+  ///
+  /// In af, this message translates to:
+  /// **'YouTube (openbaar)'**
+  String get uploadPublic;
+
+  /// No description provided for @uploadShortsPublic.
+  ///
+  /// In af, this message translates to:
+  /// **'YouTube Shorts (openbaar)'**
+  String get uploadShortsPublic;
+
+  /// No description provided for @uploadUnlisted.
+  ///
+  /// In af, this message translates to:
+  /// **'YouTube (ongelys)'**
+  String get uploadUnlisted;
+
+  /// No description provided for @copyToFolder.
+  ///
+  /// In af, this message translates to:
+  /// **'Kopieer na gids…'**
+  String get copyToFolder;
+
+  /// No description provided for @workShare.
+  ///
+  /// In af, this message translates to:
+  /// **'Deel'**
+  String get workShare;
+
+  /// No description provided for @workCopied.
+  ///
+  /// In af, this message translates to:
+  /// **'{n, plural, =1{1 lêer} other{{n} lêers}} gekopieer'**
+  String workCopied(int n);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -62,6 +62,7 @@ List<String?> controlKeys(WidgetTester t, Finder root) {
 bool _enabled(Widget w) =>
     !(w is ButtonStyleButton && w.onPressed == null) &&
     !(w is IconButton && w.onPressed == null) &&
+    !(w is Checkbox && w.onChanged == null) &&
     !(w is TextField && w.enabled == false);
 
 /// Tab through [screen] once: every enabled control with a `ctl.` key must get the keyboard focus

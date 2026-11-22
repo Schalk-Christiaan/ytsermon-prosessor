@@ -45,6 +45,8 @@ class Job {
     this.status = JobStatus.wag,
     this.error,
     List<String>? log,
+    this.privacy,
+    this.only,
   }) : log = log ?? [];
   final String sermon;
   final JobKind kind;
@@ -55,6 +57,10 @@ class Job {
 
   /// Last 200 lines of technical detail.
   final List<String> log;
+
+  /// Upload only: YouTube privacy for this run (null = the setting) and the output files to send (null = all).
+  final String? privacy;
+  final List<String>? only;
 
   /// Appends [lines], keeping only the last 200.
   void addLog(Iterable<String> lines) {
@@ -68,6 +74,8 @@ class Job {
     'status': status.name,
     'error': error,
     'log': log,
+    if (privacy != null) 'privacy': privacy,
+    if (only != null) 'only': only,
   };
 
   factory Job.fromJson(Map<String, dynamic> j) => Job(
@@ -76,6 +84,8 @@ class Job {
     status: JobStatus.values.byName(j['status'] as String),
     error: j['error'] as String?,
     log: [...(j['log'] as List).cast<String>()],
+    privacy: j['privacy'] as String?,
+    only: (j['only'] as List?)?.cast<String>(),
   );
 }
 
@@ -90,6 +100,10 @@ class JobCtx {
   void phase(JobPhase p) => _queue.phase.value = p;
   void progress(double? v) => _queue.progress.value = v;
   void log(String line) => _queue.current?.addLog([line]);
+
+  /// The running job's upload options (see [Job.privacy], [Job.only]).
+  String? get privacy => _queue.current?.privacy;
+  List<String>? get only => _queue.current?.only;
 }
 
 typedef JobRun = Future<void> Function(JobCtx ctx);
@@ -188,9 +202,14 @@ class JobQueue extends ChangeNotifier {
   );
 
   /// Adds a job unless the same one is already waiting or running; call [start] to run.
-  void enqueue(String sermon, JobKind kind) {
+  void enqueue(
+    String sermon,
+    JobKind kind, {
+    String? privacy,
+    List<String>? only,
+  }) {
     if (hasPending(sermon, kind)) return;
-    jobs.add(Job(sermon, kind));
+    jobs.add(Job(sermon, kind, privacy: privacy, only: only));
     _persist();
     start();
   }
@@ -569,6 +588,7 @@ JobRun uploadJob(
   for (var i = 0; i < videos.length; i++) {
     final path = videos[i];
     if (store.byId(c.id)!.uploads.containsKey(path)) continue;
+    if (c.only != null && !c.only!.contains(path)) continue;
     final title = _videoTitle(plan, i);
     final session = File(p.join(store.root.path, c.id, 'upload-$i.json'));
     // A resumed session was already counted when it started.
@@ -577,7 +597,7 @@ JobRun uploadJob(
       File(path),
       title: title,
       description: description,
-      privacy: settings.privacy,
+      privacy: c.privacy ?? settings.privacy,
       session: session,
       onProgress: (f) => c.progress((i + f) / videos.length),
       cancel: c.cancel,
@@ -587,9 +607,11 @@ JobRun uploadJob(
   }
   final name = playlistFor(s, settings.rules);
   final latest = store.byId(c.id)!;
-  if (name != null && latest.playlist == null) {
+  final sermonId =
+      latest.uploads[videos.first]; // Shorts alone have no sermon to list
+  if (name != null && latest.playlist == null && sermonId != null) {
     final pl = (await yt.playlists())[name] ?? await yt.createPlaylist(name);
-    await yt.addToPlaylist(pl, latest.uploads[videos.first]!);
+    await yt.addToPlaylist(pl, sermonId);
     store.save(latest..playlist = name);
   }
 };

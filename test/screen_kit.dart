@@ -147,7 +147,10 @@ Widget prekeScreen(
       ])
         ChannelItem(id, 'Preek $id', 100),
     ]);
-  st.byId('ccccccccccc')!.outputs = ['/tmp/2026-11-15 Preek.mp4'];
+  st.byId('ccccccccccc')!.outputs = [
+    '/tmp/2026-11-15/Volle preek.mp4',
+    '/tmp/2026-11-15/Short 1.mp4',
+  ];
   final q = tc.$3;
   q.jobs.addAll([
     Job('ccccccccccc', JobKind.cut, status: JobStatus.klaar),
@@ -166,7 +169,8 @@ Widget prekeScreen(
     Job('bbbbbbbbbbb', JobKind.plan),
     if (audio) Job('ccccccccccc', JobKind.audio, status: JobStatus.klaar),
   ]);
-  if (audio) st.byId('ccccccccccc')!.outputs.add('/tmp/2026-11-15 Preek.mp3');
+  if (audio)
+    st.byId('ccccccccccc')!.outputs.add('/tmp/2026-11-15/Volle preek.mp3');
   q.current = q.jobs[2];
   q.phase.value = audio ? JobPhase.audio : JobPhase.download;
   q.progress.value = 0.42;

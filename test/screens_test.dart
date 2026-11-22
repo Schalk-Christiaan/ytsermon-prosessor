@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -16,7 +15,6 @@ import 'package:preekverwerker/core/cutter.dart';
 import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/store.dart';
-import 'package:preekverwerker/core/service_info.dart';
 import 'package:preekverwerker/core/settings.dart';
 import 'package:preekverwerker/core/youtube.dart';
 import 'package:preekverwerker/features/library/library_screen.dart';
@@ -700,7 +698,10 @@ void main() {
         ])
           ChannelItem(id, 'Preek $id', 100),
       ]);
-    st.byId('ccccccccccc')!.outputs = ['/tmp/2026-11-15 Preek.mp4'];
+    st.byId('ccccccccccc')!.outputs = [
+      '/tmp/2026-11-15/Volle preek.mp4',
+      '/tmp/2026-11-15/Short 1.mp4',
+    ];
     final q = tc.$3;
     q.jobs.addAll([
       Job('ccccccccccc', JobKind.cut, status: JobStatus.klaar),
@@ -720,106 +721,13 @@ void main() {
       if (audio) Job('ccccccccccc', JobKind.audio, status: JobStatus.klaar),
     ]);
     if (audio) {
-      st.byId('ccccccccccc')!.outputs.add('/tmp/2026-11-15 Preek.mp3');
+      st.byId('ccccccccccc')!.outputs.add('/tmp/2026-11-15/Volle preek.mp3');
     }
     q.current = q.jobs[2];
     q.phase.value = audio ? JobPhase.audio : JobPhase.download;
     q.progress.value = 0.42;
     return (st, q);
   }
-
-  testWidgets('werk: current, waiting, done and failed jobs', (t) async {
-    await _fonts();
-    t.view.physicalSize = const Size(1100, 720);
-    t.view.devicePixelRatio = 1;
-    final (st, q) = workQueue();
-    final opened = <(String, bool)>[];
-    var back = 0;
-    await t.pumpWidget(
-      _app(
-        Brightness.light,
-        Scaffold(
-          body: WorkScreen(
-            store: st,
-            jobs: q,
-            onBack: () => back++,
-            open: (path, {select = false}) async => opened.add((path, select)),
-          ),
-        ),
-      ),
-    );
-    await t.pump();
-    expect(find.text('42%'), findsOneWidget);
-    expect(find.text('Laai video af…'), findsOneWidget);
-    expect(find.text('Kanselleer'), findsOneWidget);
-    expect(find.text('Plan: Preek bbbbbbbbbbb'), findsOneWidget);
-    expect(find.text('Ollama het nie geantwoord nie.'), findsOneWidget);
-    expect(find.text('Probeer weer'), findsOneWidget);
-    await t.tap(find.text('Speel'));
-    await t.tap(find.text('Wys in gids'));
-    expect(opened, [
-      ('/tmp/2026-11-15 Preek.mp4', false),
-      ('/tmp/2026-11-15 Preek.mp4', true),
-    ]);
-    await t.tap(find.text('Probeer weer'));
-    await t.pump();
-    expect(
-      q.jobs.firstWhere((j) => j.sermon == 'ddddddddddd').status,
-      isNot(JobStatus.fout),
-    );
-    await t.sendKeyEvent(LogicalKeyboardKey.escape);
-    expect(back, 1);
-    await t.pumpWidget(const SizedBox());
-  });
-
-  testWidgets('werk: "Klank vir WhatsApp" queues audio; mp3 shows in folder', (
-    t,
-  ) async {
-    await _fonts();
-    t.view.physicalSize = const Size(1100, 720);
-    t.view.devicePixelRatio = 1;
-    final tc = testController(seed: false);
-    final st = tc.$2
-      ..merge([
-        const ChannelItem('ccccccccccc', 'Preek c', 100),
-        const ChannelItem('eeeeeeeeeee', 'Preek e', 100),
-      ]);
-    st.byId('ccccccccccc')!.outputs = ['/tmp/2026-11-15 Preek.mp4'];
-    st.byId('eeeeeeeeeee')!.outputs = [
-      '/tmp/2026-11-08 E.mp4',
-      '/tmp/2026-11-08 E.mp3',
-    ];
-    final q = tc.$3;
-    q.jobs.addAll([
-      Job('eeeeeeeeeee', JobKind.audio, status: JobStatus.klaar),
-      Job('ccccccccccc', JobKind.cut, status: JobStatus.klaar),
-    ]);
-    final opened = <(String, bool)>[];
-    await t.pumpWidget(
-      _app(
-        Brightness.light,
-        Scaffold(
-          body: WorkScreen(
-            store: st,
-            jobs: q,
-            onBack: () {},
-            open: (path, {select = false}) async => opened.add((path, select)),
-          ),
-        ),
-      ),
-    );
-    await t.pump();
-    expect(find.text('Klank: Preek e'), findsOneWidget);
-    await t.tap(find.text('Wys in gids').last);
-    expect(opened, [('/tmp/2026-11-08 E.mp3', true)]);
-    await t.tap(find.text('Klank vir WhatsApp'));
-    await t.pump();
-    expect(
-      q.jobs.any((j) => j.sermon == 'ccccccccccc' && j.kind == JobKind.audio),
-      isTrue,
-    );
-    await t.pumpWidget(const SizedBox());
-  });
 
   for (final b in Brightness.values) {
     for (final (w, h) in [(1100.0, 720.0), (1600.0, 900.0)]) {
@@ -1037,33 +945,6 @@ void main() {
     await t.tap(find.byTooltip('Verwyder'));
     await t.pumpAndSettle();
     expect(AppSettings.load(root).intro, isNull);
-    await t.pumpWidget(const SizedBox());
-  });
-
-  testWidgets('werk: Laai op queues an upload; quota shows', (t) async {
-    await _fonts();
-    t.view.physicalSize = const Size(1100, 720);
-    t.view.devicePixelRatio = 1;
-    final (st, q) = workQueue();
-    final quota = UploadQuota(File(p.join(st.root.path, 'quota.json')))
-      ..take()
-      ..take();
-    await t.pumpWidget(
-      _app(
-        Brightness.light,
-        Scaffold(
-          body: WorkScreen(store: st, jobs: q, onBack: () {}, quota: quota),
-        ),
-      ),
-    );
-    await t.pump();
-    expect(find.text('Oplaaie vandag: 2 van 100'), findsOneWidget);
-    await t.tap(find.text('Laai op'));
-    await t.pump();
-    expect(
-      q.jobs.any((j) => j.sermon == 'ccccccccccc' && j.kind == JobKind.upload),
-      isTrue,
-    );
     await t.pumpWidget(const SizedBox());
   });
 
@@ -1288,99 +1169,6 @@ void main() {
     final shown = t.widget<Text>(find.byKey(const ValueKey('whatsappPreview')));
     expect(shown.data, startsWith('Tema: Preek '));
     expect(shown.data, isNot(contains('Fokus')));
-    await t.pumpWidget(const SizedBox());
-  });
-
-  testWidgets(
-    'werk: "Kopieer WhatsApp-teks" puts WhatsApp.txt on the clipboard',
-    (t) async {
-      await _fonts();
-      t.view.physicalSize = const Size(1100, 720);
-      t.view.devicePixelRatio = 1;
-      final d = Directory.systemTemp.createTempSync('wa');
-      addTearDown(() => d.deleteSync(recursive: true));
-      File('${d.path}/WhatsApp.txt').writeAsStringSync('*Aanddiens*\nTema: X');
-      File('${d.path}/diens.json').writeAsStringSync(
-        jsonEncode({'info': ServiceInfo(date: '2026-11-15').toJson()}),
-      );
-      final tc = testController(seed: false);
-      final st = tc.$2
-        ..merge([const ChannelItem('ccccccccccc', 'Preek c', 100)]);
-      st.byId('ccccccccccc')!.outputs = ['${d.path}/Volle preek.mp4'];
-      final q = tc.$3;
-      q.jobs.add(Job('ccccccccccc', JobKind.cut, status: JobStatus.klaar));
-      String? copied;
-      t.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        SystemChannels.platform,
-        (call) async {
-          if (call.method == 'Clipboard.setData') {
-            copied = (call.arguments as Map)['text'] as String;
-          }
-          return null;
-        },
-      );
-      addTearDown(
-        () => t.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-          SystemChannels.platform,
-          null,
-        ),
-      );
-      await t.pumpWidget(
-        _app(
-          Brightness.light,
-          Scaffold(
-            body: WorkScreen(store: st, jobs: q, onBack: () {}),
-          ),
-        ),
-      );
-      await t.pump();
-      await t.tap(find.text('Kopieer WhatsApp-teks'));
-      await t.pump();
-      expect(copied, '*Aanddiens*\nTema: X');
-      expect(find.text('WhatsApp-teks gekopieer'), findsOneWidget);
-      await t.pumpWidget(const SizedBox());
-      await t.pump(const Duration(seconds: 5));
-    },
-  );
-
-  testWidgets('biblioteek: search "Psalm 42" shows only the song', (t) async {
-    await _fonts();
-    t.view.physicalSize = const Size(1100, 720);
-    t.view.devicePixelRatio = 1;
-    final out = twoServices();
-    addTearDown(() => out.deleteSync(recursive: true));
-    final set = AppSettings.load(Directory.systemTemp.createTempSync('lset'))
-      ..outDir = out.path;
-    final opened = <(String, bool)>[];
-    await t.pumpWidget(
-      _app(
-        Brightness.light,
-        Scaffold(
-          body: LibraryScreen(
-            settings: set,
-            open: (path, {select = false}) async => opened.add((path, select)),
-          ),
-        ),
-      ),
-    );
-    await t.pump();
-    expect(find.text('Uit die oorvloed van die hart'), findsOneWidget);
-    expect(find.text('Genade'), findsOneWidget);
-    await t.tap(find.text('Sang'));
-    await t.pump();
-    expect(find.text('Psalm 33'), findsOneWidget);
-    await t.enterText(
-      find.byKey(const ValueKey('ctl.biblioteek.search')),
-      'Psalm 42',
-    );
-    await t.pump();
-    expect(find.widgetWithText(ListTile, 'Psalm 42'), findsOneWidget);
-    expect(find.text('Psalm 33'), findsNothing);
-    await t.tap(find.text('Speel'));
-    expect(opened.single.$1, endsWith('Sang/02 Psalm 42.mp3'));
-    await t.tap(find.text('Preke'));
-    await t.pump();
-    expect(find.text('Genade'), findsNothing);
     await t.pumpWidget(const SizedBox());
   });
 

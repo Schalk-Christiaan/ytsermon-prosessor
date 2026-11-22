@@ -680,6 +680,7 @@ void main() {
       JobQueue q, {
       void Function()? onBack,
       List<String>? opened,
+      Future<String?> Function()? pickDir,
     }) async {
       await loadFonts();
       setView(t, 1100, 900);
@@ -693,6 +694,7 @@ void main() {
               store: st,
               jobs: q,
               onBack: onBack ?? () {},
+              pickDir: pickDir ?? () async => null,
               open: (path, {select = false}) async =>
                   opened?.add('${select ? 'show:' : 'play:'}$path'),
             ),
@@ -702,32 +704,68 @@ void main() {
       await t.pump();
     }
 
-    testWidgets('done cut: play, show, audio and upload act on the output', (
-      t,
-    ) async {
-      final (st, q) = workQueue();
-      final opened = <String>[];
-      await werk(t, st, q, opened: opened);
-      await tapKey(t, 'werk.play');
-      await tapKey(t, 'werk.show');
-      expect(opened, [
-        'play:/tmp/2026-11-15 Preek.mp4',
-        'show:/tmp/2026-11-15 Preek.mp4',
-      ]);
-      await tapKey(t, 'werk.audio');
-      expect(
-        q.jobs.any((j) => j.kind == JobKind.audio && j.sermon == 'ccccccccccc'),
-        isTrue,
-      );
-      await tapKey(t, 'werk.upload');
-      expect(
-        q.jobs.any(
-          (j) => j.kind == JobKind.upload && j.sermon == 'ccccccccccc',
-        ),
-        isTrue,
-      );
-      await t.pump(const Duration(seconds: 3));
-    });
+    testWidgets(
+      'groups: counts, select-all per group, menus act on the picks',
+      (t) async {
+        final (st, q) = workQueue(audio: true);
+        final opened = <String>[];
+        await werk(t, st, q, opened: opened);
+        String count(String g) =>
+            t.widget<Text>(find.byKey(ValueKey('werk.count-$g'))).data!;
+        expect(count('full'), startsWith('1 lêer'));
+        expect(count('shorts'), startsWith('1 lêer'));
+        expect(count('audio'), startsWith('1 lêer'));
+        await tapKey(t, 'werk.play');
+        expect(opened, ['play:/tmp/2026-11-15/Volle preek.mp4']);
+        // select-all of one group touches only that group
+        await tapKey(t, 'werk.select-shorts');
+        bool? box(String g) => t.widget<Checkbox>(key('werk.select-$g')).value;
+        expect(
+          [box('full'), box('shorts'), box('audio')],
+          [false, true, false],
+        );
+        await tapKey(t, 'werk.select-shorts');
+        expect(box('shorts'), isFalse);
+        for (final g in ['full', 'audio']) {
+          await tapKey(t, 'werk.select-$g');
+          expect(box(g), isTrue);
+          await tapKey(t, 'werk.select-$g');
+        }
+        await tapKey(t, 'werk.select');
+        expect(box('full'), isTrue);
+        // full menu: upload public / unlisted, audio, show
+        await tapKey(t, 'werk.menu-full');
+        await tapKey(t, 'werk.upload-public');
+        final up = q.jobs.lastWhere((j) => j.kind == JobKind.upload);
+        expect(up.privacy, 'public');
+        expect(up.only, ['/tmp/2026-11-15/Volle preek.mp4']);
+        q.jobs.remove(up);
+        await tapKey(t, 'werk.menu-full');
+        await tapKey(t, 'werk.upload-unlisted');
+        expect(
+          q.jobs.lastWhere((j) => j.kind == JobKind.upload).privacy,
+          'unlisted',
+        );
+        await tapKey(t, 'werk.menu-full');
+        await tapKey(t, 'werk.show');
+        expect(opened.last, 'show:/tmp/2026-11-15/Volle preek.mp4');
+        await tapKey(t, 'werk.menu-full');
+        await tapKey(t, 'werk.audio');
+        expect(
+          q.jobs.where(
+            (j) => j.kind == JobKind.audio && j.sermon == 'ccccccccccc',
+          ),
+          hasLength(2),
+        );
+        // shorts menu has no selection: acts on all its items
+        await tapKey(t, 'werk.menu-shorts');
+        await tapKey(t, 'werk.upload-public');
+        expect(q.jobs.lastWhere((j) => j.kind == JobKind.upload).only, [
+          '/tmp/2026-11-15/Short 1.mp4',
+        ]);
+        await t.pump(const Duration(seconds: 3));
+      },
+    );
 
     testWidgets('failed job: retry requeues it and the log opens', (t) async {
       final (st, q) = workQueue();
@@ -755,9 +793,13 @@ void main() {
         final st = tc.$2
           ..merge([const ChannelItem('ccccccccccc', 'Preek c', 100)]);
         final file = '${d.path}/Volle preek.mp4';
+        final mp3 = '${d.path}/Volle preek.mp3';
+        File(mp3).writeAsBytesSync([1, 2, 3]);
         st.byId('ccccccccccc')!
-          ..outputs = [file]
+          ..outputs = [file, mp3]
           ..uploads = {file: 'abc123'};
+        final target = Directory.systemTemp.createTempSync('to');
+        addTearDown(() => target.deleteSync(recursive: true));
         final q = tc.$3;
         q.jobs.addAll([
           Job('ccccccccccc', JobKind.cut, status: JobStatus.klaar),
@@ -780,11 +822,27 @@ void main() {
         );
         final opened = <String>[];
         var back = 0;
-        await werk(t, st, q, opened: opened, onBack: () => back++);
+        await werk(
+          t,
+          st,
+          q,
+          opened: opened,
+          onBack: () => back++,
+          pickDir: () async => target.path,
+        );
         await tapKey(t, 'werk.open-youtube');
         expect(opened, ['play:https://studio.youtube.com/video/abc123/edit']);
+        await tapKey(t, 'werk.menu-audio');
         await tapKey(t, 'werk.copy');
         expect(copied, '*Aanddiens*\nTema: X');
+        await tapKey(t, 'werk.menu-audio');
+        await t.runAsync(() async {
+          cover(['werk.copy-to']);
+          await t.tap(key('werk.copy-to'));
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+        });
+        await t.pump();
+        expect(File('${target.path}/Volle preek.mp3').existsSync(), isTrue);
         await t.sendKeyEvent(LogicalKeyboardKey.escape);
         expect(back, 1);
         shortcutsCovered.add('werk: Escape');

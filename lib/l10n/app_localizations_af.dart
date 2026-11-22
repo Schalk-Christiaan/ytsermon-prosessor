@@ -821,4 +821,47 @@ class LAf extends L {
 
   @override
   String get selectAll => 'Kies alles';
+
+  @override
+  String get groupFull => 'Volle preke';
+
+  @override
+  String get groupShorts => 'Shorts';
+
+  @override
+  String workGroupCount(int n, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n lêers',
+      one: '1 lêer',
+    );
+    return '$_temp0 · $size';
+  }
+
+  @override
+  String get uploadPublic => 'YouTube (openbaar)';
+
+  @override
+  String get uploadShortsPublic => 'YouTube Shorts (openbaar)';
+
+  @override
+  String get uploadUnlisted => 'YouTube (ongelys)';
+
+  @override
+  String get copyToFolder => 'Kopieer na gids…';
+
+  @override
+  String get workShare => 'Deel';
+
+  @override
+  String workCopied(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n lêers',
+      one: '1 lêer',
+    );
+    return '$_temp0 gekopieer';
+  }
 }

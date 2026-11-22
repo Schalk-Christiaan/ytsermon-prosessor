@@ -546,5 +546,31 @@
       }
     }
   },
-  "selectAll": "Kies alles"
+  "selectAll": "Kies alles",
+  "groupFull": "Volle preke",
+  "groupShorts": "Shorts",
+  "workGroupCount": "{n, plural, =1{1 lêer} other{{n} lêers}} · {size}",
+  "@workGroupCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadPublic": "YouTube (openbaar)",
+  "uploadShortsPublic": "YouTube Shorts (openbaar)",
+  "uploadUnlisted": "YouTube (ongelys)",
+  "copyToFolder": "Kopieer na gids…",
+  "workShare": "Deel",
+  "workCopied": "{n, plural, =1{1 lêer} other{{n} lêers}} gekopieer",
+  "@workCopied": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }
