@@ -5,6 +5,7 @@
 //   skryf: —
 //   doel: gedeelde vorderingswyer: stappelys van die taak se fases (huidige vet), balk met persentasie, detailreël, begintyd, onbepaald-met-woorde en uitvoubare besonderhede (laaste 20 reëls)
 //   status: bou
+import 'pixel_art.dart';
 import 'pixel_scenes.dart';
 
 import 'package:flutter/material.dart';
@@ -40,6 +41,47 @@ String _step(L l, JobPhase p) => switch (p) {
   JobPhase.audio => l.stepAudio,
   JobPhase.upload => l.stepUpload,
 };
+
+/// The small form of [JobProgress] for a list row or card: sheep, "● Aflaai 42%" and a thin bar.
+class MiniProgress extends StatelessWidget {
+  const MiniProgress({super.key, required this.jobs});
+  final JobQueue jobs;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context), th = Theme.of(context);
+    return ListenableBuilder(
+      listenable: Listenable.merge([jobs.phase, jobs.progress]),
+      builder: (context, _) {
+        final v = jobs.progress.value;
+        final steps = stepsOf(jobs.current?.kind ?? JobKind.plan);
+        final text = '● ${_step(l, jobs.phase.value ?? steps.first)}';
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const PixelSprite(sheep, scale: 2),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    v == null ? text : '$text ${l.percent((v * 100).round())}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: th.textTheme.labelMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            ProgressLine(value: v),
+          ],
+        );
+      },
+    );
+  }
+}
 
 /// "begin 14:02": the clock time a job began (no ticking timer, so nothing rebuilds each second).
 String startedLabel(L l, DateTime? t) {

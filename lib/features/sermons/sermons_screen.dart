@@ -9,6 +9,7 @@ import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
 
+import '../../app/job_progress.dart' show MiniProgress;
 import '../../app/pixel_scenes.dart';
 
 import 'package:flutter/material.dart';
@@ -731,6 +732,13 @@ class _SermonsScreenState extends State<SermonsScreen> {
   );
 
   Widget _status(L l, ThemeData th, Sermon s) {
+    final cur = widget.jobs.current;
+    if (cur != null && cur.sermon == s.id && cur.status == JobStatus.besig) {
+      return MiniProgress(
+        key: const ValueKey('preke.mini-progress'),
+        jobs: widget.jobs,
+      );
+    }
     final queued = widget.jobs.hasPending(s.id);
     return Row(
       mainAxisSize: MainAxisSize.min,
