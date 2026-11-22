@@ -1802,6 +1802,72 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Versteek besonderhede'**
   String get progressHide;
+
+  /// No description provided for @whisperLabel.
+  ///
+  /// In af, this message translates to:
+  /// **'Spraakmodel'**
+  String get whisperLabel;
+
+  /// No description provided for @whisperReady.
+  ///
+  /// In af, this message translates to:
+  /// **'Gereed'**
+  String get whisperReady;
+
+  /// No description provided for @whisperMissing.
+  ///
+  /// In af, this message translates to:
+  /// **'Nie afgelaai nie. Nodig as \'n video geen onderskrifte het nie.'**
+  String get whisperMissing;
+
+  /// No description provided for @whisperDownload.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai spraakmodel af'**
+  String get whisperDownload;
+
+  /// No description provided for @whisperDownloading.
+  ///
+  /// In af, this message translates to:
+  /// **'Laai af… {percent} %'**
+  String whisperDownloading(int percent);
+
+  /// No description provided for @whisperDownloadFailed.
+  ///
+  /// In af, this message translates to:
+  /// **'Die spraakmodel kon nie afgelaai word nie. Kyk die internet en probeer weer.'**
+  String get whisperDownloadFailed;
+
+  /// No description provided for @transcriptLocalBadge.
+  ///
+  /// In af, this message translates to:
+  /// **'Plaaslike transkripsie'**
+  String get transcriptLocalBadge;
+
+  /// No description provided for @transcribeLocal.
+  ///
+  /// In af, this message translates to:
+  /// **'Transkribeer plaaslik'**
+  String get transcribeLocal;
+
+  /// No description provided for @transcribeLocalConfirm.
+  ///
+  /// In af, this message translates to:
+  /// **'Die onderskrifte van YouTube word vervang deur \'n transkripsie wat op hierdie rekenaar gemaak word. Die ou lêer bly as .bak in die preek se gids. Dit kan \'n paar minute duur.'**
+  String get transcribeLocalConfirm;
+
+  /// No description provided for @transcribeLocalRunning.
+  ///
+  /// In af, this message translates to:
+  /// **'Transkribeer… {percent} %'**
+  String transcribeLocalRunning(int percent);
+
+  /// No description provided for @transcribeLocalBusy.
+  ///
+  /// In af, this message translates to:
+  /// **'Wag tot die lopende taak klaar is.'**
+  String get transcribeLocalBusy;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

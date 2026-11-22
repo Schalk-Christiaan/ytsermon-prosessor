@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:preekverwerker/core/tools.dart';
@@ -181,4 +182,56 @@ void videoEncoderTests() {
     await videoEncoder();
     expect(File(p.join(d.path, 'runs')).readAsLinesSync(), hasLength(2));
   }, skip: skip);
+
+  group('pullWhisperModel', () {
+    late HttpServer srv;
+    late Directory d;
+    setUp(() async {
+      d = Directory.systemTemp.createTempSync('pw');
+      srv = await HttpServer.bind('127.0.0.1', 0);
+      srv.listen((r) {
+        r.response
+          ..contentLength = 11
+          ..write('hello model')
+          ..close();
+      });
+    });
+    tearDown(() async {
+      await srv.close(force: true);
+      d.deleteSync(recursive: true);
+    });
+    String url(HttpServer s) => 'http://127.0.0.1:${s.port}/m.bin';
+
+    test(
+      'right checksum: file is in place, .part is gone, progress reaches 1',
+      () async {
+        final seen = <double>[];
+        final dest = File(p.join(d.path, 'models', 'm.bin'));
+        await pullWhisperModel(
+          dest,
+          onProgress: seen.add,
+          url: url(srv),
+          sha256Hex: sha256.convert(utf8.encode('hello model')).toString(),
+        );
+        expect(dest.readAsStringSync(), 'hello model');
+        expect(File('${dest.path}.part').existsSync(), isFalse);
+        expect(seen.last, 1.0);
+      },
+    );
+
+    test('wrong checksum: error, nothing left behind', () async {
+      final dest = File(p.join(d.path, 'm.bin'));
+      await expectLater(
+        pullWhisperModel(
+          dest,
+          onProgress: (_) {},
+          url: url(srv),
+          sha256Hex: 'ab',
+        ),
+        throwsA(isA<HttpException>()),
+      );
+      expect(dest.existsSync(), isFalse);
+      expect(File('${dest.path}.part').existsSync(), isFalse);
+    });
+  });
 }

@@ -3,9 +3,8 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: —
-//   doel: transkripsiestrook: onderskrifreëls met tyd, klik soek daarheen, gebede gemerk, huidige reël uitgelig; leeg = stel self
-//   status: klaar
-//   bewys: 7236634
+//   doel: transkripsiestrook: onderskrifreëls met tyd, klik soek daarheen, gebede gemerk, huidige reël uitgelig; kop met "Plaaslike transkripsie"-merk en "Transkribeer plaaslik"; leeg = stel self
+//   status: bou
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -21,7 +20,15 @@ class Transcript extends StatelessWidget {
     required this.prayers,
     required this.position,
     required this.onSeek,
+    this.local = false,
+    this.progress,
+    this.onTranscribeLocal,
   });
+
+  /// The strip is whisper's transcript (badge); [progress] is 0..1 while it runs; [onTranscribeLocal] null hides the button.
+  final bool local;
+  final double? progress;
+  final VoidCallback? onTranscribeLocal;
 
   final List<Segment> segments;
   final List<Span> prayers;
@@ -34,6 +41,51 @@ class Transcript extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = L.of(context);
     final th = Theme.of(context);
+    final head = _header(l, th);
+    final body = _body(context, l, th);
+    if (head == null) return body;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        head,
+        Expanded(child: body),
+      ],
+    );
+  }
+
+  Widget? _header(L l, ThemeData th) {
+    if (!local && onTranscribeLocal == null) return null;
+    final running = progress != null;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 4,
+        children: [
+          if (local)
+            Text(
+              l.transcriptLocalBadge,
+              style: th.textTheme.labelLarge?.copyWith(
+                color: th.colorScheme.primary,
+              ),
+            ),
+          if (onTranscribeLocal != null)
+            TextButton(
+              key: const ValueKey('ctl.hersien.transcribe-local'),
+              onPressed: running ? null : onTranscribeLocal,
+              child: Text(
+                running
+                    ? l.transcribeLocalRunning((progress! * 100).round())
+                    : l.transcribeLocal,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _body(BuildContext context, L l, ThemeData th) {
     if (segments.isEmpty) {
       return Center(
         child: Padding(

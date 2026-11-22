@@ -435,6 +435,54 @@ void main() {
       cover(['hersien.transcript-line']);
     });
 
+    testWidgets(
+      'Transkribeer plaaslik: cancel keeps, confirm swaps the captions and keeps .bak',
+      (t) async {
+        final tmp = Directory.systemTemp.createTempSync('tl');
+        addTearDown(() => tmp.deleteSync(recursive: true));
+        final model = File('${tmp.path}/m.bin')..writeAsStringSync('x');
+        final c = readyController(
+          whisperModel: model,
+          transcribe:
+              (video, out, {required model, whisper, onProgress}) async {
+                onProgress?.call(0.5);
+                return out..writeAsStringSync(
+                  '{"events":[{"tStartMs":0,"dDurationMs":1000,"segs":[{"utf8":"Nuwe teks"}]}]}',
+                );
+              },
+        );
+        await hersien(t, c: c);
+        final af = c.meta!.captions..writeAsStringSync('{"events":[]}');
+        await tapKey(t, 'hersien.tab-transcript');
+        expect(find.text('Plaaslike transkripsie'), findsNothing);
+        await tapKey(t, 'hersien.transcribe-local');
+        await tapKey(t, 'hersien.transcribe-local-cancel');
+        expect(af.existsSync(), isTrue);
+        await tapKey(t, 'hersien.transcribe-local');
+        await tapKey(t, 'hersien.transcribe-local-confirm');
+        await t.pump(const Duration(seconds: 1));
+        expect(c.localTranscript, isTrue);
+        expect(c.segments.single.text, 'Nuwe teks');
+        expect(File('${af.path}.bak').existsSync(), isTrue);
+        expect(find.text('Plaaslike transkripsie'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Transkribeer plaaslik without a model: plain message, nothing changes',
+      (t) async {
+        final c = readyController(whisperModel: File('/nonexistent/m.bin'));
+        await hersien(t, c: c);
+        c.meta!.captions.writeAsStringSync('{"events":[]}');
+        await tapKey(t, 'hersien.tab-transcript');
+        await tapKey(t, 'hersien.transcribe-local');
+        await tapKey(t, 'hersien.transcribe-local-confirm');
+        expect(find.textContaining('Laai spraakmodel af'), findsOneWidget);
+        expect(c.localTranscript, isFalse);
+        await t.pump(const Duration(seconds: 5));
+      },
+    );
+
     testWidgets('shortcuts I, O, Space, Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y, arrows', (
       t,
     ) async {
@@ -1308,6 +1356,40 @@ void main() {
         await t.pump(const Duration(seconds: 5));
       },
     );
+  });
+
+  group('stelsel: spraakmodel', () {
+    testWidgets('download button shows progress and the row turns Gereed', (
+      t,
+    ) async {
+      await loadFonts();
+      setView(t, 1100, 900);
+      final tmp = Directory.systemTemp.createTempSync('wm');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final model = File('${tmp.path}/m.bin');
+      final gate = Completer<void>();
+      final (w, _) = settingsScreen(
+        system: SystemStatus(
+          probe: () async => [],
+          model: model,
+          pullModel: (dest, {required onProgress}) async {
+            onProgress(0.4);
+            await gate.future;
+            dest.writeAsStringSync('x');
+          },
+        ),
+      );
+      await t.pumpWidget(appWrap(Brightness.light, w));
+      await t.pump();
+      await tapKey(t, 'instellings.whisper-model');
+      expect(find.text('Laai af… 40 %'), findsOneWidget);
+      gate.complete();
+      await t.pump();
+      await t.pump();
+      expect(find.text('Gereed'), findsWidgets);
+      await t.pumpWidget(const SizedBox());
+      await t.pump(const Duration(seconds: 5));
+    });
   });
 
   group('opstelling', () {

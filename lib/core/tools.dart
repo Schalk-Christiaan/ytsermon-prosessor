@@ -10,6 +10,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 
 const kModel = 'qwen3:8b';
@@ -255,6 +256,51 @@ Future<void> pullModel({
     throw const HttpException('Model aflaai het voortydig gestop.');
   } finally {
     c.close(force: true);
+  }
+}
+
+/// Pinned download of [kWhisperModel] (SHA-256 from the Hugging Face file listing, navorsing/2026-11-22).
+const kWhisperModelUrl =
+    'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$kWhisperModel';
+const kWhisperModelSha256 =
+    '394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2';
+
+/// Downloads the whisper model to [dest] via a `.part` file, checks its SHA-256 and renames it; [onProgress] gets 0..1.
+/// [url] and [sha256Hex] are test seams.
+Future<void> pullWhisperModel(
+  File dest, {
+  required void Function(double) onProgress,
+  String url = kWhisperModelUrl,
+  String sha256Hex = kWhisperModelSha256,
+}) async {
+  dest.parent.createSync(recursive: true);
+  final part = File('${dest.path}.part');
+  final c = HttpClient();
+  try {
+    final req = await c.getUrl(Uri.parse(url));
+    final res = await req.close();
+    if (res.statusCode != 200) {
+      throw HttpException('Spraakmodel aflaai het misluk (${res.statusCode}).');
+    }
+    final sink = part.openWrite();
+    var got = 0;
+    try {
+      await for (final chunk in res) {
+        sink.add(chunk);
+        got += chunk.length;
+        if (res.contentLength > 0) onProgress(got / res.contentLength);
+      }
+    } finally {
+      await sink.close();
+    }
+    final sum = (await sha256.bind(part.openRead()).first).toString();
+    if (sum != sha256Hex) {
+      throw const HttpException('Spraakmodel is beskadig; probeer weer.');
+    }
+    part.renameSync(dest.path);
+  } finally {
+    c.close(force: true);
+    if (part.existsSync()) part.deleteSync();
   }
 }
 

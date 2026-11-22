@@ -374,6 +374,82 @@ void main() {
     });
   }
 
+  for (final b in Brightness.values) {
+    for (final (w, h) in [(1400.0, 700.0), (1600.0, 800.0)]) {
+      testWidgets('spraak ${b.name} ${w.toInt()}', (t) async {
+        await _fonts();
+        t.view.physicalSize = Size(w, h);
+        t.view.devicePixelRatio = 1;
+        final dir = Directory.systemTemp.createTempSync('sp');
+        addTearDown(() => dir.deleteSync(recursive: true));
+        File('${dir.path}/x.local.json3').writeAsStringSync('{"events":[]}');
+        final c = testController().$1
+          ..debugReady(
+            FetchedMeta('x', dir, {'title': 'Preek'}),
+            parseJson3(
+              File('test/fixtures/sample.af-orig.json3').readAsStringSync(),
+            ),
+            SermonPlan(
+              sermonStart: 1384,
+              sermonEnd: 3210,
+              title: 'Die genade van God in Christus',
+              description: 'Skriflesing en preek.',
+              shorts: [],
+            ),
+            3600,
+          );
+        final key = GlobalKey();
+        await t.pumpWidget(
+          _app(
+            b,
+            RepaintBoundary(
+              key: key,
+              child: Scaffold(body: ReviewScreen(controller: c)),
+            ),
+          ),
+        );
+        await t.pump(const Duration(seconds: 1));
+        await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-transcript')));
+        await t.pump(const Duration(milliseconds: 400));
+        expect(find.text('Plaaslike transkripsie'), findsOneWidget);
+        await _shot(
+          t,
+          key,
+          'hersien-transkripsie-plaaslik-${b.name}-${w.toInt()}',
+        );
+        await t.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('stelsel spraakmodel ${b.name} ${w.toInt()}', (t) async {
+        await _fonts();
+        t.view.physicalSize = Size(w, 520);
+        t.view.devicePixelRatio = 1;
+        final key = GlobalKey();
+        await t.pumpWidget(
+          _app(
+            b,
+            RepaintBoundary(
+              key: key,
+              child: Scaffold(
+                body: SystemStatus(
+                  probe: () async => const [
+                    ToolStatus('ollama', true, '0.12 \u00b7 qwen3:8b'),
+                    ToolStatus('encoder', true, 'h264_nvenc'),
+                  ],
+                  model: File('/nonexistent/ggml.bin'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await t.pumpAndSettle();
+        expect(t.takeException(), isNull);
+        expect(find.text('Laai spraakmodel af'), findsOneWidget);
+        await _shot(t, key, 'stelsel-spraakmodel-${b.name}-${w.toInt()}');
+      });
+    }
+  }
+
   testWidgets('handle moves with keys and drag, plan.json follows', (t) async {
     await _fonts();
     t.view.physicalSize = const Size(1100, 720);

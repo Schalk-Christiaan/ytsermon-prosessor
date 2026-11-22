@@ -12,6 +12,7 @@ import '../../app/motion.dart' show Reveal;
 import 'package:flutter/services.dart';
 
 import '../../core/captions.dart';
+import '../../core/jobs.dart' show friendlyError;
 import '../../core/models.dart';
 import '../../core/planner.dart';
 import '../../core/settings.dart';
@@ -43,6 +44,35 @@ class _PropertiesPanelState extends State<PropertiesPanel>
   void initState() {
     super.initState();
     c.addListener(_follow);
+  }
+
+  /// Asks first, then swaps YouTube's captions for whisper's (the controller keeps `.bak` files).
+  Future<void> _transcribeLocal(L l) async {
+    final m = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        content: Text(l.transcribeLocalConfirm),
+        actions: [
+          TextButton(
+            key: const ValueKey('ctl.hersien.transcribe-local-cancel'),
+            onPressed: () => Navigator.pop(d, false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            key: const ValueKey('ctl.hersien.transcribe-local-confirm'),
+            onPressed: () => Navigator.pop(d, true),
+            child: Text(l.transcribeLocal),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await c.transcribeLocally();
+    } on Object catch (e) {
+      m.showSnackBar(SnackBar(content: Text(l.errorGeneric(friendlyError(e)))));
+    }
   }
 
   /// Picking a Short or cut while Transkripsie is open jumps to Inligting.
@@ -115,6 +145,9 @@ class _PropertiesPanelState extends State<PropertiesPanel>
                           prayers: c.prayerMarks,
                           position: c.position,
                           onSeek: c.seek,
+                          local: c.localTranscript,
+                          progress: c.transcribing,
+                          onTranscribeLocal: () => _transcribeLocal(l),
                         ),
                       )
                     : Reveal(

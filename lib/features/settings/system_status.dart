@@ -3,9 +3,11 @@
 //   wanneer: Instellings → Stelsel
 //   groep: features | Skerms
 //   skryf: —
-//   doel: wys yt-dlp/ffmpeg/ffprobe/Ollama en die video-enkodeerder (GPU/CPU) met ikoon + woord (Gereed / Ontbreek); "Werk yt-dlp by"
+//   doel: wys yt-dlp/ffmpeg/ffprobe/Ollama en die video-enkodeerder (GPU/CPU) en die spraakmodel met ikoon + woord (Gereed / Ontbreek); "Laai spraakmodel af"; "Werk yt-dlp by"
 //   status: bou
 import '../../app/motion.dart';
+
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -33,7 +35,20 @@ Future<void> updateYtDlpSnack(BuildContext context) async {
 
 /// Shows yt-dlp, ffmpeg, ffprobe and Ollama as green or red; sized to its content so the page above scrolls as one.
 class SystemStatus extends StatefulWidget {
-  const SystemStatus({super.key, this.probe = probeAll});
+  const SystemStatus({
+    super.key,
+    this.probe = probeAll,
+    this.model,
+    this.pullModel = pullWhisperModel,
+  });
+
+  /// The whisper model file; null hides its row. [pullModel] is the test seam for its download.
+  final File? model;
+  final Future<void> Function(
+    File dest, {
+    required void Function(double) onProgress,
+  })
+  pullModel;
 
   /// Test seam: the real probes run processes, which a widget test cannot await.
   final Future<List<ToolStatus>> Function() probe;
@@ -44,6 +59,65 @@ class SystemStatus extends StatefulWidget {
 
 class _SystemStatusState extends State<SystemStatus> {
   late final Future<List<ToolStatus>> _f = widget.probe();
+  double? _pull; // 0..1 while the model downloads
+  String? _pullError;
+
+  /// "Laai spraakmodel af": the model download with progress, like Ollama's pull.
+  Future<void> _download(L l) async {
+    setState(() {
+      _pull = 0;
+      _pullError = null;
+    });
+    try {
+      await widget.pullModel(
+        widget.model!,
+        onProgress: (v) {
+          if (mounted) setState(() => _pull = v);
+        },
+      );
+    } on Object {
+      _pullError = l.whisperDownloadFailed;
+    }
+    if (mounted) setState(() => _pull = null);
+  }
+
+  Widget _modelRow(L l, ThemeData th) {
+    final has = widget.model!.existsSync();
+    final pulling = _pull != null;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(
+            has ? Icons.check_circle_rounded : Icons.error_rounded,
+            color: has
+                ? th.extension<AppTokens>()!.success
+                : th.colorScheme.error,
+          ),
+          const SizedBox(width: 16),
+          SizedBox(
+            width: 160,
+            child: Text(l.whisperLabel, style: th.textTheme.titleMedium),
+          ),
+          Expanded(
+            child: Text(has ? l.whisperReady : _pullError ?? l.whisperMissing),
+          ),
+          if (!has) ...[
+            const SizedBox(width: 16),
+            OutlinedButton(
+              key: const ValueKey('ctl.instellings.whisper-model'),
+              onPressed: pulling ? null : () => _download(l),
+              child: Text(
+                pulling
+                    ? l.whisperDownloading((_pull! * 100).round())
+                    : l.whisperDownload,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   String _text(L l, ToolStatus s) {
     if (s.name == 'encoder') {
@@ -102,6 +176,7 @@ class _SystemStatusState extends State<SystemStatus> {
               ],
             ),
           ),
+          if (widget.model != null) _modelRow(l, th),
           const SizedBox(height: 8),
           OutlinedButton(
             key: const ValueKey('ctl.instellings.update-ytdlp'),

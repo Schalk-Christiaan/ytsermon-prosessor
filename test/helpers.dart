@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:preekverwerker/core/channel.dart';
 import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/store.dart';
+import 'package:preekverwerker/core/transcribe.dart';
 import 'package:preekverwerker/features/review/review_controller.dart';
 
 /// A controller on a temp store with stubbed (instant) jobs; sermon `x` exists.
@@ -12,6 +13,15 @@ import 'package:preekverwerker/features/review/review_controller.dart';
   Stream<Duration>? positions,
   JobRun? cut,
   bool seed = true,
+  Future<File> Function(
+    File,
+    File, {
+    required File model,
+    String? whisper,
+    void Function(double)? onProgress,
+  })?
+  transcribe,
+  File? whisperModel,
 }) {
   final store = SermonStore(Directory.systemTemp.createTempSync('work'))
     ..load()
@@ -28,6 +38,9 @@ import 'package:preekverwerker/features/review/review_controller.dart';
     download: download ?? (m, {onProgress}) async => File('v.mp4'),
     openVideo: (_) async {},
     positions: positions,
+    transcribe: transcribe ?? transcribeLocal,
+    whisper: '/bin/true',
+    whisperModel: whisperModel,
   );
   return (c, store, jobs);
 }

@@ -3,7 +3,7 @@
 //   wanneer: Hersien-skerm
 //   groep: features | Skerms
 //   skryf: <app-support>/work/<id>/plan.json | die plan; elke wysiging stoor dadelik
-//   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit die etikette (analysis.json), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry
+//   doel: laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit die etikette (analysis.json), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plaaslike transkripsie (whisper) kan die onderskrifte vervang (.bak bly); plan en sny loop deur die werkry
 //   status: bou
 import 'dart:async';
 import 'dart:convert';
@@ -22,6 +22,8 @@ import '../../core/planner.dart';
 import '../../core/service_info.dart';
 import '../../core/sound.dart';
 import '../../core/store.dart';
+import '../../core/tools.dart';
+import '../../core/transcribe.dart';
 
 /// What Hersien shows: nothing chosen, loading, an error, no plan yet or the editor.
 enum ReviewState { empty, loading, error, unplanned, ready }
@@ -37,6 +39,9 @@ class ReviewController extends ChangeNotifier {
     this.download = downloadVideo,
     this.openVideo,
     this.positions,
+    this.transcribe = transcribeLocal,
+    this.whisper,
+    this.whisperModel,
   }) {
     position.addListener(_skipCuts);
   }
@@ -52,6 +57,64 @@ class ReviewController extends ChangeNotifier {
   download;
   final Future<void> Function(File video)? openVideo;
   final Stream<Duration>? positions;
+
+  /// Test seams for "Transkribeer plaaslik": the transcriber, the whisper-cli path (null = on PATH) and the model file.
+  final Future<File> Function(
+    File video,
+    File out, {
+    required File model,
+    String? whisper,
+    void Function(double frac)? onProgress,
+  })
+  transcribe;
+  final String? whisper;
+  final File? whisperModel;
+
+  /// 0..1 while the local transcription runs, else null.
+  double? transcribing;
+
+  /// True when the shown transcript is whisper's (no YouTube af-orig on disk).
+  bool get localTranscript {
+    final m = meta;
+    return m != null &&
+        !m.captions.existsSync() &&
+        m.localCaptions.existsSync();
+  }
+
+  /// Replaces the captions by a local whisper transcript (the old json3 files are kept as `.bak`) and reloads the
+  /// strip. Throws [StateError] with a plain message when the model or whisper-cli is missing, or a job is running
+  /// (one whisper process at a time).
+  Future<void> transcribeLocally() async {
+    final m = meta!;
+    final model = whisperModel ?? whisperModelFile(store.root);
+    checkWhisper(model, whisper);
+    if (jobs.current != null) {
+      throw StateError('Wag tot die lopende taak klaar is.');
+    }
+    transcribing = 0;
+    notifyListeners();
+    try {
+      final tmp = File('${m.localCaptions.path}.new');
+      await transcribe(
+        m.video,
+        tmp,
+        model: model,
+        whisper: whisper,
+        onProgress: (f) {
+          transcribing = f;
+          notifyListeners();
+        },
+      );
+      for (final old in [m.captions, m.localCaptions]) {
+        if (old.existsSync()) old.renameSync('${old.path}.bak');
+      }
+      tmp.renameSync(m.localCaptions.path);
+      segments = parseJson3(m.localCaptions.readAsStringSync());
+    } finally {
+      transcribing = null;
+      notifyListeners();
+    }
+  }
 
   /// "Werk op YouTube by": sends the plan's title and description to the uploaded videos; set by Shell (null = hidden).
   Future<int> Function(String id)? updateYouTube;

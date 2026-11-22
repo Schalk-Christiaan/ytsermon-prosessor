@@ -1010,4 +1010,44 @@ class LAf extends L {
 
   @override
   String get progressHide => 'Versteek besonderhede';
+
+  @override
+  String get whisperLabel => 'Spraakmodel';
+
+  @override
+  String get whisperReady => 'Gereed';
+
+  @override
+  String get whisperMissing =>
+      'Nie afgelaai nie. Nodig as \'n video geen onderskrifte het nie.';
+
+  @override
+  String get whisperDownload => 'Laai spraakmodel af';
+
+  @override
+  String whisperDownloading(int percent) {
+    return 'Laai af… $percent %';
+  }
+
+  @override
+  String get whisperDownloadFailed =>
+      'Die spraakmodel kon nie afgelaai word nie. Kyk die internet en probeer weer.';
+
+  @override
+  String get transcriptLocalBadge => 'Plaaslike transkripsie';
+
+  @override
+  String get transcribeLocal => 'Transkribeer plaaslik';
+
+  @override
+  String get transcribeLocalConfirm =>
+      'Die onderskrifte van YouTube word vervang deur \'n transkripsie wat op hierdie rekenaar gemaak word. Die ou lêer bly as .bak in die preek se gids. Dit kan \'n paar minute duur.';
+
+  @override
+  String transcribeLocalRunning(int percent) {
+    return 'Transkribeer… $percent %';
+  }
+
+  @override
+  String get transcribeLocalBusy => 'Wag tot die lopende taak klaar is.';
 }
