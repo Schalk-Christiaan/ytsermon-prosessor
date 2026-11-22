@@ -610,5 +610,34 @@
         "type": "int"
       }
     }
+  },
+  "groupsHeading": "Eie snitlyste",
+  "groupsHelp": "Maak 'n snitlys vir 'n reeks of 'n seisoen. 'n Preek kan in meer as een wees; by oplaai kom dit ook by hierdie snitlyste.",
+  "groupsEmpty": "Nog geen eie snitlyste nie.",
+  "groupAdd": "Nuwe snitlys",
+  "groupEditTitle": "Snitlys",
+  "groupNameLabel": "Naam",
+  "groupDescriptionLabel": "Beskrywing (opsioneel)",
+  "groupSave": "Stoor",
+  "groupRename": "Wysig",
+  "groupSermons": "Preke",
+  "groupDone": "Klaar",
+  "groupDelete": "Vee uit",
+  "groupDeleteAsk": "Vee \"{name}\" uit? Die preke self bly.",
+  "groupKeep": "Hou",
+  "groupSermonsTitle": "Preke in \"{name}\"",
+  "@groupDeleteAsk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@groupSermonsTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

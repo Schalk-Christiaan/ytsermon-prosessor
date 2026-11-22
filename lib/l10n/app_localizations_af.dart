@@ -885,4 +885,54 @@ class LAf extends L {
   String shortRow(int n, String time, int secs) {
     return 'Short $n · $time · $secs s';
   }
+
+  @override
+  String get groupsHeading => 'Eie snitlyste';
+
+  @override
+  String get groupsHelp =>
+      'Maak \'n snitlys vir \'n reeks of \'n seisoen. \'n Preek kan in meer as een wees; by oplaai kom dit ook by hierdie snitlyste.';
+
+  @override
+  String get groupsEmpty => 'Nog geen eie snitlyste nie.';
+
+  @override
+  String get groupAdd => 'Nuwe snitlys';
+
+  @override
+  String get groupEditTitle => 'Snitlys';
+
+  @override
+  String get groupNameLabel => 'Naam';
+
+  @override
+  String get groupDescriptionLabel => 'Beskrywing (opsioneel)';
+
+  @override
+  String get groupSave => 'Stoor';
+
+  @override
+  String get groupRename => 'Wysig';
+
+  @override
+  String get groupSermons => 'Preke';
+
+  @override
+  String get groupDone => 'Klaar';
+
+  @override
+  String get groupDelete => 'Vee uit';
+
+  @override
+  String groupDeleteAsk(String name) {
+    return 'Vee \"$name\" uit? Die preke self bly.';
+  }
+
+  @override
+  String get groupKeep => 'Hou';
+
+  @override
+  String groupSermonsTitle(String name) {
+    return 'Preke in \"$name\"';
+  }
 }

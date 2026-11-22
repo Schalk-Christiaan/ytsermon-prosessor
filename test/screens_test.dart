@@ -822,7 +822,7 @@ void main() {
     t,
   ) async {
     await _fonts();
-    t.view.physicalSize = const Size(1100, 720);
+    t.view.physicalSize = const Size(1100, 1000);
     t.view.devicePixelRatio = 1;
     final st = playlistStore();
     final set = AppSettings.load(st.root);

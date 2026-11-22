@@ -2,10 +2,9 @@
 //   soort: skerm
 //   wanneer: Snitlyste (rail)
 //   groep: features | Skerms
-//   skryf: <werkmap>/settings.json | reëls en jabloon
-//   doel: snitlysreëls aan/af en in volgorde, voorskou hoeveel preke in elke snitlys val, beskrywingsjabloon, WhatsApp-sjabloon met voorskou
-//   status: klaar
-//   bewys: 7236634
+//   skryf: <werkmap>/settings.json | reëls, groepe en jabloon
+//   doel: snitlysreëls aan/af en in volgorde, eie snitlysgroepe (skep, wysig, preke by, uitvee), voorskou hoeveel preke in elke snitlys val, beskrywingsjabloon, WhatsApp-sjabloon met voorskou
+//   status: bou
 import 'package:flutter/material.dart';
 
 import '../../core/cutter.dart';
@@ -115,6 +114,23 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
                       ),
                   ],
                 ),
+                _heading(th, l.groupsHeading),
+                Text(l.groupsHelp, style: th.textTheme.bodyMedium),
+                const SizedBox(height: 8),
+                if (widget.settings.groups.isEmpty)
+                  Text(l.groupsEmpty, style: th.textTheme.bodyLarge),
+                for (final (i, g) in widget.settings.groups.indexed)
+                  _group(th, l, i, g),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('ctl.snitlyste.group-add'),
+                    onPressed: () => _edit(null),
+                    icon: const Icon(Icons.add_rounded),
+                    label: Text(l.groupAdd),
+                  ),
+                ),
                 _heading(th, l.playlistPreview),
                 for (final e in named) _count(th, l, e.key!, e.value),
                 if (none > 0) _count(th, l, l.noPlaylist, none, quiet: true),
@@ -201,6 +217,183 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
         );
       },
     );
+  }
+
+  void _saveGroups() {
+    widget.settings.save();
+    setState(() {});
+  }
+
+  /// A group row: name, count, and its actions.
+  Widget _group(ThemeData th, L l, int i, PlaylistGroup g) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(g.name, style: th.textTheme.titleMedium),
+              if (g.description.isNotEmpty)
+                Text(g.description, style: th.textTheme.bodyMedium),
+            ],
+          ),
+        ),
+        Text(
+          l.sermonCount(g.sermons.length),
+          style: th.textTheme.bodyMedium?.copyWith(
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+        const SizedBox(width: 8),
+        TextButton(
+          key: ValueKey('ctl.snitlyste.group-sermons.$i'),
+          onPressed: () => _pickSermons(g),
+          child: Text(l.groupSermons),
+        ),
+        IconButton(
+          key: ValueKey('ctl.snitlyste.group-edit.$i'),
+          tooltip: l.groupRename,
+          onPressed: () => _edit(g),
+          icon: const Icon(Icons.edit_outlined),
+        ),
+        IconButton(
+          key: ValueKey('ctl.snitlyste.group-delete.$i'),
+          tooltip: l.groupDelete,
+          onPressed: () => _delete(g),
+          icon: const Icon(Icons.delete_outline_rounded),
+        ),
+      ],
+    ),
+  );
+
+  /// Name and description of a new ([g] null) or existing group.
+  Future<void> _edit(PlaylistGroup? g) async {
+    final l = L.of(context);
+    final name = TextEditingController(text: g?.name);
+    final description = TextEditingController(text: g?.description);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l.groupEditTitle),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                key: const ValueKey('ctl.snitlyste.group-name'),
+                controller: name,
+                autofocus: true,
+                decoration: InputDecoration(labelText: l.groupNameLabel),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const ValueKey('ctl.snitlyste.group-description'),
+                controller: description,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(labelText: l.groupDescriptionLabel),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            key: const ValueKey('ctl.snitlyste.group-save'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l.groupSave),
+          ),
+        ],
+      ),
+    );
+    final n = name.text.trim();
+    final d = description.text.trim();
+    // not disposed: the dialog is still animating out; an unlistened controller is just garbage
+    if (ok != true || n.isEmpty) return;
+    if (g == null) {
+      widget.settings.groups.add(
+        PlaylistGroup(
+          DateTime.now().microsecondsSinceEpoch.toString(),
+          n,
+          description: d,
+        ),
+      );
+    } else {
+      g
+        ..name = n
+        ..description = d;
+    }
+    _saveGroups();
+  }
+
+  /// Ticks the sermons that belong to [g].
+  Future<void> _pickSermons(PlaylistGroup g) async {
+    final l = L.of(context);
+    final sermons = widget.store.sorted;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, set) => AlertDialog(
+          title: Text(l.groupSermonsTitle(g.name)),
+          content: SizedBox(
+            width: 520,
+            height: 420,
+            child: ListView(
+              children: [
+                for (final (i, s) in sermons.indexed)
+                  CheckboxListTile(
+                    key: ValueKey('ctl.snitlyste.group-sermon.$i'),
+                    dense: true,
+                    value: g.sermons.contains(s.id),
+                    title: Text(s.title, overflow: TextOverflow.ellipsis),
+                    onChanged: (on) {
+                      set(() {
+                        on == true
+                            ? g.sermons.add(s.id)
+                            : g.sermons.remove(s.id);
+                      });
+                      _saveGroups();
+                    },
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            FilledButton(
+              key: const ValueKey('ctl.snitlyste.group-done'),
+              onPressed: () => Navigator.pop(context),
+              child: Text(l.groupDone),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _delete(PlaylistGroup g) async {
+    final l = L.of(context);
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(l.groupDeleteAsk(g.name)),
+        actions: [
+          TextButton(
+            key: const ValueKey('ctl.snitlyste.group-delete-no'),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l.groupKeep),
+          ),
+          FilledButton(
+            key: const ValueKey('ctl.snitlyste.group-delete-yes'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l.groupDelete),
+          ),
+        ],
+      ),
+    );
+    if (yes != true) return;
+    widget.settings.groups.remove(g);
+    _saveGroups();
   }
 
   Widget _heading(ThemeData th, String text) => Padding(

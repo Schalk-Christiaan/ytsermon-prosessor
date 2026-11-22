@@ -1574,6 +1574,96 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Short {n} · {time} · {secs} s'**
   String shortRow(int n, String time, int secs);
+
+  /// No description provided for @groupsHeading.
+  ///
+  /// In af, this message translates to:
+  /// **'Eie snitlyste'**
+  String get groupsHeading;
+
+  /// No description provided for @groupsHelp.
+  ///
+  /// In af, this message translates to:
+  /// **'Maak \'n snitlys vir \'n reeks of \'n seisoen. \'n Preek kan in meer as een wees; by oplaai kom dit ook by hierdie snitlyste.'**
+  String get groupsHelp;
+
+  /// No description provided for @groupsEmpty.
+  ///
+  /// In af, this message translates to:
+  /// **'Nog geen eie snitlyste nie.'**
+  String get groupsEmpty;
+
+  /// No description provided for @groupAdd.
+  ///
+  /// In af, this message translates to:
+  /// **'Nuwe snitlys'**
+  String get groupAdd;
+
+  /// No description provided for @groupEditTitle.
+  ///
+  /// In af, this message translates to:
+  /// **'Snitlys'**
+  String get groupEditTitle;
+
+  /// No description provided for @groupNameLabel.
+  ///
+  /// In af, this message translates to:
+  /// **'Naam'**
+  String get groupNameLabel;
+
+  /// No description provided for @groupDescriptionLabel.
+  ///
+  /// In af, this message translates to:
+  /// **'Beskrywing (opsioneel)'**
+  String get groupDescriptionLabel;
+
+  /// No description provided for @groupSave.
+  ///
+  /// In af, this message translates to:
+  /// **'Stoor'**
+  String get groupSave;
+
+  /// No description provided for @groupRename.
+  ///
+  /// In af, this message translates to:
+  /// **'Wysig'**
+  String get groupRename;
+
+  /// No description provided for @groupSermons.
+  ///
+  /// In af, this message translates to:
+  /// **'Preke'**
+  String get groupSermons;
+
+  /// No description provided for @groupDone.
+  ///
+  /// In af, this message translates to:
+  /// **'Klaar'**
+  String get groupDone;
+
+  /// No description provided for @groupDelete.
+  ///
+  /// In af, this message translates to:
+  /// **'Vee uit'**
+  String get groupDelete;
+
+  /// No description provided for @groupDeleteAsk.
+  ///
+  /// In af, this message translates to:
+  /// **'Vee \"{name}\" uit? Die preke self bly.'**
+  String groupDeleteAsk(String name);
+
+  /// No description provided for @groupKeep.
+  ///
+  /// In af, this message translates to:
+  /// **'Hou'**
+  String get groupKeep;
+
+  /// No description provided for @groupSermonsTitle.
+  ///
+  /// In af, this message translates to:
+  /// **'Preke in \"{name}\"'**
+  String groupSermonsTitle(String name);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

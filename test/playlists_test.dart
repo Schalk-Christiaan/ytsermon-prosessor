@@ -47,4 +47,40 @@ void main() {
       5000,
     );
   });
+
+  test('playlistsFor = rule + groups, without duplicates', () {
+    final s = Sermon(
+      'a',
+      't',
+      1,
+      date: '2026-11-15',
+      scripture: 'Efesiërs 6:10-20',
+    );
+    final g1 = PlaylistGroup('1', 'Advent 2026')..sermons.add('a');
+    final g2 = PlaylistGroup('2', 'Efesiërs')..sermons.addAll(['a', 'b']);
+    final g3 = PlaylistGroup('3', 'Ander')..sermons.add('b');
+    expect(playlistsFor(s, ['book'], [g1, g2, g3]), [
+      'Efesiërs',
+      'Advent 2026',
+    ]);
+    expect(playlistsFor(s, [], [g3]), isEmpty);
+    expect(playlistsFor(Sermon('b', 't', 1), [], [g3]), ['Ander']);
+  });
+
+  test('PlaylistGroup round trips and survives damaged json', () {
+    final g = PlaylistGroup('1', 'Reeks', description: 'Bergpredikasie')
+      ..sermons.addAll(['a', 'b']);
+    final back = PlaylistGroup.fromJson(g.toJson())!;
+    expect(
+      [back.id, back.name, back.description],
+      ['1', 'Reeks', 'Bergpredikasie'],
+    );
+    expect(back.sermons, ['a', 'b']);
+    expect(PlaylistGroup.fromJson({'id': 1}), isNull);
+    expect(PlaylistGroup.fromJson('x'), isNull);
+    expect(
+      PlaylistGroup.fromJson({'id': '2', 'name': 'N', 'sermons': 5})!.sermons,
+      isEmpty,
+    );
+  });
 }

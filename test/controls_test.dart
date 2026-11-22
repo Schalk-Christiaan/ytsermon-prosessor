@@ -987,6 +987,56 @@ void main() {
       expect(AppSettings.load(st.root).whatsappTemplate, 'Fokus: {fokus}');
       await t.pumpWidget(const SizedBox());
     });
+
+    testWidgets('groups: create, rename, add sermons, delete', (t) async {
+      await loadFonts();
+      setView(t, 1100, 1400);
+      final st = playlistStore();
+      final set = AppSettings.load(st.root);
+      await t.pumpWidget(
+        appWrap(
+          Brightness.light,
+          Scaffold(
+            body: PlaylistsScreen(store: st, settings: set),
+          ),
+        ),
+      );
+      await t.pump();
+      await tapKey(t, 'snitlyste.group-add');
+      await t.enterText(key('snitlyste.group-name'), 'Advent 2026');
+      await t.enterText(key('snitlyste.group-description'), 'Vier Sondae');
+      cover(['snitlyste.group-name', 'snitlyste.group-description']);
+      await tapKey(t, 'snitlyste.group-save');
+      expect(set.groups.single.name, 'Advent 2026');
+      expect(
+        AppSettings.load(st.root).groups.single.description,
+        'Vier Sondae',
+      );
+      await t.pumpAndSettle();
+      expect(find.text('Advent 2026'), findsWidgets);
+      // rename
+      await tapKey(t, 'snitlyste.group-edit.0');
+      await t.enterText(key('snitlyste.group-name'), 'Advent');
+      await tapKey(t, 'snitlyste.group-save');
+      expect(set.groups.single.name, 'Advent');
+      // add and remove sermons
+      await tapKey(t, 'snitlyste.group-sermons.0');
+      await tapKey(t, 'snitlyste.group-sermon.0');
+      await tapKey(t, 'snitlyste.group-sermon.1');
+      await tapKey(t, 'snitlyste.group-sermon.1');
+      await tapKey(t, 'snitlyste.group-done');
+      expect(set.groups.single.sermons, hasLength(1));
+      expect(find.text('1 preek'), findsWidgets);
+      // delete asks first
+      await tapKey(t, 'snitlyste.group-delete.0');
+      await tapKey(t, 'snitlyste.group-delete-no');
+      expect(set.groups, hasLength(1));
+      await tapKey(t, 'snitlyste.group-delete.0');
+      await tapKey(t, 'snitlyste.group-delete-yes');
+      expect(set.groups, isEmpty);
+      expect(AppSettings.load(st.root).groups, isEmpty);
+      await t.pumpWidget(const SizedBox());
+    });
   });
 
   group('instellings', () {

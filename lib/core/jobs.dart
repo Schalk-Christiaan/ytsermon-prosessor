@@ -604,13 +604,16 @@ JobRun uploadJob(
     final latest = store.byId(c.id)!;
     store.save(latest..uploads = {...latest.uploads, path: id});
   }
-  final name = playlistFor(s, settings.rules);
+  final names = playlistsFor(s, settings.rules, settings.groups);
   final latest = store.byId(c.id)!;
   final sermonId =
       latest.uploads[videos.first]; // Shorts alone have no sermon to list
-  if (name != null && latest.playlist == null && sermonId != null) {
-    final pl = (await yt.playlists())[name] ?? await yt.createPlaylist(name);
-    await yt.addToPlaylist(pl, sermonId);
-    store.save(latest..playlist = name);
+  if (names.isNotEmpty && latest.playlist == null && sermonId != null) {
+    final known = await yt.playlists();
+    for (final name in names) {
+      final pl = known[name] ?? await yt.createPlaylist(name);
+      await yt.addToPlaylist(pl, sermonId);
+    }
+    store.save(latest..playlist = names.join(', '));
   }
 };

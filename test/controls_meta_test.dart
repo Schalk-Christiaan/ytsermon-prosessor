@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preekverwerker/app/shell.dart';
+import 'package:preekverwerker/core/playlists.dart';
 import 'package:preekverwerker/core/settings.dart';
 import 'package:preekverwerker/core/store.dart';
 import 'package:preekverwerker/features/review/review_controller.dart';
@@ -290,13 +291,14 @@ void main() {
 
       testWidgets('snitlyste', (t) async {
         final st = playlistStore();
+        final set = AppSettings.load(st.root);
+        set.groups.add(
+          PlaylistGroup('1', 'Advent', description: 'Vier Sondae'),
+        );
         await pump(
           t,
           Scaffold(
-            body: PlaylistsScreen(
-              store: st,
-              settings: AppSettings.load(st.root),
-            ),
+            body: PlaylistsScreen(store: st, settings: set),
           ),
         );
         checkScreen(t, 'snitlyste');

@@ -3,7 +3,7 @@
 //   wanneer: by begin gelaai; gestoor as Instellings of Snitlyste verander
 //   groep: core | Kern
 //   skryf: <werkmap>/settings.json | atomies
-//   doel: Schalk se keuses: kanaal-URL, kliënt-ID-lêer, oplaai-privaatheid, beskrywingsjabloon, snitlysreëls, uitsetgids, watter uitvoere 'n sny maak, WhatsApp-sjabloon, of Opstelling klaar is
+//   doel: Schalk se keuses: kanaal-URL, kliënt-ID-lêer, oplaai-privaatheid, beskrywingsjabloon, snitlysreëls en -groepe, uitsetgids, watter uitvoere 'n sny maak, WhatsApp-sjabloon, of Opstelling klaar is
 //   status: bou
 import 'dart:convert';
 import 'dart:io';
@@ -13,6 +13,7 @@ import 'package:path/path.dart' as p;
 import 'channel.dart' show kChannelUrl, normalizeChannelUrl;
 import 'cutter.dart' show kWhatsappTemplate;
 import 'paths.dart';
+import 'playlists.dart' show PlaylistGroup;
 import 'store.dart';
 
 const kDefaultTemplate =
@@ -39,7 +40,11 @@ class AppSettings {
       outro = j['outro'] as String?,
       exports = {...((j['exports'] as List?)?.cast<String>() ?? kExports)},
       whatsappTemplate = j['whatsappTemplate'] as String? ?? kWhatsappTemplate,
-      rules = [...?(j['rules'] as List?)?.cast<String>()] {
+      rules = [...?(j['rules'] as List?)?.cast<String>()],
+      groups = [
+        if (j['groups'] is List)
+          for (final g in j['groups'] as List) ?PlaylistGroup.fromJson(g),
+      ] {
     if (!j.containsKey('rules')) rules = ['book', 'year'];
   }
 
@@ -70,6 +75,9 @@ class AppSettings {
   /// Playlist rules in order: `book`, `year`.
   List<String> rules;
 
+  /// Schalk's own playlists (see [PlaylistGroup]).
+  List<PlaylistGroup> groups;
+
   /// Where cut sermons, Shorts and audio go.
   String outDir;
 
@@ -94,6 +102,7 @@ class AppSettings {
     'privacy': privacy,
     'template': template,
     'rules': rules,
+    'groups': [for (final g in groups) g.toJson()],
     'outDir': outDir,
     'setupDone': setupDone,
     'sermonGrid': sermonGrid,

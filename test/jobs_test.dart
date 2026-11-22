@@ -8,6 +8,7 @@ import 'package:preekverwerker/core/channel.dart';
 import 'package:preekverwerker/core/jobs.dart';
 import 'package:preekverwerker/core/models.dart';
 import 'package:preekverwerker/core/planner.dart';
+import 'package:preekverwerker/core/playlists.dart';
 import 'package:preekverwerker/core/settings.dart';
 import 'package:preekverwerker/core/youtube.dart';
 import 'package:preekverwerker/core/store.dart';
@@ -249,6 +250,30 @@ void main() {
         expect(quota.used, 2);
       },
     );
+
+    test('the sermon also goes into its groups\' playlists', () async {
+      final settings = AppSettings.load(root);
+      settings.groups
+        ..add(PlaylistGroup('1', 'Advent 2026')..sermons.add('aaaaaaaaaaa'))
+        ..add(PlaylistGroup('2', 'Mattheus')..sermons.add('aaaaaaaaaaa'))
+        ..add(PlaylistGroup('3', 'Ander')..sermons.add('zzz'));
+      q = queue(
+        upload: uploadJob(store, yt: yt, settings: settings, quota: quota),
+      );
+      q.enqueue('aaaaaaaaaaa', JobKind.upload);
+      await q.idle;
+      expect(
+        q.jobs.single.status,
+        JobStatus.klaar,
+        reason: q.jobs.single.error,
+      );
+      expect(yt.made, ['Romeine', 'Advent 2026']);
+      expect(yt.added, [
+        ('PL-Romeine', 'V1'),
+        ('PL-Advent 2026', 'V1'),
+        ('PL1', 'V1'),
+      ]);
+    });
 
     test('a retry after a failure does not upload twice', () async {
       yt.failOn = 'Short een';

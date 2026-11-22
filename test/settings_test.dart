@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:preekverwerker/core/channel.dart' show kChannelUrl;
+import 'package:preekverwerker/core/playlists.dart';
 import 'package:preekverwerker/core/settings.dart';
 
 void main() {
@@ -57,5 +58,21 @@ void main() {
         .writeAsStringSync('{"channelUrl": "youtube.com/@ander/videos"}');
     expect(AppSettings.load(d).channelUrl, 'https://www.youtube.com/@ander');
     d.deleteSync(recursive: true);
+  });
+
+  test('groups are saved, and damaged entries are dropped', () {
+    final d = Directory.systemTemp.createTempSync('grp');
+    addTearDown(() => d.deleteSync(recursive: true));
+    final s = AppSettings.load(d);
+    expect(s.groups, isEmpty);
+    s.groups.add(PlaylistGroup('1', 'Advent')..sermons.add('a'));
+    s.save();
+    expect(AppSettings.load(d).groups.single.sermons, ['a']);
+    File(p.join(d.path, 'settings.json')).writeAsStringSync(
+      '{"groups":[{"id":"1","name":"Goed"},5,{"name":"geen id"}]}',
+    );
+    expect(AppSettings.load(d).groups.map((g) => g.name), ['Goed']);
+    File(p.join(d.path, 'settings.json')).writeAsStringSync('{"groups":"x"}');
+    expect(AppSettings.load(d).groups, isEmpty);
   });
 }
