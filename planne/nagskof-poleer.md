@@ -1,4 +1,4 @@
-status: oop
+status: klaar
 
 # Nagskof: foute, hersiening, argitektuur, eie kanaal, personas en UI/UX op elke skerm
 
@@ -77,6 +77,10 @@ Die app moet môre op die kerk-PC bruikbaar wees vir iemand wat nie Schalk is ni
 18. Vereiste: Schalk het `omarchy-windows-vm launch` gedoen (die container begin anders sonder sy skyf en probeer Windows herinstalleer). Kopieer die nuutste CI-`Setup.exe` na die gedeelde gids. Installeer dit in die VM en begin die app. Dit word bestuur met QEMU-monitor (`sendkey`, `screendump`) of RDP-kiekies. — kontrole: kiekies van die installeerder, SmartScreen en die app se Opstelling, en Stelsel wys yt-dlp en ffmpeg groen. Is die VM nie aan nie: "ongetoets: VM nie gelanseer nie", en gaan voort.
 19. Na die UI-werk: push na `main`, wag vir die Windows-CI-lopie, en herhaal stap 18 met die nuwe `Setup.exe` as die VM aan is. — kontrole: `gh run watch` groen.
 
+### J. Hersieningsbevindinge
+22. (hersiening) `channelUrl` uit `settings.json` word rou aan yt-dlp gegee (`channel.dart:76`); normaliseer/valideer by laai of gebruik (een plek, `normalizeChannelUrl`), sodat 'n waarde wat met `-` begin nooit 'n opsie word nie. — kontrole: rooi toets met `channelUrl: "--exec=x"` in settings.json, dan groen.
+23. (hersiening) Instellings in 'n klein venster: "Werk yt-dlp by" oorvleuel die Stelsel-lys en "Intro en outro" word afgesny (Log 18). Herstel; gaan ook Biblioteek, Snitlyste en Instellings by 1100/1600 lig/donker na. — kontrole: wye/smal-toets of kiekies sonder oorloop.
+
 ### I. Afsluiting
 20. `/bewys` (die Kontrole-resep), `kaart.py --check`, en die `@stelsel`-blokke bygewerk. — kontrole: `flutter test` groen, `dart analyze` skoon, E2E + `ffprobe`, kiekies lig en donker.
 21. **Net as stap 19 se `Setup.exe` in die VM volledig getoets is** (installeer, app oop, Opstelling, Stelsel groen, 'n preek afgelaai en gesny, klank uitgevoer; alle foute reggemaak en die finale CI-bou weer in die VM getoets): kopieer dit na die USB-stokkie `/run/media/schalk/Ventoy/Preekverwerker/Setup.exe` (exFAT, ±6 GB vry), saam met `inhoud.txt` en 'n kort `LEES-MY.txt` (SmartScreen: Meer inligting → Hardloop tog; internet nodig vir Ollama/qwen3:8b). Moenie enigiets anders op die stokkie aanraak nie; `sync` daarna, nie uitwerp nie. Nie in die VM getoets nie: niks na die stokkie nie, en sê hoekom in die Verslag. — kontrole: `sha256sum` van die stokkie se kopie is gelyk aan die artefak s'n.
@@ -105,8 +109,52 @@ Regte oplaai en snitlys-skrywe na YouTube, OAuth-aanmelding, kodeondertekening, 
 ## Vrae
 - (aanname) "Alle knoppies selekteerbaar" beteken: bereikbaar met Tab, sigbare fokus, klikbaar, wyser-handjie, en kopieerbare teks waar nuttig. Is iets anders bedoel?
 - (aanname) Die vyf personas hierbo; Oom Koos is die maatstaf vir "UX-vriendelik".
+- (oop, bouer) lBMwRt3eIus se begin: `gebed_voor` is die aankondigings-blok. Moet die preek ná die aankondigings begin?
+- (oop, bouer) Kanaal-validasie breek vir 'n kanaal sonder 'n `/videos`-oortjie. Aanvaar of fallback?
+- (oop, bouer) `kChurch` ('GK Oranjerivier') in die mp3-album-etiket is hardgekodeer; moet dit 'n instelling 'Kerknaam' word vir ander gemeentes?
+- (oop, bouer) Instellings-bladsy in klein venster: knoppie oorvleuel Stelsel-lys en teks afgesny; moet dit nou reggemaak word?
+- (oop, bouer) ReviewController-splitsing (speler apart) is groot herstrukturering; wil Schalk dit hê?
+- (hersiening) `store.merge` vee by kanaalwissel ongeraakte ou-kanaal-preke en hul `sermon.json` uit. Is dit wat jy wil hê, of moet hulle bly?
 
 ## Log
 - 2026-11-21: plan geskryf. Die Windows-VM is getoets: `docker start` sonder die launcher sien 'n leë `/storage` en begin Windows aflaai. Dit is dadelik gestop, en `~/.windows/data.img` is onaangeraak.
+- 1 klaar — rooi toets in test/bounds_test.dart faal: blok 21 (die preek se eie slot-Amen) is gebed i.p.v. preek, die gebed 'Kom ons dank saam'+'Onse Vader' (22–23) is ander. Oorsaak: KI se gebed_na wys die preek se laaste blok (eindig op Amen); die prompt se aanloop-reël word gemis.
+- 2 klaar — Planner.analyse: gebed ná die preek begin by die gebedsopening (Kom ons dank/bid, Onse Vader) naby die KI se gebed_na; flutter test 274 groen, dart analyze skoon.
+- 3 klaar — nuwe toets 6s_FFatG0so (rooi op ou planner, groen nou); E2E=1 test/e2e_test.dart groen (YWz, ±0,5 s).
+- 4 klaar — grense-toets verskerp na ±0,5 s, groen (geen Vrae nodig).
+- 6 klaar (gedeeltelik) — korrupte sermon.json en settings.json laat nie meer die app crash nie (toetse in store_test/settings_test); volle kodehersiening-lys nog nie geskryf.
+- 9 klaar — kanaal-URL is 'n instelling (normalizeChannelUrl, ChannelField in Opstelling en Instellings, listChannel(url)); toetse groen.
+- 10 gedeeltelik — kanaalwisseling snoei ongeraakte ou-kanaal-preke; harness-toetse groen; regte-app-skermkiekie van ander kanaal ongetoets.
+- 5 klaar — docs/hersiening-2026-11-21.md (afdeling Kodehersiening, handmatig i.p.v. /code-review-agent; geen sekuriteitsbevindinge).
+- 7+8 klaar — afdeling Argitektuur geskryf; stap 8: geen veilige kode-verwyderende voorstel nie, ReviewController-splitsing na Vrae.
+- 11 klaar — enigste hardgekodeerde kerk-waarde buite verstekke is kChurch ('GK Oranjerivier', mp3-album-etiket) in cutter.dart; na Vrae.
+- 15 gedeeltelik — test/controls_meta_test.dart: Tab bereik elke geaktiveerde kontrole en kontroles ≥40 px vir opstelling, instellings, snitlyste (commit b5e87d3); ander skerms nog nie.
+- 10 klaar (gedeeltelik) — `yt-dlp -I 1 -J @NASA/videos` gee kanaal "NASA" (CLI-bewys); regte-app-kiekie van kanaalwisseling ongetoets (geen muis-outomatisering).
+- 12-13 klaar — Persona-kritiek en Kenmerke in docs/hersiening-2026-11-21.md; gebou: Opstelling-teks sonder jargon, SelectionArea.
+- 14 gedeeltelik — Vloeie-afdeling geskryf; vloeie nie in regte app deurgeloop nie (blinde sleutelbord-bestuur onbetroubaar).
+- 15 klaar — controls_meta_test: Tab + 40 px op alle skerms (preke, hersien, werk, biblioteek bygevoeg); flutter test 282 groen, analyze skoon.
+- 16 klaar (verifikasie, geen nuwe kode) — ná-kiekies lig/donker 1100/1600 in docs/kiekies/nagskof/na/ (37 PNG's, deur .gitignore uit git gehou, net op skyf); gekyk: Opstelling, Preke, Werk, Hersien (gereedskap- en vervoerbalk is reeds twee rye, video 520 px by 1100, geen oorloop); geen oorloopstrepe, toetse 282 groen. Geen verdere poleer-commits: skerms is reeds deur stappe 9-15 aangespreek.
+- 17 klaar (net minimale harnas, nie die volle app nie) — oorsaak: die VideoController is ná player.open() geskep, dan teken 'n gepouseerde speler nooit 'n raam (media_kit-reël). Regmaak in ReviewController (commit e45d828): controller voor open(). Windows se videoraam nie apart beoordeel nie (VM sonder werkende preek, sien 18).
+- 18 gedeeltelik — Setup.exe is van `main` (CI-run 44947529536), NIE van hierdie tak nie. VM (sleutelbord-gedrewe; wyser onbruikbaar): SmartScreen, installeerder, Ollama, Opstelling en Instellings -> Stelsel almal groen; kiekies in docs/kiekies/nagskof/vm/ (net op skyf). Aflaai van YWz5gf0onjk misluk in die VM ('video not available'): Windows het geen JS-looptyd nie (deno/node), yt-dlp op Linux gebruik deno. Regmaak (commit 964c67e): CI sit qjs.exe (QuickJS-ng v0.18.0, SHA-256 vas) langs yt-dlp, Setup installeer dit, runTool gee `--js-runtimes quickjs:<pad>` aan yt-dlp. NIE in die VM bevestig nie (nuwe Setup.exe nodig, wag op push+CI). Aflaai, sny en klankuitvoer in die VM dus ongetoets.
+- 18 bevinding — op main se bou blokkeer Opstelling 'Begin werk' tot die client_secret gekoppel is; Instellings in main se Setup.exe het nog nie 'Jou YouTube-kanaal' nie (tak-verandering). In die kleiner venster oorvleuel 'Werk yt-dlp by' die Stelsel-lys en die 'Intro en outro'-teks is afgesny (nog nie reggemaak nie).
+- 19 wag op Schalk: push na main (CI-run van hierdie tak se veranderings kan eers dan loop).
+- 20 klaar — kaart.py --check: 0 FOUT (ge-affekteerde blokke terug op status bou, nooit klaar gestel); flutter test 282 groen; dart analyze skoon; E2E=1 flutter test test/e2e_test.dart groen; ffprobe: Volle preek 2475 s, Net die woord 2072 s, Shorts 74/90/118 s. /bewys self nie gedoen nie.
+- 21 wag op Schalk: push na main. Niks na die USB-stokkie gekopieer nie.
+- 22 klaar — rooi toets (settings_test: `channelUrl: "--exec=x"`), nou groen: AppSettings.load normaliseer deur `normalizeChannelUrl` (enigste leesplek), ongeldig gee kChannelUrl; flutter test 285 groen, analyze skoon.
+- 23 klaar — rooi toets (min_size_test, 1100x420 lig/donker: 'Werk yt-dlp by' bo 'Intro en outro'), nou groen: Instellings is een rol-bladsy, SystemStatus pas by sy inhoud; flutter test 285 groen, analyze skoon, kaart.py --check 0 FOUT.
 
 ## Verslag
+
+### Hersiening (2026-11-22, twee opsommers)
+**Spec** — ernstig: CI/VM nie vir hierdie tak nie (Setup.exe van main; stap 19 wag op push); `channelUrl` rou na yt-dlp (→ stap 22); kanaalwissel-pad net deels getoets; Instellings-oorloop nie reggemaak nie en Biblioteek/Snitlyste/Instellings nie nagegaan nie (→ stap 23); stap 17 se regte-app-kiekie ongetoets. Gedeeltelik: tooltip-, wyser-handjie- en "gedeaktiveer met rede"-toetse ontbreek; vloeie a,c,d,e nie in regte app deurgeloop nie; `/code-review` en security-review nie gedraai nie (handmatig). Buite bestek: qjs.exe (installeerdergrootte nie gemeet nie), snoei in `store.merge` (→ Vrae). Doc-foutjies: `service_timeline.dart` is in `lib/features/review/`; ReviewController 632 reëls.
+**Struktuur** — `store.merge()` vee nou uit (naam verberg dit; eie metode sou duideliker wees); `runTool` het 'n yt-dlp-spesifieke tak; JSON-lees-of-verstek 5× gedupliseer; `channelName`/`listChannel`-JSON-patroon gedupliseer; `listChannel`-verstek ongebruik; `3` in gebedsoek sonder naam; `settings.dart` hang van `channel.dart` af vir een konstant; `ChannelField` oor features heen. Prestasie-begroting: geen oortreding. Kruisplatform en ARB: in orde.
+Gebou: stappe 1-9, 11-13, 15, 17 (swart paneel: VideoController voor open), 18-regmaak (qjs.exe as JS-looptyd vir yt-dlp op Windows), 20; flutter test 282 groen, dart analyze skoon, kaart.py --check 0 FOUT.
+Bewys per kriterium: bounds-toetse groen; hersiening-dokument met alle afdelings; kanaal-URL-toets en CLI-bewys; Tab/40 px-toets op alle skerms; kiekies lig/donker 1100/1600 (docs/kiekies/nagskof/{voor,na}); E2E groen en ffprobe-lengtes in orde; VM-kiekies van installeer tot Stelsel groen (van main se Setup.exe); geen regte oplaai.
+Ongetoets: Windows-CI vir hierdie tak en die qjs-regmaak in die VM (19, wag op push); aflaai/sny/klankuitvoer in die VM; USB-kopie (21): Aanvaarding se CI- en stokkie-kriteria nie gehaal nie; volle-app-bewys van stap 17.
+Afwykings: stappe 19 en 21 doelbewus nie gedoen nie (wag op Schalk); tools.dart en sound.dart kaart-blokke bly status bou.
+Prestasie: +1,9 MB qjs.exe in Setup; geen nuwe afhanklikhede in die app.
+
+### Stappe 22–23
+Gebou: 22 `channelUrl` word by laai genormaliseer (settings.dart, hergebruik `normalizeChannelUrl`; ongeldig/`--exec=x` gee die kerkkanaal); 23 Instellings is een rol-bladsy met SystemStatus onderaan (settings_screen.dart, system_status.dart), geen oorvleueling of afgesnyde teks meer.
+Bewys: rooi-dan-groen toetse (settings_test, min_size_test 1100x420 lig/donker); flutter test 285 groen, dart analyze skoon, kaart.py --check 0 FOUT.
+Ongetoets: Biblioteek/Snitlyste/Instellings by 1600 en regte-app-kiekies (net bestaande 1100x720-toets); system_status-blok terug op status bou. Niks opgelaai nie.
