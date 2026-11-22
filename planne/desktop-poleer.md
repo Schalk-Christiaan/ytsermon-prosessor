@@ -135,7 +135,7 @@ Alles gaan deur die bewegingskonstantes en `disableAnimations`.
 - `lib/core/jobs.dart`: ná 'n render, vra voorstelle.
 - Bestaande Ollama-oproep (grep `ollama`/`qwen3` in `lib/core/planner.dart`): hergebruik dit vir die voorstelle.
 - `lib/app/pixel_art.dart` (nuut): `PixelSprite`, `PixelScene`, sprite-roosters; `lib/app/job_progress.dart` (nuut): die gedeelde vorderingswyer (toneel, stappelys, detailreël, besonderhede).
-- `lib/core/jobs.dart`: `detail` en die laaste uitsetreëls by die runners; `lib/core/tools.dart`/`youtube.dart`: geef yt-dlp se grootte en spoed deur.
+- `lib/core/jobs.dart`: `detail` en die laaste uitsetreëls by die runners; `lib/core/tools.dart`/`youtube.dart`: gee yt-dlp se grootte en spoed deur.
 - `lib/l10n/app_af.arb`: alle nuwe teks.
 - Toetse: `test/controls_test.dart`, `test/controls_inventory.dart`, `test/controls_meta_test.dart`, `test/workspace_test.dart`, `test/screens_test.dart`, plus nuwe eenheidstoetse vir grootte en groepe.
 
