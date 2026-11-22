@@ -807,6 +807,17 @@ void main() {
       await t.pump();
     }
 
+    testWidgets('view toggle switches Werk to cards', (t) async {
+      final (st, q) = workQueue(audio: true);
+      await werk(t, st, q);
+      await t.tap(
+        find.descendant(of: key('werk.view'), matching: find.text('Rooster')),
+      );
+      await t.pumpAndSettle();
+      expect(find.byKey(const ValueKey('werk.card')), findsNWidgets(3));
+      cover(['werk.view']);
+    });
+
     testWidgets(
       'groups: counts, select-all per group, menus act on the picks',
       (t) async {

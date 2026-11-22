@@ -261,6 +261,7 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
                                   quota: _quota,
                                   onSelection: (v) => selection[2]!.value = v,
                                   suggestions: _suggestions,
+                                  settings: _settings,
                                 ),
                                 PlaylistsScreen(
                                   store: widget.store,

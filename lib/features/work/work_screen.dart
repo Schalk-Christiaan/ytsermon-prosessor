@@ -3,7 +3,7 @@
 //   wanneer: Werk (rail)
 //   groep: features | Skerms
 //   skryf: —
-//   doel: wys die werkry: huidige taak met vordering en Kanselleer, wag- en fout-lyste, voorgestelde snitlyste (Aanvaar/Ignoreer), en die uitvoere in drie groepe (Volle preke, Shorts, Klank vir WhatsApp) met kies-alles en 'n aftreklys per groep (Laai op, Kopieer na gids, Wys in gids, Kopieer WhatsApp-teks, Klank vir WhatsApp); oplaai-teller
+//   doel: wys die werkry (lys of rooster, soos Preke): huidige taak met vordering en Kanselleer, wag- en fout-lyste, voorgestelde snitlyste (Aanvaar/Ignoreer), en die uitvoere in drie groepe (Volle preke, Shorts, Klank vir WhatsApp) met kies-alles en 'n aftreklys per groep (Laai op, Kopieer na gids, Wys in gids, Kopieer WhatsApp-teks, Klank vir WhatsApp); oplaai-teller
 //   status: bou
 import 'dart:io';
 
@@ -22,12 +22,14 @@ import '../../app/job_progress.dart';
 import '../../core/cutter.dart' show kFullName, kWhatsappTemplate, kWordName;
 import '../../core/jobs.dart';
 import '../../core/library.dart';
+import '../../core/settings.dart';
 import '../../core/storage.dart' show formatBytes;
 import '../../core/store.dart';
 import '../../core/suggest.dart';
 import '../../core/tools.dart';
 import '../../core/youtube.dart';
 import '../../l10n/app_localizations.dart';
+import '../sermons/sermons_screen.dart' show SermonThumb;
 
 /// The three groups of outputs on the Werk screen.
 enum WorkGroup { full, shorts, audio }
@@ -54,6 +56,7 @@ class WorkScreen extends StatefulWidget {
     this.pickDir = pickFolder,
     this.onSelection,
     this.suggestions,
+    this.settings,
   });
   final SermonStore store;
   final JobQueue jobs;
@@ -76,6 +79,9 @@ class WorkScreen extends StatefulWidget {
   /// Playlist suggestions made after a render; null hides the section.
   final GroupSuggestions? suggestions;
 
+  /// The list/grid choice shared with Preke; loaded from the store when null.
+  final AppSettings? settings;
+
   @override
   State<WorkScreen> createState() => _WorkScreenState();
 }
@@ -83,6 +89,7 @@ class WorkScreen extends StatefulWidget {
 class _WorkScreenState extends State<WorkScreen> {
   final _sel = <String>{};
   final _sizes = <String, int>{};
+  late final _settings = widget.settings ?? AppSettings.load(store.root);
   String? _reported;
 
   SermonStore get store => widget.store;
@@ -178,7 +185,33 @@ class _WorkScreenState extends State<WorkScreen> {
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                Text(l.navWerk, style: th.textTheme.headlineMedium),
+                Row(
+                  children: [
+                    Text(l.navWerk, style: th.textTheme.headlineMedium),
+                    const SizedBox(width: 16),
+                    SegmentedButton<bool>(
+                      key: const ValueKey('ctl.werk.view'),
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment(
+                          value: false,
+                          icon: const Icon(Icons.view_list_rounded),
+                          label: Text(l.viewList),
+                        ),
+                        ButtonSegment(
+                          value: true,
+                          icon: const Icon(Icons.grid_view_rounded),
+                          label: Text(l.viewGrid),
+                        ),
+                      ],
+                      selected: {_settings.sermonGrid},
+                      onSelectionChanged: (v) => setState(() {
+                        _settings.sermonGrid = v.single;
+                        _settings.save();
+                      }),
+                    ),
+                  ],
+                ),
                 if (widget.quota != null)
                   Text(
                     l.quotaToday(widget.quota!.used, UploadQuota.limit),
@@ -343,8 +376,21 @@ class _WorkScreenState extends State<WorkScreen> {
           ),
         ),
       ),
-      for (final i in items)
-        Reveal(key: ValueKey('rv.${i.path}'), child: _row(l, th, g, i)),
+      if (_settings.sermonGrid)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final i in items)
+                Reveal(key: ValueKey('rv.${i.path}'), child: _card(l, th, i)),
+            ],
+          ),
+        )
+      else
+        for (final i in items)
+          Reveal(key: ValueKey('rv.${i.path}'), child: _row(l, th, g, i)),
     ];
   }
 
@@ -432,6 +478,76 @@ class _WorkScreenState extends State<WorkScreen> {
       await File(i.path).copy(p.join(dir, p.basename(i.path)));
     }
     m.showSnackBar(SnackBar(content: Text(l.workCopied(items.length))));
+  }
+
+  /// Grid card: thumbnail with the select box, title, file name, size and the YouTube link.
+  Widget _card(L l, ThemeData th, WorkItem it) {
+    final id = it.sermon.uploads[it.path];
+    return SizedBox(
+      width: 240,
+      child: Card(
+        key: const ValueKey('werk.card'),
+        clipBehavior: Clip.antiAlias,
+        margin: EdgeInsets.zero,
+        child: InkWell(
+          key: const ValueKey('ctl.werk.play'),
+          onTap: () => widget.open(it.path),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Stack(
+                children: [
+                  SermonThumb(sermon: it.sermon, width: 240, height: 100),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: Checkbox(
+                      key: const ValueKey('ctl.werk.select'),
+                      value: _sel.contains(it.path),
+                      onChanged: (v) => setState(() {
+                        v == true ? _sel.add(it.path) : _sel.remove(it.path);
+                      }),
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: Text(
+                  it.sermon.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: th.textTheme.titleMedium,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${p.basenameWithoutExtension(it.path)} · ${formatBytes(_size(it.path))}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: th.textTheme.labelMedium,
+                      ),
+                    ),
+                    if (id != null)
+                      TextButton(
+                        key: const ValueKey('ctl.werk.open-youtube'),
+                        onPressed: () => widget.open(
+                          'https://studio.youtube.com/video/$id/edit',
+                        ),
+                        child: Text(l.openOnYouTube),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // stap: v7 1 WhatsApp-klank | by die gesnyde preek in Werkry; een klik
