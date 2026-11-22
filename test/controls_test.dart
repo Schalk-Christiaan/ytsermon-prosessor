@@ -957,6 +957,7 @@ void main() {
       tc.$3.enqueue('x', JobKind.cut);
       await werk(t, tc.$2, tc.$3);
       await t.pump(const Duration(milliseconds: 50));
+      await tapKey(t, 'werk.details');
       await tapKey(t, 'werk.cancel');
       await t.pump(const Duration(milliseconds: 50));
       expect(tc.$3.jobs.single.status, JobStatus.gekanselleer);

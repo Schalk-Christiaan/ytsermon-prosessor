@@ -5,6 +5,8 @@
 //   skryf: <werkmap>/settings.json | reëls, groepe en jabloon
 //   doel: snitlysreëls aan/af en in volgorde, eie snitlysgroepe (skep, wysig, preke by, uitvee, KI stel preke voor), voorskou hoeveel preke in elke snitlys val, beskrywingsjabloon, WhatsApp-sjabloon met voorskou
 //   status: bou
+import '../../app/job_progress.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../core/cutter.dart';
@@ -512,7 +514,7 @@ class _SuggestDialogState extends State<_SuggestDialog> {
                 children: [
                   Text(l.suggestWorking),
                   const SizedBox(height: 16),
-                  const LinearProgressIndicator(),
+                  const ProgressLine(),
                 ],
               )
             : list.isEmpty

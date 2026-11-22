@@ -7,6 +7,8 @@
 //   status: bou
 import 'dart:io';
 
+import '../../app/job_progress.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
@@ -165,12 +167,7 @@ class _SetupScreenState extends State<SetupScreen> {
               below: _busy == 'model'
                   ? Row(
                       children: [
-                        Expanded(
-                          child: LinearProgressIndicator(
-                            value: _pull,
-                            color: th.colorScheme.secondary,
-                          ),
-                        ),
+                        Expanded(child: ProgressLine(value: _pull)),
                         const SizedBox(width: 16),
                         Text(
                           _pull == null

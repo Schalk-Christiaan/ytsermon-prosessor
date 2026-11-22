@@ -667,5 +667,14 @@
         "type": "String"
       }
     }
-  }
+  },
+  "stepMeta": "Inligting",
+  "stepDownload": "Aflaai",
+  "stepPlan": "Preek soek",
+  "stepCut": "Sny",
+  "stepAudio": "Klank",
+  "stepUpload": "Oplaai",
+  "progressSlow": "Dit kan 'n paar minute duur.",
+  "progressShow": "Wys besonderhede",
+  "progressHide": "Versteek besonderhede"
 }

@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 
 import 'package:path/path.dart' as p;
 
+import '../../app/job_progress.dart';
 import '../../core/cutter.dart' show kFullName, kWhatsappTemplate, kWordName;
 import '../../core/jobs.dart';
 import '../../core/library.dart';
@@ -89,15 +90,6 @@ class _WorkScreenState extends State<WorkScreen> {
     JobKind.cut => l.taskCut,
     JobKind.audio => l.taskAudio,
     JobKind.upload => l.taskUpload,
-  };
-
-  String _phase(L l, JobPhase? p) => switch (p) {
-    JobPhase.meta || null => l.stageMeta,
-    JobPhase.plan => l.stagePlan,
-    JobPhase.download => l.stageDownload,
-    JobPhase.cut => l.stageCut,
-    JobPhase.audio => l.stageAudio,
-    JobPhase.upload => l.stageUpload,
   };
 
   WorkGroup _groupOf(String path) {
@@ -257,31 +249,7 @@ class _WorkScreenState extends State<WorkScreen> {
         style: th.textTheme.headlineSmall,
       ),
       const SizedBox(height: 12),
-      ValueListenableBuilder<JobPhase?>(
-        valueListenable: jobs.phase,
-        builder: (context, phase, _) => ValueListenableBuilder<double?>(
-          valueListenable: jobs.progress,
-          builder: (context, v, _) => Row(
-            children: [
-              Expanded(
-                child: LinearProgressIndicator(
-                  value: v,
-                  color: th.colorScheme.secondary,
-                ),
-              ),
-              const SizedBox(width: 16),
-              SizedBox(
-                width: 56,
-                child: Text(
-                  v == null ? '' : l.percent((v * 100).round()),
-                  style: th.textTheme.labelMedium,
-                ),
-              ),
-              Text(_phase(l, phase)),
-            ],
-          ),
-        ),
-      ),
+      JobProgress(jobs: jobs),
       const SizedBox(height: 12),
       OutlinedButton(
         key: const ValueKey('ctl.werk.cancel'),

@@ -186,6 +186,9 @@ class JobQueue extends ChangeNotifier {
 
   /// The running job; its fraction (null = unknown) and phase.
   Job? current;
+
+  /// When [current] started (for the elapsed time on Werk).
+  DateTime? started;
   final progress = ValueNotifier<double?>(null);
   final phase = ValueNotifier<JobPhase?>(null);
 
@@ -243,6 +246,7 @@ class JobQueue extends ChangeNotifier {
       Sermon? s;
       try {
         current = job;
+        started = DateTime.now();
         job.status = JobStatus.besig;
         progress.value = null;
         phase.value = null;

@@ -102,6 +102,7 @@ const kControls = <String, Set<String>>{
   },
   'werk': {
     'ctl.werk.cancel',
+    'ctl.werk.details',
     'ctl.werk.open-youtube',
     'ctl.werk.play',
     'ctl.werk.select',

@@ -6,6 +6,8 @@
 //   doel: veld "Jou YouTube-kanaal": normaliseer die invoer, valideer met een yt-dlp-oproep op versoek, wys "Gevind: naam" of 'n vriendelike fout
 //   status: bou
 
+import '../../app/job_progress.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../core/channel.dart';
@@ -111,7 +113,7 @@ class _ChannelFieldState extends State<ChannelField> {
         if (_busy)
           const Padding(
             padding: EdgeInsets.only(top: 8),
-            child: LinearProgressIndicator(),
+            child: ProgressLine(),
           ),
         if (_found != null)
           Padding(

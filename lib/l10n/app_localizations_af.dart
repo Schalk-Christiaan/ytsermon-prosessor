@@ -974,4 +974,31 @@ class LAf extends L {
 
   @override
   String get suggestAcceptOne => 'Aanvaar';
+
+  @override
+  String get stepMeta => 'Inligting';
+
+  @override
+  String get stepDownload => 'Aflaai';
+
+  @override
+  String get stepPlan => 'Preek soek';
+
+  @override
+  String get stepCut => 'Sny';
+
+  @override
+  String get stepAudio => 'Klank';
+
+  @override
+  String get stepUpload => 'Oplaai';
+
+  @override
+  String get progressSlow => 'Dit kan \'n paar minute duur.';
+
+  @override
+  String get progressShow => 'Wys besonderhede';
+
+  @override
+  String get progressHide => 'Versteek besonderhede';
 }

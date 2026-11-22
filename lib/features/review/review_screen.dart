@@ -6,6 +6,8 @@
 //   doel: die preekredigeerder: preek uit Preke → plan → hakies, I/O, uitknip, transkripsie, Shorts, ontdoen (kortpaaie) → kies uitvoere, Oggend/Aand en soort diens (liedname op die tydlyn) → keur goed en sny
 //   status: bou
 
+import '../../app/job_progress.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -410,10 +412,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                             style: th.textTheme.labelMedium,
                           ),
                           const SizedBox(height: 4),
-                          LinearProgressIndicator(
-                            value: v / 100,
-                            color: th.colorScheme.secondary,
-                          ),
+                          ProgressLine(value: v / 100),
                         ],
                       ),
                     ),
@@ -511,9 +510,8 @@ class _Loading extends StatelessWidget {
           children: [
             SizedBox(
               width: 320,
-              child: LinearProgressIndicator(
+              child: ProgressLine(
                 value: c.stage == LoadStage.cut ? c.cutFraction : null,
-                color: th.colorScheme.secondary,
               ),
             ),
             const SizedBox(height: 16),

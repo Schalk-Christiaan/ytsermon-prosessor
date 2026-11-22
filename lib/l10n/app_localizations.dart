@@ -1730,6 +1730,60 @@ abstract class L {
   /// In af, this message translates to:
   /// **'Aanvaar'**
   String get suggestAcceptOne;
+
+  /// No description provided for @stepMeta.
+  ///
+  /// In af, this message translates to:
+  /// **'Inligting'**
+  String get stepMeta;
+
+  /// No description provided for @stepDownload.
+  ///
+  /// In af, this message translates to:
+  /// **'Aflaai'**
+  String get stepDownload;
+
+  /// No description provided for @stepPlan.
+  ///
+  /// In af, this message translates to:
+  /// **'Preek soek'**
+  String get stepPlan;
+
+  /// No description provided for @stepCut.
+  ///
+  /// In af, this message translates to:
+  /// **'Sny'**
+  String get stepCut;
+
+  /// No description provided for @stepAudio.
+  ///
+  /// In af, this message translates to:
+  /// **'Klank'**
+  String get stepAudio;
+
+  /// No description provided for @stepUpload.
+  ///
+  /// In af, this message translates to:
+  /// **'Oplaai'**
+  String get stepUpload;
+
+  /// No description provided for @progressSlow.
+  ///
+  /// In af, this message translates to:
+  /// **'Dit kan \'n paar minute duur.'**
+  String get progressSlow;
+
+  /// No description provided for @progressShow.
+  ///
+  /// In af, this message translates to:
+  /// **'Wys besonderhede'**
+  String get progressShow;
+
+  /// No description provided for @progressHide.
+  ///
+  /// In af, this message translates to:
+  /// **'Versteek besonderhede'**
+  String get progressHide;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
