@@ -22,7 +22,7 @@
     - werkmap/<id>/plan.json, analysis.json
     - <werkmap>/<id>/plan.json (via die beheerder), instellings.json (uitvoere)
     - werkmap/opname-…/ (video.mp4, info.json, leë onderskrifte, plan.json, sermon.json)
-    - en 5 ander
+    - en 6 ander
   - Die dele
     - Skerms
     - App-raam
@@ -42,10 +42,10 @@ Hoekom: Schalk wil die woord en die sang apart hê, en die diensorde verskil van
 4. KI-etikette — een Ollama-oproep sonder onderskrifte kry die blokke, liedere en beskrywing en gee net nommers terug (gebed voor en ná die preek); die blokke tussen die twee gebede word preek; die KI kies nooit tye nie (`lib/core/planner.dart:369–522`)
 5. Grense uit etikette — preek = langste loop `preek`-blokke (≥ 15 min); begin by die eerste blok van die gebed daarvoor (terug tot by musiek), einde by die Amen van die gebed daarna; twyfel gee 'n rede vir Hersien (`lib/core/bounds.dart:53–60`)
 6. Net die woord — alle spraak tussen die gebede (Skriflesing ingesluit), sonder gebede en sang, in een snit aanmekaar (`lib/core/bounds.dart:118–120`)
-7. Kies die uitvoere — drie merkblokkies (almal aan, onthou in Instellings), Oggend/Aand en die soort diens; die sny gebruik dit (`lib/features/review/properties_panel.dart:453–513`)
+7. Kies die uitvoere — drie merkblokkies (almal aan, onthou in Instellings), Oggend/Aand en die soort diens; die sny gebruik dit (`lib/features/review/properties_panel.dart:486–546`)
 8. WhatsApp-sjabloon — die teks met plekhouers en 'n voorskou met die nuutste preek (`lib/features/playlists/playlists_screen.dart:184–591`)
-9. Uitvoere — `<uitgids>/<jaar>/<datum> <Oggend|Aand> - <tema>/` kry Volle preek.mp4, Net die woord.mp4, Sang/NN <lied>.mp3, WhatsApp.txt en diens.json (`lib/core/cutter.dart:355–356`)
-10. Sny die uitvoere — Volle preek, Net die woord en Sang soos in Instellings gekies, in die diensgids; dan WhatsApp.txt en diens.json (`lib/core/jobs.dart:411–413`)
+9. Uitvoere — `<uitgids>/<jaar>/<datum> <Oggend|Aand> - <tema>/` kry Volle preek.mp4, Net die woord.mp4, Sang/NN <lied>.mp3, WhatsApp.txt en diens.json (`lib/core/cutter.dart:414–415`)
+10. Sny die uitvoere — Volle preek, Net die woord en Sang soos in Instellings gekies, in die diensgids; dan WhatsApp.txt en diens.json (`lib/core/jobs.dart:453–455`)
 11. Kopieer WhatsApp-teks — die teks langs die uitvoere (WhatsApp.txt) op die knipbord, om saam met die klank te plak (`lib/features/work/work_screen.dart:621–631`)
 12. Preke-aansig — per jaar, nuutste eerste; Speel, Wys in gids en Kopieer WhatsApp-teks per diens (`lib/features/library/library_screen.dart:118–171`)
 13. Sang-aansig — alle liedere met naam, diens en datum; 'n soektog wys net die liedere wat pas (`lib/features/library/library_screen.dart:173–217`)
@@ -57,7 +57,7 @@ Die snit begin by die eerste woord van die gebed voor die preek en eindig ná di
 Hoekom: Ollama het die grense soms verkeerd gekies (of 30 min gedink); reëls oor woordtye en stilte is herhaalbaar en binne 0,5 s.
 
 1. Stilte-snap — begin na die einde van die laaste stilte voor die eerste woord, einde by die begin van die eerste stilte ná "Amen" (ffmpeg silencedetect, ±3 s) (`lib/core/bounds.dart:175–178`)
-2. Herkodeer — libx264 presies op die grense (nie -c copy nie, wat net op 'n sleutelraam sny) (`lib/core/cutter.dart:251–253`)
+2. Herkodeer — libx264 presies op die grense (nie -c copy nie, wat net op 'n sleutelraam sny) (`lib/core/cutter.dart:303–305`)
 
 ### Verwerk nuutste diens
 
@@ -67,11 +67,11 @@ Hoekom: die gewone week; Oom Johan moet dit sonder hulp kan doen, met net een ge
 
 1. Verwerk nuutste diens — Preke: een knoppie verfris die lys, beplan die boonste diens en maak Hersien oop (`lib/features/sermons/sermons_screen.dart:181–193`)
    - nog besig met beplan → Hersien wys die laaistap; geen internet → strook met die rede
-2. Beplan — onderskrifte + video af; Ollama benoem die blokke, kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks (`lib/core/jobs.dart:352–355`)
+2. Beplan — onderskrifte + video af; Ollama benoem die blokke, kode kies die grense (gebed tot gebed, stilte-snap), Ollama skryf net teks (`lib/core/jobs.dart:390–393`)
    - Ollama af → "Ollama het nie geantwoord nie" met Probeer weer in Werkry
 3. Hersien — kyk die hakies by die gebede, die titel, Skriflesing en beskrywing (`lib/features/review/review_screen.dart:202–202`)
-4. Sny — herkodeer presies van die eerste woord tot ná die Amen (met intro/outro en uitgeknipte stukke saamgevoeg); uitset in die uitsetgids (`lib/core/jobs.dart:409–409`)
-5. Laai op — volle preek en Shorts na YouTube, in die regte snitlys (`lib/core/jobs.dart:617–619`)
+4. Sny — herkodeer presies van die eerste woord tot ná die Amen (met intro/outro en uitgeknipte stukke saamgevoeg); uitset in die uitsetgids (`lib/core/jobs.dart:451–451`)
+5. Laai op — volle preek en Shorts na YouTube, in die regte snitlys (`lib/core/jobs.dart:659–661`)
    - kwota op → "probeer môre weer"; geen internet → Probeer weer
 
 ### 'n Ou preek verwerk
@@ -92,8 +92,8 @@ Hoekom: soms faal die regstreekse uitsending; dan is die eie opname die enigste 
 1. Voer opname in — lêerkieser of insleep → dialoog met titel (lêernaam) en datum (`lib/features/sermons/sermons_screen.dart:195–559`)
    - kanselleer → niks verander nie; kopie misluk (skyf vol) → strook met friendlyError
 2. Kopieer en beplan — video.mp4, info.json, leë onderskrifte en 'n plan oor die hele lêer (`lib/core/recording.dart:24–26`)
-3. Stel self — geen onderskrifte nie: die strook sê so; stel begin en einde met I/O by die speelkop (`lib/features/review/transcript.dart:32–97`)
-4. Sny sonder YouTube — dieselfde snit; die opname het geen Shorts-onderskrifte nie (`lib/core/jobs.dart:410–410`)
+3. Stel self — geen onderskrifte nie: die strook sê so; stel begin en einde met I/O by die speelkop (`lib/features/review/transcript.dart:39–149`)
+4. Sny sonder YouTube — dieselfde snit; die opname het geen Shorts-onderskrifte nie (`lib/core/jobs.dart:452–452`)
 
 ### Die grense is onseker of verkeerd
 
@@ -103,9 +103,9 @@ Hoekom: die grense kom uit reëls, nie 'n KI nie, maar is net so min onfeilbaar;
 
 1. Sien die fout — 'n banier wys waarom die kode onseker is en spring na die grens; gebedsmerkers wys waar die gebede is (`lib/features/review/review_screen.dart:203–479`)
    - kode onseker → banier met die rede (ARB) en "Gaan na die grens"
-2. Soek in die transkripsie — klik die gebed se reël; die video spring daarheen (`lib/features/review/transcript.dart:31–31`)
-3. Skuif die hakie — sleep, ←/→ 1 s, Shift 0,1 s, of I/O by die speelkop (`lib/features/review/review_controller.dart:435–664`)
-4. Ontdoen — Ctrl+Z draai die laaste skuif terug, Ctrl+Shift+Z herdoen (`lib/features/review/review_controller.dart:431–433`)
+2. Soek in die transkripsie — klik die gebed se reël; die video spring daarheen (`lib/features/review/transcript.dart:38–38`)
+3. Skuif die hakie — sleep, ←/→ 1 s, Shift 0,1 s, of I/O by die speelkop (`lib/features/review/review_controller.dart:498–727`)
+4. Ontdoen — Ctrl+Z draai die laaste skuif terug, Ctrl+Shift+Z herdoen (`lib/features/review/review_controller.dart:494–496`)
 5. Beplan weer — loop die grense en die teks weer van voor af as die hele voorstel verkeerd is (bevestiging) (`lib/features/review/review_screen.dart:73–200`)
 
 ### Hervat ná 'n onderbreking
@@ -114,8 +114,8 @@ Die app of die krag gaan af in die middel van 'n aflaai of snit; by die volgende
 
 Hoekom: 'n uur se aflaai mag nie verlore gaan nie, en niemand moet onthou wat besig was nie.
 
-1. Hervat ná 'n onderbreking — jobs.json word gelees; 'n taak wat besig was, wag weer en loop van voor af (`lib/core/jobs.dart:156–325`)
-2. Aflaai hervat — yt-dlp gaan voort met die halwe .part-lêer; 'n klaar video word oorgeslaan (`lib/core/channel.dart:175–177`)
+1. Hervat ná 'n onderbreking — jobs.json word gelees; 'n taak wat besig was, wag weer en loop van voor af (`lib/core/jobs.dart:157–326`)
+2. Aflaai hervat — yt-dlp gaan voort met die halwe .part-lêer; 'n klaar video word oorgeslaan (`lib/core/channel.dart:178–180`)
 3. Mislukte taak — rooi ikoon, die rede en Probeer weer (`lib/features/work/work_screen.dart:633–633`)
 
 ### Eerste keer op die kerk-PC
@@ -124,7 +124,7 @@ Ná Setup.exe bring die Opstelling-lys alles tot groen sonder 'n terminaal.
 
 Hoekom: die kerk-PC het geen ontwikkelaar langsaan nie.
 
-1. Begin op Opstelling — tot setupDone waar is, wys die app net die Opstelling-lys (`lib/app/shell.dart:106–416`)
+1. Begin op Opstelling — tot setupDone waar is, wys die app net die Opstelling-lys (`lib/app/shell.dart:106–418`)
 2. Kontroleer — kyk wat klaar is: Ollama, model, kanaal, uitsetgids (`lib/features/setup/setup_screen.dart:70–80`)
 3. Een knoppie op 'n slag — Begin Ollama → Laai model af → Koppel kanaal → Maak gids (`lib/features/setup/setup_screen.dart:82–97`)
    - geen kliënt-ID-lêer → "Gaan na Instellings"
@@ -137,7 +137,7 @@ Die gesnyde preek word 'n mp3 wat die WhatsApp-admin in die groep sleep.
 Hoekom: baie lidmate luister net op hul foon; die admin wil nie die app leer nie.
 
 1. WhatsApp-klank — by die gesnyde preek in Werkry; een klik (`lib/features/work/work_screen.dart:564–564`)
-2. Klank uitvoer — mp3 van Net die woord (of Volle preek as dit nie gesny is nie), langs die gesnyde video (`lib/core/jobs.dart:531–533`)
+2. Klank uitvoer — mp3 van Net die woord (of Volle preek as dit nie gesny is nie), langs die gesnyde video (`lib/core/jobs.dart:573–575`)
    - preek nog nie gesny nie → "Sny eers die preek"
 3. Wys in gids — maak die gids met die mp3 oop om in WhatsApp te sleep (`lib/features/work/work_screen.dart:565–619`)
 
@@ -147,10 +147,10 @@ Die titel of Skriflesing is verkeerd op YouTube; Hersien stuur die regstelling s
 
 Hoekom: weer oplaai kos kwota en breek die skakel wat reeds gedeel is.
 
-1. Maak reg — open die opgelaaide preek in Hersien en wysig titel of beskrywing (`lib/features/review/properties_panel.dart:245–451`)
+1. Maak reg — open die opgelaaide preek in Hersien en wysig titel of beskrywing (`lib/features/review/properties_panel.dart:278–484`)
 2. Werk op YouTube by — knoppie verskyn net vir 'n opgelaaide preek; strook sê hoeveel video's (`lib/features/review/review_screen.dart:481–532`)
    - geen internet of video weg → strook met friendlyError
-3. Stuur na elke opgelaaide video — titel en beskrywing uit die plan, per mp4-uitset (`lib/core/jobs.dart:591–592`)
+3. Stuur na elke opgelaaide video — titel en beskrywing uit die plan, per mp4-uitset (`lib/core/jobs.dart:633–634`)
 4. YouTube PUT — haal die snippet, verander titel en beskrywing, stuur dit terug (`lib/core/youtube.dart:301–390`)
    - video weg → "Video … is nie meer op YouTube nie."
 
@@ -160,9 +160,9 @@ Hoekom: weer oplaai kos kwota en breek die skakel wat reeds gedeel is.
 
 Hoekom: "SocketException" sê niks vir Oom Johan nie; die regstelling moet in die boodskap staan.
 
-1. Gewone-taal fout — internet, Ollama of vol skyf word elk sy eie sin met die regstelling (`lib/core/jobs.dart:120–121`)
+1. Gewone-taal fout — internet, Ollama of vol skyf word elk sy eie sin met die regstelling (`lib/core/jobs.dart:121–122`)
 2. Werkry wys die rede — die sin uit friendlyError onder die taak, met Probeer weer (`lib/features/work/work_screen.dart:634–682`)
-3. Probeer weer — die mislukte taak staan weer in die ry, die werk tot dusver bly (`lib/core/jobs.dart:327–350`)
+3. Probeer weer — die mislukte taak staan weer in die ry, die werk tot dusver bly (`lib/core/jobs.dart:328–353`)
 
 ## Geheue
 
@@ -180,6 +180,7 @@ Hoekom: "SocketException" sê niks vir Oom Johan nie; die regstelling moet in di
 | `<werkmap>/<id>/service.json` | Oggend/Aand en diens-soort wat Schalk in Hersien kies | service_info |
 | `<werkmap>/<id>/sound.json` | die klas van elke sekonde (stilte/musiek/spraak/geraas); sound.level.json | die dB per sekonde (golfvorm in Hersien) | sound |
 | `<werkmap>/<id>/sermon.json` | atomies (.tmp, dan hernoem) | store |
+| `<id>/<id>.local.json3` |  | transcribe |
 | `refresh-token (deur die roeper: Windows Credential Manager / libsecret); <werkmap>/quota.json; <werkmap>/<id>/upload-*.json` | hervat-sessie | youtube |
 
 ## Dele
@@ -198,13 +199,13 @@ flowchart TB
     n26["setup_screen"]:::bou
     n27["shell"]:::bou
     n33["system_status"]:::bou
-    n38["work_screen"]:::bou
+    n39["work_screen"]:::bou
   end
   subgraph g1["module"]
     n0["bounds"]:::klaar
     n1["captions"]:::bou
     n2["channel"]:::bou
-    n4["cutter"]:::klaar
+    n4["cutter"]:::bou
     n5["job_progress"]:::bou
     n6["jobs"]:::bou
     n7["library"]:::klaar
@@ -228,9 +229,10 @@ flowchart TB
     n32["suggest"]:::bou
     n34["theme"]:::bou
     n35["tools"]:::bou
-    n36["transcript"]:::klaar
-    n37["transport_bar"]:::bou
-    n39["youtube"]:::klaar
+    n36["transcribe"]:::bou
+    n37["transcript"]:::bou
+    n38["transport_bar"]:::bou
+    n40["youtube"]:::klaar
   end
   n0 --> n4
   classDef bou fill:#fde68a,stroke:#b45309,color:#000
@@ -242,11 +244,11 @@ flowchart TB
 |---|---|---|---|---|---|---|---|
 | bounds | module | ná die KI-etikette (Planner.analyse), in planJob (met die video af, vir die stilte-snap) | kies die snit-grense met reëls uit die etikette van die spraakblokke (die KI kies nooit tye): preek = langste loop preek-blokke, begin by die gebed voor, einde by die Amen van die gebed ná die preek; snapBounds pas albei by die naaste stilte aan (ffmpeg silencedetect) |  | klaar | `lib/core/bounds.dart` | sermonRuns, findBounds, musicBetween, wordParts, snapStart, snapEnd, snapBounds |
 | captions | module | ná fetchMeta | json3-onderskrifte → segmente met woordtye, kompakte teks vir die KI (uit blokke), spraakblokke (pouse/Amen/musiek), SRT |  | bou | `lib/core/captions.dart` | parseJson3, formatTime, parseClock, compact, toSrt, wordsOf, blocks |
-| channel | module | as 'n preek-URL gelaai word | lys die kanaal (flat; URL uit instellings, normaliseer), video-ID uit URL, haal metadata + af-orig-onderskrifte, laai die video een keer af |  | bou | `lib/core/channel.dart` | ChannelItem, parseChannel, normalizeChannelUrl, channelName, listChannel, videoIdFromUrl, parseProgress, downloadDetail, FetchedMeta, fetchMeta, downloadVideo, InfoFields |
+| channel | module | as 'n preek-URL gelaai word | lys die kanaal (flat; URL uit instellings, normaliseer), video-ID uit URL, haal metadata + af-orig-onderskrifte (ontbreek dit: geen fout, die plan transkribeer plaaslik), laai die video een keer af |  | bou | `lib/core/channel.dart` | ChannelItem, parseChannel, normalizeChannelUrl, channelName, listChannel, videoIdFromUrl, parseProgress, downloadDetail, FetchedMeta, fetchMeta, downloadVideo, InfoFields |
 | channel_field | skerm | Opstelling en Instellings | veld "Jou YouTube-kanaal": normaliseer die invoer, valideer met een yt-dlp-oproep op versoek, wys "Gevind: naam" of 'n vriendelike fout |  | bou | `lib/features/settings/channel_field.dart` | ChannelField |
-| cutter | module | by 'Keur goed en sny' en 'Klank vir WhatsApp' | gids per diens (serviceDir), sny Volle preek en Net die woord (herkodeer net die stuk, of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif), elke lied as mp3 en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg; skryf die WhatsApp-teks |  | klaar | `lib/core/cutter.dart` | sermonFileName, sermonArgs, silenceArgs, shortArgs, audioArgs, MediaInfo, probeMedia, joinArgs, parseFfmpegProgress, cutParts, cutShort, cutAudio, serviceDir, songArgs, cutSong, longDate, whatsappText |
+| cutter | module | by 'Keur goed en sny' en 'Klank vir WhatsApp' | gids per diens (serviceDir), sny Volle preek en Net die woord (herkodeer net die stuk met NVENC of libx264 (val terug by 'n NVENC-fout), of segmente plus intro/outro saamgevoeg), Shorts (9:16 met ingebrande onderskrif), elke lied as mp3 en WhatsApp-klank (mono mp3 64 kbps) met ffmpeg; skryf die WhatsApp-teks |  | bou | `lib/core/cutter.dart` | videoArgs, sermonFileName, sermonArgs, silenceArgs, shortArgs, audioArgs, MediaInfo, probeMedia, joinArgs, parseFfmpegProgress, cutParts, cutShort, cutAudio, serviceDir, songArgs, cutSong, longDate, whatsappText |
 | job_progress | module | Werk-skerm, Hersien-laai, Opstel en oral waar iets wag | gedeelde vorderingswyer: stappelys van die taak se fases (huidige vet), balk met persentasie, detailreël, begintyd, onbepaald-met-woorde en uitvoubare besonderhede (laaste 20 reëls) |  | bou | `lib/app/job_progress.dart` | ProgressLine, stepsOf, MiniProgress, startedLabel, JobProgress |
-| jobs | module | "Verwerk volgende", "Keur goed en sny", "Beplan weer", "Klank vir WhatsApp", "Laai op" en by begin (hervat) | een taak op 'n slag (plan: klank → blokke → etikette → grense → stilte-snap; sny: die gekose uitvoere in die diensgids met WhatsApp.txt en diens.json; klank of oplaai), hervat ná herbegin, kanselleer, probeer weer |  | bou | `lib/core/jobs.dart` | JobKind, JobStatus, JobPhase, Job, JobCtx, friendlyError, JobQueue, planJob, cutJob, audioJob, updateOnYouTube, uploadJob |
+| jobs | module | "Verwerk volgende", "Keur goed en sny", "Beplan weer", "Klank vir WhatsApp", "Laai op" en by begin (hervat) | een taak op 'n slag (plan: (geen af-orig: plaaslike transkripsie met whisper) klank → blokke → etikette → grense → stilte-snap; sny: die gekose uitvoere in die diensgids met WhatsApp.txt en diens.json; klank of oplaai), hervat ná herbegin, kanselleer, probeer weer |  | bou | `lib/core/jobs.dart` | JobKind, JobStatus, JobPhase, Job, JobCtx, friendlyError, JobQueue, checkWhisper, transcribeStep, planJob, cutJob, audioJob, updateOnYouTube, uploadJob |
 | library | module | as die Biblioteek-skerm oopmaak of herlaai | lees elke <uitvoer>/<jaar>/<diens>/diens.json in een lys diens (nuutste eerste) met hul liedere; die blaaier soek daarin |  | klaar | `lib/core/library.dart` | LibrarySong, LibraryService, readService, loadLibrary, libraryWhatsapp |
 | library_screen | skerm | Biblioteek (rail) | die dienste in die uitvoergids as Preke (per jaar, nuutste eerste) en Sang (alle liedere); soek op tema, skriflesing en liedname; Speel, Wys in gids, Kopieer WhatsApp-teks; laai by oopmaak en met Herlaai |  | klaar | `lib/features/library/library_screen.dart` | LibraryScreen |
 | models | module | oral waar 'n plan gebruik word | Word, Segment (met woordtye), TimeBlock, Block/BlockLabel (spraakblok met etiket), Song, Bounds, Short, Span, SermonPlan (preek minus uitgeknipte stukke = segmente) met JSON |  | klaar | `lib/core/models.dart` | SegmentKind, Word, Segment, TimeBlock, BlockLabel, Block, Song, BoundsDoubt, Bounds, Short, Span, SermonPlan |
@@ -259,7 +261,7 @@ flowchart TB
 | playlists_screen | skerm | Snitlyste (rail) | snitlysreëls aan/af en in volgorde, eie snitlysgroepe (skep, wysig, preke by, uitvee, KI stel preke voor), voorskou hoeveel preke in elke snitlys val, beskrywingsjabloon, WhatsApp-sjabloon met voorskou |  | bou | `lib/features/playlists/playlists_screen.dart` | PlaylistsScreen |
 | properties_panel | module | Hersien-skerm (regs; onder 1280 breed in 'n laai) | twee oortjies (Inligting, Transkripsie); Inligting wys titel, beskrywing, uitvoere en die Shorts- en snitlyste, of net die Short/snit wat in die diensbaan gekies is (slider met syferveld); Herstel na die KI-voorstel |  | bou | `lib/features/review/properties_panel.dart` | PropertiesPanel |
 | recording | module | by "Voer opname in" (knoppie of insleep op Preke) | 'n eie video-opname (nie op YouTube nie) word 'n preek met 'n plaaslike ID en 'n handmatige plan, sodat Hersien en sny dit soos enige ander preek hanteer |  | klaar | `lib/core/recording.dart` | importRecording |
-| review_controller | module | Hersien-skerm | laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit die etikette (analysis.json), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plan en sny loop deur die werkry |  | bou | `lib/features/review/review_controller.dart` | ReviewState, LoadStage, ReviewController |
+| review_controller | module | Hersien-skerm | laai meta en plan van 'n preek uit die stoor en redigeer dit (hakies, gebedsmerkers uit die etikette (analysis.json), I/O, uitknip, Shorts, ontdoen/herdoen, voorskou van die snit); plaaslike transkripsie (whisper) kan die onderskrifte vervang (.bak bly); plan en sny loop deur die werkry |  | bou | `lib/features/review/review_controller.dart` | ReviewState, LoadStage, ReviewController |
 | review_screen | skerm | Hersien (rail) | die preekredigeerder: preek uit Preke → plan → hakies, I/O, uitknip, transkripsie, Shorts, ontdoen (kortpaaie) → kies uitvoere, Oggend/Aand en soort diens (liedname op die tydlyn) → keur goed en sny |  | bou | `lib/features/review/review_screen.dart` | ReviewScreen |
 | sermons_screen | skerm | Preke (rail, tuis) | die hele kanaal (uit instellings) as tabel (Titel, Datum, Lengte, Stand, Grootte; klik op opskrif sorteer) of rooster; filter (ook "Nie opgelaai nie"), soek; "Verwerk nuutste diens" → plan → Hersien; "Verwerk volgende" → werkry; "Voer opname in" (knoppie of insleep) → Hersien |  | bou | `lib/features/sermons/sermons_screen.dart` | stateLabel, stateIcon, SermonsScreen, SermonThumb, ViewToggle |
 | service_info | module | ná fetchMeta (info.json) en in cutJob | diensdatum in plaaslike tyd (nie upload_date nie), Oggend/Aand en die velde uit die YouTube-beskrywing (tema, skriflesing, fokus, belydenis, psalms); Schalk se keuses oor Oggend/Aand en diens-soort |  | klaar | `lib/core/service_info.dart` | serviceStart, ServiceInfo, applyChoices, saveChoices |
@@ -273,10 +275,11 @@ flowchart TB
 | storage | module | by laai en ná 'n taak | lêergroottes (som van 'n gids), SA-formaat "1,42 GB", en vrye skyfspasie (df / fsutil) |  | bou | `lib/core/storage.dart` | dirSize, sermonSizes, formatBytes, freeBytes |
 | store | module | by begin (laai almal) en by elke toestandsverandering van 'n preek | elke diens as Sermon met toestand wat herbegin oorleef; voeg die kanaallys by en snoei ongeraakte preke van 'n vorige kanaal; 'n beskadigde sermon.json word oorgeslaan |  | bou | `lib/core/store.dart` | scriptureFrom, writeJson, SermonState, Sermon, SermonStore |
 | suggest | module | Schalk vra "Stel preke voor" by 'n snitlysgroep; een keer ná elke klaar snit | vra Ollama (qwen3:8b) watter preke by 'n snitlysgroep pas, uit titel, Skriflesing, datum en die begin van die transkripsie; antwoord is JSON, onbekende ID's word weggelaat; GroupSuggestions vra ná 'n klaar snit (sonder dat die render wag) by watter groepe die preek pas en hoogstens een nuwe groepnaam, en hou dit in die geheue tot Aanvaar of Ignoreer |  | bou | `lib/core/suggest.dart` | Brief, SuggestException, wordBudget, cutWords, briefOf, suggestSermons, preek, suggestGroupsFor, GroupSuggestions |
-| system_status | skerm | Instellings → Stelsel | wys yt-dlp/ffmpeg/ffprobe/Ollama met ikoon + woord (Gereed / Ontbreek); "Werk yt-dlp by" |  | bou | `lib/features/settings/system_status.dart` | updateYtDlpSnack, SystemStatus |
+| system_status | skerm | Instellings → Stelsel | wys yt-dlp/ffmpeg/ffprobe/Ollama en die video-enkodeerder (GPU/CPU) en die spraakmodel met ikoon + woord (Gereed / Ontbreek); "Laai spraakmodel af"; "Werk yt-dlp by" |  | bou | `lib/features/settings/system_status.dart` | updateYtDlpSnack, SystemStatus |
 | theme | module | by opstart | ontwerpstelsel (Karoo-wit / Karoo-nag kleure, tipe, panele, seleksie), lig + donker |  | bou | `lib/app/theme.dart` | appPanel, motion, AppTokens, buildTheme |
-| tools | module | by oopmaak van Instellings en voor elke aflaai/KI-oproep | vind yt-dlp/ffmpeg/ffprobe/ollama (langs die exe, Ollama se gids, PATH), loop eksterne prosesse (runTool), toets Ollama + qwen3:8b, laai die model af, begin Ollama; wys qjs.exe (QuickJS) as JS-looptyd aan yt-dlp as dit langs die exe lê |  | bou | `lib/core/tools.dart` | ollamaBase, findExecutable, JobCancelled, runTool, ToolStatus, openPath, updateYtDlp, probeOllama, pullModel, startOllama, probeAll |
-| transcript | module | Hersien-skerm | transkripsiestrook: onderskrifreëls met tyd, klik soek daarheen, gebede gemerk, huidige reël uitgelig; leeg = stel self |  | klaar | `lib/features/review/transcript.dart` | Transcript |
+| tools | module | by oopmaak van Instellings en voor elke aflaai/KI-oproep | kies video-enkodeerder (videoEncoder: NVENC as dit werk, anders libx264); vind yt-dlp/ffmpeg/ffprobe/ollama (langs die exe, Ollama se gids, PATH), loop eksterne prosesse (runTool), toets Ollama + qwen3:8b, laai die model af, begin Ollama; wys qjs.exe (QuickJS) as JS-looptyd aan yt-dlp as dit langs die exe lê |  | bou | `lib/core/tools.dart` | whisperModelFile, resetVideoEncoder, ollamaBase, findExecutable, JobCancelled, runTool, ToolStatus, openPath, updateYtDlp, probeOllama, pullModel, pullWhisperModel, startOllama, probeAll |
+| transcribe | module | as 'n video geen af-orig-onderskrifte het nie, of as Schalk in Hersien plaaslik wil transkribeer | ffmpeg maak 16 kHz mono WAV, whisper-cli (whisper.cpp, taal af) transkribeer dit, die JSON word json3 in YouTube se vorm sodat captions/bounds/planner onveranderd werk |  | bou | `lib/core/transcribe.dart` | whisperToJson3, transcribeLocal |
+| transcript | module | Hersien-skerm | transkripsiestrook: onderskrifreëls met tyd, klik soek daarheen, gebede gemerk, huidige reël uitgelig; kop met "Plaaslike transkripsie"-merk en "Transkribeer plaaslik"; leeg = stel self |  | bou | `lib/features/review/transcript.dart` | Transcript |
 | transport_bar | module | Hersien-skerm (onder die voorskou) | vervoerbalk (speel/pouse, tyd, na die hakies, 5 s terug/vorentoe, klankvolume met demp, zoem met syferveld) en gereedskapbalk (I/O, knip uit, Short by, voorskou van die snit) |  | bou | `lib/features/review/transport_bar.dart` | TransportBar, ToolBar |
 | work_screen | skerm | Werk (rail) | wys die werkry (lys of rooster, soos Preke): huidige taak met vordering en Kanselleer, wag- en fout-lyste, voorgestelde snitlyste (Aanvaar/Ignoreer), en die uitvoere in drie groepe (Volle preke, Shorts, Klank vir WhatsApp) met kies-alles en 'n aftreklys per groep (Laai op, Kopieer na gids, Wys in gids, Kopieer WhatsApp-teks, Klank vir WhatsApp); oplaai-teller |  | bou | `lib/features/work/work_screen.dart` | WorkGroup, WorkItem, WorkScreen |
 | youtube | module | "Koppel kanaal" (Instellings) en die oplaai-taak in die werkry | desktop-OAuth (loopback + PKCE), hervatbare oplaai, snitlyste en die 100-per-dag-teller; net dart:io, endpunte uit die kliëntlêer sodat toetse 'n vals bediener gebruik |  | klaar | `lib/core/youtube.dart` | GoogleAuth, YouTube, QuotaExceeded, UploadQuota |
