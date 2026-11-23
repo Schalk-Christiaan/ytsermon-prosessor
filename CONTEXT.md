@@ -60,7 +60,7 @@ Windows-VM (`omarchy-windows`): dryf met QEMU-monitor `sendkey`; kiekie via `doc
 
 2026-11-22 Desktop-styl: styl A (Verkenner: vaste sybalk, opdragbalk, statusbalk, digte tabelle, 32 px-knoppies, radius 4) met styl C se groepe per afdeling en Oplaai-aftreklys op die Werk-skerm; Karoo-wit aardse palet (kalkwit #F4F0E8, Oranje bly, karoobos-groen #5A6B47 vervang rivier-teal) en animasies tussen skerms (want dit is 'n Windows-app, nie 'n foon-app nie; Schalk se keuse uit artefak Preekverwerker-style)
 2026-11-22 Pixel-kuns uit Bybelverhale as ekstra grafika (vorderingstonele per fase, leë toestande, klein karakters), as kode-roosters met tema-kleure, sonder afbeelding van God of Christus (aanname: Gereformeerde gemeente); elke wag sê wat besig is (want Schalk weet nie wat gebeur terwyl dit laai nie)
-2026-11-22 Plaaslike spraak-na-teks (whisper.cpp, taal af, GPU) net as terugval: video sonder af-orig of op versoek in Hersien; YouTube bly eerste; NVENC met libx264-terugval (want die kerk-PC het 'n RTX 3050; vervang "geen Whisper" net vir dié gevalle)
+2026-11-22 Plaaslike spraak-na-teks (whisper.cpp, taal af, CPU-bou gebundel; CUDA later) net as terugval: video sonder af-orig of op versoek in Hersien; YouTube bly eerste; NVENC met libx264-terugval (want die kerk-PC het 'n RTX 3050; vervang "geen Whisper" net vir dié gevalle)
 ## Name
 die kanaal = https://www.youtube.com/@gereformeerdekerkoranjeriv5791
 die kerk-PC = die kerk se Windows 11-skootrekenaar waar dit finaal loop: Ryzen 7 5800H, RTX 3050 (skootrekenaar, waarskynlik 4 GB VRAM), 16 GB DDR4

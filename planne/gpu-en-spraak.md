@@ -1,4 +1,4 @@
-status: bou
+status: klaar
 
 # GPU-enkodering (NVENC) en plaaslike spraak-na-teks as terugval
 
@@ -134,5 +134,22 @@ Twee dinge:
 
 ## Log
 - 2026-11-22: plan geskryf ná Schalk se keuses "NVENC eers" en "spraak-na-teks as terugval".
+- 2026-11-22: 1 klaar — videoEncoder() 3 gevalle + kas getoets (rooi→groen); regte ffmpeg op Linux gee libx264.
+- 2026-11-22: 2 klaar — videoArgs() een definisie, _encode herprobeer met libx264; regte snit: h264, 7.52 s vir 7.5 s. Afwyking: Shorts kry nou ook -preset veryfast (was x264-verstek).
+- 2026-11-22: 3 klaar — probeAll kry 'encoder'-ry; system_status_test (GPU/CPU) + tools_probe_test; kiekies lig/donker in docs/kiekies/gpu-en-spraak/stelsel-rye-*.png; flutter test 361 groen. SystemStatus kry `probe`-naat (Process.run kan nie in widget-toets nie).
+- 2026-11-22: 4 klaar — navorsing/2026-11-22-whisper-cpp-afrikaans.md: b5907, CUDA-zip 735 MB + SHA-256, turbo q5_0 (574 MB); CPU 0,6x intyds; ~10 % segmente met Nederlandse vorms (nie >50 %), ooreenkoms 0,8 met YouTube; `--prompt` help nie en veroorsaak herhalingslus in sang. Vulkan onbewys (vulkan-headers ontbreek; niks geïnstalleer).
+- 2026-11-22: 5 klaar — lib/core/transcribe.dart (whisperToJson3 + transcribeLocal); test/transcribe_test.dart rooi→groen met fixture whisper-sample.json en vervalste ffmpeg/whisper-cli; parseJson3 gee woordtye, blocks() werk, bounds-/captions-toetse groen. Anti-lus: segment gelyk aan vorige twee word weggelaat.
+- 2026-11-22: 6 klaar — fetchMeta gooi nie meer sonder af-orig nie; FetchedMeta.anyCaptions (af-orig dan local) in jobs/suggest/review; planJob: checkWhisper vroeg (fout wys na Instellings "Laai spraakmodel af"), transkribeStep ná aflaai met detail+persentasie; jobs_test (vervalste whisper-cli/ffmpeg, twee take agtermekaar) groen; volle suite 366 groen.
+- 2026-11-22: 7 klaar — Stelsel-ry "Spraakmodel" + "Laai spraakmodel af" (pullWhisperModel: .part, SHA-256, hernoem; getoets met plaaslike HttpServer); Hersien → Transkripsie: badge "Plaaslike transkripsie" + "Transkribeer plaaslik" (bevestiging, .bak van af-orig/local); sleutels ctl.instellings.whisper-model, ctl.hersien.transcribe-local(+cancel/confirm) in inventory en getoets; volle suite 379 groen; kiekies lig/donker 1400+1600 (Hersien) en 1100/1400/1600 (Stelsel) in docs/kiekies/gpu-en-spraak/ (1100 vir Hersien wys die paneel nie, dis die bestaande uitleg).
+- 2026-11-22: 8 klaar (afwyking) — windows.yml laai whisper-bin-x64 b5907 (SHA-256 vasgepen) af, kopieer whisper-cli.exe + whisper.dll + ggml*.dll na deps/whisper, setup.iss installeer dit langs die exe, rooktoets loop `whisper-cli --help`; YAML parse OK. CUDA-zip (735 MB) NIE gebundel nie (te groot, drywer >= 551 onbewys); sy URL/SHA staan as kommentaar. CI self: ongetoets: CI.
+- 2026-11-23: 9 deels — regte vloei op 'n 4-min-knip van YWz5gf0onjk sonder af-orig: whisper-cli (CPU) → `local.json3` (12 KB) met vordering 12→53 % in die detail-reël → plan het korrek geweier ("Die preek is 4 min; moet 15–90 min"); snit dus nie op regte data bewys nie (eenheidstoetse dek dit). Transkripsie wys Nederlandse glip ("toch", "kracht", "wij").
+- 2026-11-23: 10 klaar (hoofsessie) — tydelike toets weg; format, analyze skoon, 379 toetse groen, kaart 0 FOUT.
 
 ## Verslag
+**Gebou:** `videoEncoder()` + `videoArgs()` (NVENC met proef en libx264-terugval, ook per snit); Stelsel-rye Enkodeerder en Spraakmodel (+ aflaai met SHA-256); `lib/core/transcribe.dart` (wav → whisper-cli → json3 `local`); job-vloei transkribeer as af-orig ontbreek; Hersien-merk en "Transkribeer plaaslik" (.bak); windows.yml bundel whisper-cli CPU-bou b5907.
+**Bewys:** 379 toetse (vervalste ffmpeg/whisper/HTTP); regte snit op Linux h264 7,52 s; regte whisper-lopie tot plan (stap 9); navorsing met maatstaf.
+**Ongetoets:** NVENC op 'n NVIDIA-kaart (kerk-PC); whisper op Windows; CI-lopie; volle regte snit uit 'n plaaslike transkripsie.
+**Afwykings:** net CPU-whisper gebundel (CUDA-zip 735 MB); Shorts kry ook `-preset veryfast`; `--prompt` nie gebruik nie (help nie, veroorsaak lusse); anti-lus-filter vir herhaalde segmente.
+**Hersiening (2026-11-23):** niks ernstig nie. Klein, later: Hersien se "Transkribeer plaaslik" loop buite die JobQueue (kan saam met 'n taak se whisper loop); duplikate in `_pickEncoder`/`runTool` en `pullWhisperModel`/`pullModel`; Windows-toetse oorgeslaan; zip-paaie in CI ongetoets.
+**Prestasie:** een proef per sessie; whisper net sonder af-orig of op versoek, deur die JobQueue; CPU-whisper ≈ 0,6× intyds hier, op die kerk-PC na verwagting effens stadiger.
+
