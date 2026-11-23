@@ -51,6 +51,9 @@ const kControls = <String, Set<String>>{
     'ctl.hersien.replan-cancel',
     'ctl.hersien.replan-confirm',
     'ctl.hersien.tab-info',
+    'ctl.hersien.transcribe-local',
+    'ctl.hersien.transcribe-local-cancel',
+    'ctl.hersien.transcribe-local-confirm',
     'ctl.hersien.tab-transcript',
     'ctl.hersien.select-back',
     'ctl.hersien.select-short',
@@ -148,6 +151,7 @@ const kControls = <String, Set<String>>{
     'ctl.snitlyste.group-delete-no',
   },
   'instellings': {
+    'ctl.instellings.whisper-model',
     'ctl.instellings.setup',
     'ctl.instellings.channel',
     'ctl.instellings.channel-check',

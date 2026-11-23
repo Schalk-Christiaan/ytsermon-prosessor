@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:preekverwerker/core/tools.dart';
@@ -30,6 +31,7 @@ void main() {
     pathDir.deleteSync(recursive: true);
   });
   runToolTests();
+  videoEncoderTests();
 
   group('pullModel against a fake Ollama', () {
     late HttpServer server;
@@ -133,4 +135,103 @@ void runToolTests() {
       ),
     );
   }, skip: sh == null);
+}
+
+/// A fake ffmpeg script: lists `h264_nvenc` when [listed]; encoding with it fails unless [works]. Counts runs in `<dir>/runs`.
+String fakeFfmpeg(Directory d, {required bool listed, required bool works}) {
+  final f = File(p.join(d.path, 'ffmpeg'));
+  f.writeAsStringSync('''#!/bin/sh
+echo "\$@" >> "${d.path}/runs"
+case "\$*" in
+  *-encoders*) ${listed ? 'echo " V....D h264_nvenc NVIDIA NVENC"' : 'echo " V....D libx264"'};;
+  *h264_nvenc*) ${works ? 'exit 0' : 'echo "No NVENC capable devices" >&2; exit 1'};;
+esac
+exit 0
+''');
+  Process.runSync('chmod', ['+x', f.path]);
+  return f.path;
+}
+
+void videoEncoderTests() {
+  late Directory d;
+  setUp(() {
+    d = Directory.systemTemp.createTempSync('enc');
+    resetVideoEncoder();
+  });
+  tearDown(() {
+    ffmpegTool = 'ffmpeg';
+    resetVideoEncoder();
+    d.deleteSync(recursive: true);
+  });
+  final skip = Platform.isWindows ? 'sh' : null;
+
+  for (final c in [
+    (true, true, 'h264_nvenc'),
+    (true, false, 'libx264'),
+    (false, true, 'libx264'),
+  ]) {
+    test('videoEncoder: listed=${c.$1} works=${c.$2} -> ${c.$3}', () async {
+      ffmpegTool = fakeFfmpeg(d, listed: c.$1, works: c.$2);
+      expect(await videoEncoder(), c.$3);
+    }, skip: skip);
+  }
+
+  test('videoEncoder: the answer is cached (one probe per session)', () async {
+    ffmpegTool = fakeFfmpeg(d, listed: true, works: true);
+    await videoEncoder();
+    await videoEncoder();
+    expect(File(p.join(d.path, 'runs')).readAsLinesSync(), hasLength(2));
+  }, skip: skip);
+
+  group('pullWhisperModel', () {
+    late HttpServer srv;
+    late Directory d;
+    setUp(() async {
+      d = Directory.systemTemp.createTempSync('pw');
+      srv = await HttpServer.bind('127.0.0.1', 0);
+      srv.listen((r) {
+        r.response
+          ..contentLength = 11
+          ..write('hello model')
+          ..close();
+      });
+    });
+    tearDown(() async {
+      await srv.close(force: true);
+      d.deleteSync(recursive: true);
+    });
+    String url(HttpServer s) => 'http://127.0.0.1:${s.port}/m.bin';
+
+    test(
+      'right checksum: file is in place, .part is gone, progress reaches 1',
+      () async {
+        final seen = <double>[];
+        final dest = File(p.join(d.path, 'models', 'm.bin'));
+        await pullWhisperModel(
+          dest,
+          onProgress: seen.add,
+          url: url(srv),
+          sha256Hex: sha256.convert(utf8.encode('hello model')).toString(),
+        );
+        expect(dest.readAsStringSync(), 'hello model');
+        expect(File('${dest.path}.part').existsSync(), isFalse);
+        expect(seen.last, 1.0);
+      },
+    );
+
+    test('wrong checksum: error, nothing left behind', () async {
+      final dest = File(p.join(d.path, 'm.bin'));
+      await expectLater(
+        pullWhisperModel(
+          dest,
+          onProgress: (_) {},
+          url: url(srv),
+          sha256Hex: 'ab',
+        ),
+        throwsA(isA<HttpException>()),
+      );
+      expect(dest.existsSync(), isFalse);
+      expect(File('${dest.path}.part').existsSync(), isFalse);
+    });
+  });
 }

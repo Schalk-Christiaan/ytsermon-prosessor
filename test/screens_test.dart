@@ -22,6 +22,7 @@ import 'package:preekverwerker/features/playlists/playlists_screen.dart';
 import 'package:preekverwerker/features/settings/settings_screen.dart';
 import 'package:preekverwerker/features/setup/setup_screen.dart';
 import 'package:preekverwerker/core/tools.dart';
+import 'package:preekverwerker/features/settings/system_status.dart';
 import 'package:preekverwerker/features/sermons/sermons_screen.dart';
 import 'package:preekverwerker/features/work/work_screen.dart';
 import 'package:preekverwerker/features/review/review_controller.dart';
@@ -305,6 +306,8 @@ void main() {
     }
     testWidgets('stelsel ${b.name}', (t) async {
       await _fonts();
+      // The encoder probe runs two processes in turn; probe in real async so no timer outlives the test.
+      await t.runAsync(videoEncoder);
       t.view.physicalSize = const Size(1100, 720);
       t.view.devicePixelRatio = 1;
       final key = GlobalKey();
@@ -338,6 +341,113 @@ void main() {
             .writeAsBytesSync(bytes!.buffer.asUint8List());
       });
     });
+  }
+
+  for (final b in Brightness.values) {
+    testWidgets('stelsel-rye ${b.name}', (t) async {
+      await _fonts();
+      t.view.physicalSize = const Size(1100, 420);
+      t.view.devicePixelRatio = 1;
+      final key = GlobalKey();
+      await t.pumpWidget(
+        _app(
+          b,
+          RepaintBoundary(
+            key: key,
+            child: Scaffold(
+              body: SystemStatus(
+                probe: () async => const [
+                  ToolStatus('yt-dlp', true, '2026.08.19'),
+                  ToolStatus('ffmpeg', true, '9.0.2'),
+                  ToolStatus('ffprobe', true, '9.0.2'),
+                  ToolStatus('ollama', true, '0.12 · qwen3:8b'),
+                  ToolStatus('encoder', true, 'h264_nvenc'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull);
+      await _shot(t, key, 'stelsel-rye-${b.name}');
+    });
+  }
+
+  for (final b in Brightness.values) {
+    for (final (w, h) in [(1400.0, 700.0), (1600.0, 800.0)]) {
+      testWidgets('spraak ${b.name} ${w.toInt()}', (t) async {
+        await _fonts();
+        t.view.physicalSize = Size(w, h);
+        t.view.devicePixelRatio = 1;
+        final dir = Directory.systemTemp.createTempSync('sp');
+        addTearDown(() => dir.deleteSync(recursive: true));
+        File('${dir.path}/x.local.json3').writeAsStringSync('{"events":[]}');
+        final c = testController().$1
+          ..debugReady(
+            FetchedMeta('x', dir, {'title': 'Preek'}),
+            parseJson3(
+              File('test/fixtures/sample.af-orig.json3').readAsStringSync(),
+            ),
+            SermonPlan(
+              sermonStart: 1384,
+              sermonEnd: 3210,
+              title: 'Die genade van God in Christus',
+              description: 'Skriflesing en preek.',
+              shorts: [],
+            ),
+            3600,
+          );
+        final key = GlobalKey();
+        await t.pumpWidget(
+          _app(
+            b,
+            RepaintBoundary(
+              key: key,
+              child: Scaffold(body: ReviewScreen(controller: c)),
+            ),
+          ),
+        );
+        await t.pump(const Duration(seconds: 1));
+        await t.tap(find.byKey(const ValueKey('ctl.hersien.tab-transcript')));
+        await t.pump(const Duration(milliseconds: 400));
+        expect(find.text('Plaaslike transkripsie'), findsOneWidget);
+        await _shot(
+          t,
+          key,
+          'hersien-transkripsie-plaaslik-${b.name}-${w.toInt()}',
+        );
+        await t.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('stelsel spraakmodel ${b.name} ${w.toInt()}', (t) async {
+        await _fonts();
+        t.view.physicalSize = Size(w, 520);
+        t.view.devicePixelRatio = 1;
+        final key = GlobalKey();
+        await t.pumpWidget(
+          _app(
+            b,
+            RepaintBoundary(
+              key: key,
+              child: Scaffold(
+                body: SystemStatus(
+                  probe: () async => const [
+                    ToolStatus('ollama', true, '0.12 \u00b7 qwen3:8b'),
+                    ToolStatus('encoder', true, 'h264_nvenc'),
+                  ],
+                  model: File('/nonexistent/ggml.bin'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await t.pumpAndSettle();
+        expect(t.takeException(), isNull);
+        expect(find.text('Laai spraakmodel af'), findsOneWidget);
+        await _shot(t, key, 'stelsel-spraakmodel-${b.name}-${w.toInt()}');
+      });
+    }
   }
 
   testWidgets('handle moves with keys and drag, plan.json follows', (t) async {

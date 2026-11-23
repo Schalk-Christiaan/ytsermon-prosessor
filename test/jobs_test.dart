@@ -14,6 +14,8 @@ import 'package:preekverwerker/core/youtube.dart';
 import 'package:preekverwerker/core/store.dart';
 import 'package:preekverwerker/core/tools.dart';
 
+import 'tools_test.dart' show fakeFfmpeg;
+
 void main() {
   late Directory root;
   late SermonStore store;
@@ -36,6 +38,85 @@ void main() {
         audio: audio,
         upload: upload,
       );
+
+  group('transcribe step of the plan job', () {
+    late Directory d;
+    late FetchedMeta m;
+    late File video;
+    setUp(() {
+      d = Directory.systemTemp.createTempSync('wh');
+      resetVideoEncoder();
+      m = FetchedMeta('aaaaaaaaaaa', d, {});
+      video = File(p.join(d.path, 'video.mp4'))..writeAsStringSync('x');
+    });
+    tearDown(() {
+      ffmpegTool = 'ffmpeg';
+      d.deleteSync(recursive: true);
+    });
+
+    test('anyCaptions: af-orig wins over the local transcript', () {
+      expect(m.anyCaptions.path, endsWith('.local.json3'));
+      m.captions.writeAsStringSync('{"events":[]}');
+      expect(m.anyCaptions.path, endsWith('.af-orig.json3'));
+    });
+
+    test(
+      'no model: a plain error that points to Instellings, nothing runs',
+      () async {
+        final q = queue(
+          plan: (c) => transcribeStep(
+            c,
+            m,
+            video,
+            File(p.join(d.path, 'no.bin')),
+            '/bin/true',
+          ),
+        );
+        q.enqueue('aaaaaaaaaaa', JobKind.plan);
+        await q.idle;
+        expect(q.jobs.single.status, JobStatus.fout);
+        expect(q.jobs.single.error, contains('Laai spraakmodel af'));
+        expect(m.localCaptions.existsSync(), isFalse);
+      },
+    );
+
+    test(
+      'whisper runs once: detail and progress follow -pp, json3 is written',
+      () async {
+        ffmpegTool = fakeFfmpeg(d, listed: false, works: false);
+        final log = File(p.join(d.path, 'runs'));
+        final whisper = File(p.join(d.path, 'whisper-cli'))
+          ..writeAsStringSync('''#!/bin/sh
+echo run >> "${log.path}"
+while [ \$# -gt 0 ]; do
+  case "\$1" in -of) OUT="\$2";; esac
+  shift
+done
+echo "progress =  50%" >&2
+cp ${File('test/fixtures/whisper-sample.json').absolute.path} "\$OUT.json"
+''');
+        Process.runSync('chmod', ['+x', whisper.path]);
+        final model = File(p.join(d.path, 'm.bin'))..writeAsStringSync('x');
+        final seen = <String?>[];
+        late final JobQueue q;
+        q = queue(
+          plan: (c) async {
+            await transcribeStep(c, m, video, model, whisper.path);
+          },
+        );
+        q.detail.addListener(() => seen.add(q.detail.value));
+        q.enqueue('aaaaaaaaaaa', JobKind.plan);
+        q.enqueue('bbbbbbbbbbb', JobKind.plan);
+        await q.idle;
+        // the second job runs after the first (one whisper at a time); both share one dir here, so it just rewrites
+        expect(q.jobs.map((j) => j.status), everyElement(JobStatus.klaar));
+        expect(log.readAsLinesSync().where((l) => l == 'run'), hasLength(2));
+        expect(seen, contains('Transkribeer plaaslik \u00b7 50 %'));
+        expect(m.localCaptions.existsSync(), isTrue);
+      },
+      skip: Platform.isWindows,
+    );
+  });
 
   test(
     'detail and the output ring are set while a job runs, cleared after',

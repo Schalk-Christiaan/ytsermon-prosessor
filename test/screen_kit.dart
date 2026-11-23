@@ -75,11 +75,24 @@ ReviewController readyController({
   List<Short>? shorts,
   List<Span>? cuts,
   Stream<Duration>? positions,
+  Future<File> Function(
+    File,
+    File, {
+    required File model,
+    String? whisper,
+    void Function(double)? onProgress,
+  })?
+  transcribe,
+  File? whisperModel,
 }) {
   final segs = parseJson3(
     File('test/fixtures/sample.af-orig.json3').readAsStringSync(),
   );
-  final c = testController(positions: positions).$1;
+  final c = testController(
+    positions: positions,
+    transcribe: transcribe,
+    whisperModel: whisperModel,
+  ).$1;
   c.debugReady(
     FetchedMeta('x', Directory.systemTemp, {'title': 'Preek'}),
     segs,

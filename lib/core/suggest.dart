@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import 'captions.dart';
+import 'channel.dart';
 import 'planner.dart';
 import 'jobs.dart';
 import 'playlists.dart';
@@ -53,7 +54,8 @@ String cutWords(String text, int n) {
 /// The brief of [s]: its first ~500 transcript words when the captions are on disk.
 Brief briefOf(Sermon s, Directory root) {
   var excerpt = '';
-  final f = File(p.join(root.path, s.id, '${s.id}.af-orig.json3'));
+  final dir = Directory(p.join(root.path, s.id));
+  final f = FetchedMeta(s.id, dir, {}).anyCaptions;
   if (f.existsSync()) {
     try {
       excerpt = cutWords(

@@ -7,6 +7,9 @@
   "navWerk": "Werk",
   "navSnitlyste": "Snitlyste",
   "settingsSystem": "Stelsel",
+  "encoderLabel": "Video-enkodering",
+  "encoderGpu": "GPU (NVENC)",
+  "encoderCpu": "CPU (libx264)",
   "toolReady": "Gereed",
   "toolReadyVersion": "Gereed · {version}",
   "@toolReadyVersion": {
@@ -676,5 +679,30 @@
   "stepUpload": "Oplaai",
   "progressSlow": "Dit kan 'n paar minute duur.",
   "progressShow": "Wys besonderhede",
-  "progressHide": "Versteek besonderhede"
+  "progressHide": "Versteek besonderhede",
+  "whisperLabel": "Spraakmodel",
+  "whisperReady": "Gereed",
+  "whisperMissing": "Nie afgelaai nie. Nodig as 'n video geen onderskrifte het nie.",
+  "whisperDownload": "Laai spraakmodel af",
+  "whisperDownloading": "Laai af… {percent} %",
+  "@whisperDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "whisperDownloadFailed": "Die spraakmodel kon nie afgelaai word nie. Kyk die internet en probeer weer.",
+  "transcriptLocalBadge": "Plaaslike transkripsie",
+  "transcribeLocal": "Transkribeer plaaslik",
+  "transcribeLocalConfirm": "Die onderskrifte van YouTube word vervang deur 'n transkripsie wat op hierdie rekenaar gemaak word. Die ou lêer bly as .bak in die preek se gids. Dit kan 'n paar minute duur.",
+  "transcribeLocalRunning": "Transkribeer… {percent} %",
+  "@transcribeLocalRunning": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "transcribeLocalBusy": "Wag tot die lopende taak klaar is."
 }

@@ -272,7 +272,9 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
                                   settings: _settings,
                                   auth: _auth,
                                   signIn: () => _auth.signIn(openPath),
-                                  system: const SystemStatus(),
+                                  system: SystemStatus(
+                                    model: whisperModelFile(widget.store.root),
+                                  ),
                                   onChannelChanged: () => setState(() {}),
                                   onSetup: () => _go(5),
                                 ),
