@@ -12,14 +12,13 @@ kaart: lib/core/*.dart, lib/app/*.dart, lib/features/**/*.dart
 Alles plaaslik: yt-dlp, ffmpeg, Ollama. Ontwikkel en toets op Linux, verskeep na die kerk-PC (Windows 11).
 
 ## Status
-`desktop-poleer` gemerge en gepush (8d45747); repo is nou **public** (2026-11-22) met 'n alle-regte-voorbehou-LICENSE; Release `v2026.11.22` met Setup.exe (CI 44996930443). Nog nie op die VM of kerk-PC getoets nie; `/bewys` nog oop.
-Kerk-PC = skootrekenaar Ryzen 7 5800H, RTX 3050, 16 GB.
-Bou loop: `planne/gpu-en-spraak.md` (NVENC met libx264-terugval; whisper.cpp as terugval as af-orig ontbreek of op versoek), tak `bou/gpu-en-spraak`, worktree `../.bou/ytsermon-prosessor-gpu-en-spraak`.
-Schalk se opdrag: ná die bou → hersien, merge, push, nuwe Release met die nuwe Setup.exe, dan rekenaar afskakel.
-Oop: waar WhatsApp-klank gemaak word (`planne/desktop-poleer.md` `## Vrae`); oop vrae in `planne/nagskof-poleer.md`; NVENC-spoed net op die kerk-PC meetbaar.
+`gpu-en-spraak` gemerge en gepush (1efe25f): NVENC met libx264-terugval, whisper.cpp (CPU-bou gebundel) as terugval as af-orig ontbreek of via Hersien. Windows-CI groen (45091878246, rooktoets sluit `whisper-cli --help` in). Release `v2026.11.23` met Setup.exe. Repo public, LICENSE alle regte voorbehou.
+Kerk-PC = skootrekenaar Ryzen 7 5800H, RTX 3050, 16 GB. NVENC-spoed en whisper op Windows net daar meetbaar.
+Klein, later (`planne/gpu-en-spraak.md` Verslag): Hersien se "Transkribeer plaaslik" loop buite die JobQueue; duplikate `_pickEncoder`/`runTool`, `pullWhisperModel`/`pullModel`; CUDA-whisper (735 MB) nie gebundel nie.
+Oop: waar WhatsApp-klank gemaak word (`planne/desktop-poleer.md` `## Vrae`); oop vrae in `planne/nagskof-poleer.md`.
 Windows-VM (`omarchy-windows`): dryf met QEMU-monitor `sendkey`; kiekie via `docker exec omarchy-windows sh -c 'printf "screendump /shared/scr.ppm\n" | nc -q1 -U /run/shm/monitor.sock'`.
-**Laaste sessie:** 2026-11-22
-**Volgende:** kyk `## Log` in `planne/gpu-en-spraak.md` (hervat met `/bou gpu-en-spraak` as dit gestop het); dan hersien, merge, Release, VM-toets, `/bewys`.
+**Laaste sessie:** 2026-11-23
+**Volgende:** installeer `v2026.11.23` op die VM of kerk-PC: aflaai, sny (kyk Stelsel → Enkodeerder), spraakmodel aflaai en een video sonder onderskrifte; dan `/bewys`.
 
 ## Gebruikers
 - **Schalk**: tegnies; sleutelbord (I/O, ←/→, Shift, spasie, Ctrl+Z), spoed en die log. Struikel oor: stadige herhaalwerk, muis-net-paaie.
